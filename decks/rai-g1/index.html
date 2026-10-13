@@ -1,0 +1,852 @@
+<!doctype html>
+<html lang="es" data-style="nube">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RAI en el Unitree G1</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="rai.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ======================= D1 · PORTADA ======================= -->
+<section class="slide is-plain cover" id="portada" data-fx="backdrop" data-seed="5" data-section="Inicio" data-title="RAI en el Unitree G1">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">máster en sistemas inteligentes · uji · machine learning · proyecto 1</p>
+    <h1 class="s-title xl">RAI en el Unitree G1</h1>
+    <p class="lead">Cómo un modelo de lenguaje habla con un robot ROS&nbsp;2, y dónde no debe hacerlo.</p>
+    <p class="who">Juan Carlos Rivas Pérez · Alan Landaluce Moreyra</p>
+    <div class="row"><span class="chip">octubre de 2026</span><span class="chip">reunión de seguimiento</span><span class="chip"><b>N</b>&nbsp;notas del orador</span></div>
+  </div>
+  <aside class="notes">
+    <p>[Recorrido corto para el profesor: «Una orden, tres retos», «RAI es un adaptador», «El ciclo ReAct», «Los límites, medidos», «Agente frente a BT», «La regla de diseño», «La orden E1 recorre el sistema», «Lo que nunca pasa por RAI», «Una puerta antes de actuar», «Cuatro ideas para quedarse».]</p>
+    <p>Vamos a ver qué es RAI, qué demostró su uso en un robot real según Rivas Pérez (2026) y cómo lo montaríamos en el G1. Al final hay una hipótesis que aún no está validada.</p>
+  </aside>
+</section>
+
+<!-- ======================= D2 ======================= -->
+<section class="slide" id="orden" data-fx="secuencia" data-section="El problema" data-title="Una orden, tres retos">
+  <header class="s-head">
+    <p class="kicker">a · el problema · escenario E1</p>
+    <h2 class="s-title">Una orden, tres retos</h2>
+  </header>
+  <div class="s-body orden">
+    <p class="frase">«Ve a <span class="tk" style="--c:var(--cat-1)" data-seq="1"><b>la 203</b><small>habitación</small></span> y colócate <span class="tk" style="--c:var(--cat-3)" data-seq="3"><b>a la derecha de</b><small>relación</small></span> <span class="tk" style="--c:var(--cat-2)" data-seq="2"><b>la cama</b><small>objeto</small></span>»</p>
+    <div class="retos">
+      <div class="panel" data-seq="4"><span class="n">1</span><h3>Entender</h3><p>Qué se pide: habitación, objeto y relación.</p></div>
+      <div class="panel" data-seq="5"><span class="n">2</span><h3>Anclar</h3><p>Qué cama, la derecha de quién, qué pose exacta. Aquí fallan los modelos (FoREST, SATURN, Wang et al. 2026).</p></div>
+      <div class="panel" data-seq="6"><span class="n">3</span><h3>Moverse seguro</h3><p>Llegar sin chocar con nadie, en un hospital con gente.</p></div>
+    </div>
+  </div>
+  <p class="src">Pregunta del proyecto: <em>How can natural-language spatial instructions be grounded into safe navigation goals for a humanoid robot operating in a dynamic indoor environment?</em></p>
+  <aside class="notes">
+    <p>Todo lo que vamos a ver lo seguimos con esta frase. Tiene tres problemas distintos.</p>
+    <p>El primero es de lenguaje: separar habitación, objeto y relación. El segundo es de geometría: ¿qué cama?, ¿derecha de quién?, ¿qué pose? FoREST (Premsri y Kordjamshidi, 2025) y SATURN (Kamali et al., 2026) muestran que los modelos se equivocan con el marco de referencia, y Wang et al. (2026) sitúan el cuello de botella en el anclaje espacial.</p>
+    <p>El tercero es de seguridad: llegar sin chocar con nadie.</p>
+  </aside>
+</section>
+
+<!-- ======================= D3 ======================= -->
+<section class="slide" id="adaptador" data-fx="secuencia" data-section="El problema" data-title="RAI es un adaptador">
+  <header class="s-head">
+    <p class="kicker">a · qué es rai · robotecai, apache-2.0</p>
+    <h2 class="s-title">RAI es un adaptador</h2>
+  </header>
+  <div class="s-body cols even">
+    <svg class="dia" viewBox="0 0 760 560" role="img" aria-label="Dos mundos: el modelo de lenguaje arriba, ROS 2 abajo y RAI en medio">
+      <defs><marker id="ah-d3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <g data-seq="0"><rect class="box model" x="20" y="10" width="720" height="140" rx="10"/>
+        <text x="44" y="54" class="b">Mundo del modelo de lenguaje</text>
+        <text x="44" y="92" class="t2">prompts · tool calling · contexto</text>
+        <text x="44" y="128" class="t3">OpenAI · AWS Bedrock · Ollama · Google</text></g>
+      <path class="ln" d="M380 154 V204" marker-end="url(#ah-d3)" data-seq="1" data-a="draw"/>
+      <g data-seq="1" data-a="pop"><rect class="box solid" x="150" y="210" width="460" height="130" rx="10"/>
+        <text x="380" y="270" text-anchor="middle" class="h inv" style="font-size:46px">RAI</text>
+        <text x="380" y="314" text-anchor="middle" class="inv">valida argumentos y ejecuta la tool</text></g>
+      <path class="ln" d="M380 344 V394" marker-end="url(#ah-d3)" data-seq="2" data-a="draw"/>
+      <g data-seq="2"><rect class="box code" x="20" y="400" width="720" height="140" rx="10"/>
+        <text x="44" y="444" class="b">Mundo ROS 2</text>
+        <text x="44" y="482" class="t2">topics · services · actions · TF</text>
+        <text x="44" y="518" class="t3">Nav2 · sensores · controladores</text></g>
+    </svg>
+    <div class="stack" style="justify-content:center">
+      <p class="body-text">Framework <em>open source</em> de RobotecAI que conecta agentes LLM con robots ROS&nbsp;2.</p>
+      <ul class="clean" data-seq="3">
+        <li><b>No</b> entrena modelos.</li>
+        <li><b>No</b> implementa controladores.</li>
+        <li><b>No</b> sustituye a Nav2.</li>
+        <li>El <span class="k-model">modelo</span> decide qué tool usar; RAI comprueba los argumentos y la ejecuta. Si el modelo se equivoca, RAI no lo arregla.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Rivas Pérez (2026), §2.3 y §5.1 · RobotecAI (2025a, 2025b) · Repositorio RobotecAI/rai, licencia Apache-2.0 (consultado el 12-10-2026).</p>
+  <aside class="notes">
+    <p>RAI no es un traductor mágico. Es el enchufe entre un modelo de lenguaje y las piezas de ROS 2 que ya existen.</p>
+    <p>El modelo decide qué herramienta usar; RAI comprueba que los argumentos son válidos y la ejecuta. Si el modelo elige mal, RAI no lo corrige.</p>
+    <p>Por eso no hablamos de traducción automática: hay una decisión del modelo en medio, y puede fallar.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR B ======================= -->
+<section class="slide is-plain divider" id="sec-dentro" data-fx="backdrop" data-seed="11" data-section="Por dentro" data-title="Cómo funciona RAI">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">B</p>
+    <h2 class="s-title xl">Cómo funciona RAI</h2>
+    <p class="lead">Capas, ciclo ReAct, tools, configuración, ecosistema y tres formas de montar el agente.</p>
+  </div>
+  <aside class="notes"><p>Ahora, por dentro: qué piezas tiene RAI y cómo trabaja un agente.</p></aside>
+</section>
+
+<!-- ======================= D4 ======================= -->
+<section class="slide" id="piezas" data-fx="secuencia" data-section="Por dentro" data-title="Las piezas de RAI">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · rai_core 2.12.4</p>
+    <h2 class="s-title">Las piezas de RAI</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="pila">
+      <div class="capa top" data-seq="2"><div class="nm"><b>Interfaces HRI</b><span>cómo hablamos con el robot</span></div>
+        <div class="parts"><span class="chip">/from_human</span><span class="chip">/to_human</span><span class="chip">rai_interfaces</span></div></div>
+      <div class="capa mid" data-seq="1"><div class="nm"><b>rai_core</b><span>el núcleo</span></div>
+        <div class="parts"><span class="chip">tools: BaseROS2Tool + Pydantic</span><span class="chip">agente ReAct sobre LangGraph</span><span class="chip">embodiment</span><span class="chip">MultimodalArtifact</span></div></div>
+      <div class="capa bot" data-seq="0"><div class="nm"><b>Conectores</b><span>ROS 2 y modelos</span></div>
+        <div class="parts"><span class="chip">ROS2Connector: topics, services, actions, TF</span><span class="chip">get_llm_model() + config.toml</span></div></div>
+    </div>
+    <aside class="stack" style="justify-content:center">
+      <p class="side-text">Tres pisos, de abajo arriba: hablar con ROS&nbsp;2 y con el modelo; el núcleo con tools, agente y embodiment; y la entrada y salida de mensajes humanos.</p>
+      <p class="note">La memoria del TFG llama <code>LLMConnector</code> a la capa de modelos. La documentación oficial lo cuenta como agentes, conectores, agregadores y <em>runners</em>.</p>
+    </aside>
+  </div>
+  <p class="src">Vista por capas de Rivas Pérez (2026), §5.1.1, con los nombres de la versión actual (rai_core 2.12.4, commit b018729).</p>
+  <aside class="notes">
+    <p>Tres pisos. Abajo, cómo se habla con ROS 2 y con el modelo: el conector de ROS 2 y la configuración del modelo.</p>
+    <p>En medio, el núcleo: las herramientas, el agente montado sobre LangGraph y el embodiment, que es lo que el robot sabe de sí mismo.</p>
+    <p>Arriba, cómo hablamos nosotros con el robot: un topic de entrada y uno de salida.</p>
+    <p>La memoria usa algún nombre de una versión anterior; aquí uso los actuales.</p>
+  </aside>
+</section>
+
+<!-- ======================= D5 ======================= -->
+<section class="slide" id="react" data-fx="secuencia" data-section="Por dentro" data-title="El ciclo ReAct">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · razonar, actuar, observar</p>
+    <h2 class="s-title">El ciclo ReAct</h2>
+  </header>
+  <div class="s-body cols">
+    <svg class="dia" viewBox="0 0 1060 600" role="img" aria-label="Ciclo ReAct: razonar, elegir tool, ejecutar y observar, en bucle hasta responder">
+      <defs><marker id="ah-d5" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <path id="react-loop" class="ln dash" d="M530 100 A200 200 0 1 1 529.9 100" data-seq="1" data-a="draw"/>
+      <circle class="dot" r="11" data-travel="#react-loop" data-period="5200" data-rest="0.125"/>
+      <text x="530" y="286" text-anchor="middle" class="h">ciclo</text>
+      <text x="530" y="320" text-anchor="middle" class="t3">se repite</text>
+      <text x="530" y="348" text-anchor="middle" class="t3">hasta terminar</text>
+      <g data-seq="0"><rect class="box" x="20" y="72" width="200" height="56" rx="8"/><text x="120" y="108" text-anchor="middle">Instrucción</text></g>
+      <path class="ln" d="M222 100 H404" marker-end="url(#ah-d5)" data-seq="0" data-a="draw"/>
+      <g data-seq="1"><rect class="box model" x="410" y="64" width="240" height="72" rx="10"/><text x="530" y="108" text-anchor="middle" class="b">Razonar</text></g>
+      <g data-seq="2"><rect class="box model" x="610" y="264" width="240" height="72" rx="10"/><text x="730" y="308" text-anchor="middle" class="b">Elegir tool</text></g>
+      <g data-seq="3"><rect class="box code" x="410" y="464" width="240" height="72" rx="10"/><text x="530" y="508" text-anchor="middle" class="b">Ejecutar</text><text x="530" y="566" text-anchor="middle" class="t3">RAI llama a ROS 2</text></g>
+      <g data-seq="4"><rect class="box code" x="210" y="264" width="240" height="72" rx="10"/><text x="330" y="308" text-anchor="middle" class="b">Observar</text></g>
+      <path class="ln dash" d="M652 100 H834" marker-end="url(#ah-d5)" data-seq="5" data-a="draw"/>
+      <g data-seq="5"><rect class="box" x="840" y="72" width="200" height="56" rx="8"/><text x="940" y="108" text-anchor="middle">Respuesta</text><text x="743" y="86" text-anchor="middle" class="t3">al terminar</text></g>
+    </svg>
+    <aside class="stack" style="justify-content:center">
+      <div class="vid"><video controls preload="metadata" playsinline src="../../../04_Archivo/definitivo/demo-juguete.mp4"></video><span class="vlabel">Simulación · Rivas Pérez (2026)</span></div>
+      <p class="vidcap">«Dime qué tienes de frente y dónde estás». Gazebo + RViz + terminal del agente · 0:35</p>
+    </aside>
+  </div>
+  <p class="src">Adaptado de Rivas Pérez (2026), fig. 2.1 · Patrón ReAct: Yao et al. (2023), citado en Rivas Pérez (2026).</p>
+  <aside class="notes">
+    <p>Llega la instrucción. El modelo razona en texto: «necesito la cámara». Elige una tool y RAI la ejecuta. El resultado vuelve al contexto como observación. Repite hasta que da la tarea por terminada y responde.</p>
+    <p>Vídeo: le pregunto qué tiene delante y dónde está. En el terminal, cada bloque es una vuelta del ciclo: primero la cámara, luego la pose, y al final responde.</p>
+  </aside>
+</section>
+
+<!-- ======================= D6 ======================= -->
+<section class="slide" id="tool" data-fx="secuencia" data-section="Por dentro" data-title="Una tool por dentro">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · BaseROS2Tool</p>
+    <h2 class="s-title">Una tool por dentro</h2>
+  </header>
+  <div class="s-body cols">
+    <ol class="pasos" style="justify-content:center">
+      <li class="model" data-seq="0"><div>El modelo pide una llamada: <code>navigate_to_location("Puesto-3")</code><small>solo ve nombre, descripción y parámetros</small></div></li>
+      <li class="code" data-seq="1"><div>RAI valida los argumentos con el esquema Pydantic<small>tipos simples: str, float, int</small></div></li>
+      <li class="code" data-seq="2"><div>La tool usa <code>ROS2Connector</code> para lanzar la acción de Nav2<small>el modelo nunca ve el código</small></div></li>
+      <li class="code" data-seq="3"><div>El resultado vuelve como texto o <code>MultimodalArtifact</code><small>pasa al contexto como observación</small></div></li>
+      <li class="code" data-seq="4"><div>Si algo falla, el error también vuelve como texto legible<small>no como una excepción que gaste contexto</small></div></li>
+    </ol>
+    <aside class="stack" style="justify-content:center">
+      <div class="vid"><video controls preload="metadata" playsinline src="../../../04_Archivo/definitivo/demo-explicacion.mp4"></video><span class="vlabel">Simulación · Rivas Pérez (2026)</span></div>
+      <p class="vidcap">«Visualiza la mesa con la cámara y actualiza el costmap usando tus herramientas» · 0:24</p>
+    </aside>
+  </div>
+  <p class="src">Rivas Pérez (2026), §5.1.1, §6.1 y §6.5 · BaseROS2Tool y MultimodalArtifact en rai_core 2.12.4.</p>
+  <aside class="notes">
+    <p>El modelo pide una llamada: ir al Puesto-3. RAI valida los argumentos con el esquema Pydantic. La tool usa el conector de ROS 2 para lanzar la acción de Nav2. El resultado vuelve como texto. Si algo falla, también vuelve como texto legible, no como una excepción, para no gastar contexto.</p>
+    <p>Por eso la descripción de cada tool se escribe para el modelo, no para un programador.</p>
+    <p>Vídeo: encadena cámara, costmap y LiDAR sin que nadie haya programado esa secuencia.</p>
+  </aside>
+</section>
+
+<!-- ======================= D7 ======================= -->
+<section class="slide" id="config" data-fx="secuencia" data-section="Por dentro" data-title="Configuración y embodiment">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · config.toml y rai_whoami</p>
+    <h2 class="s-title">Configuración y embodiment</h2>
+  </header>
+  <div class="s-body cols even">
+    <div class="stack">
+<pre class="codebox" data-seq="0"><span class="c"># config.toml (extracto, versión actual)</span>
+<span class="k">[vendor]</span>
+simple_model     = <span class="s">"ollama"</span>
+complex_model    = <span class="s">"ollama"</span>
+embeddings_model = <span class="s">"ollama"</span>
+
+<span class="k">[ollama]</span>
+simple_model = <span class="s">"llama3.2"</span>
+base_url     = <span class="s">"http://localhost:11434"</span>
+
+<span class="k">[tracing.langfuse]</span>
+use_langfuse = true</pre>
+      <p class="note">Proveedores hoy: OpenAI, AWS Bedrock, Ollama y Google. El ejemplo oficial usa OpenAI; aquí, Ollama, como en el TFG.</p>
+    </div>
+    <div class="stack" style="gap:30px">
+      <div class="stack" style="gap:8px" data-seq="1"><h3>Dos roles de modelo</h3><p class="side-text"><span class="k-model">Simple</span> y <span class="k-model">complejo</span>: un planificador grande y un ejecutor rápido.</p></div>
+      <div class="stack" style="gap:8px" data-seq="2"><h3>Embodiment</h3><p class="side-text">Hechos del robot (sensores, topics, ubicaciones) en el <em>system prompt</em>. <code>rai_whoami</code> lo genera desde documentación, imágenes y URDF.</p></div>
+      <div class="stack" style="gap:8px" data-seq="3"><h3>Cambiar de modelo</h3><p class="side-text">Es cambiar una línea. <span class="k-warn">Que el robot funcione igual es otra cosa</span>: lo vemos en «Los límites, medidos».</p></div>
+    </div>
+  </div>
+  <p class="src">Rivas Pérez (2026), §5.1.2 · config.toml y rai_whoami en RobotecAI/rai (commit b018729, 12-10-2026) · Trazas: Langfuse (2024), citado en Rivas Pérez (2026).</p>
+  <aside class="notes">
+    <p>Todo se configura en un fichero: qué proveedor sirve el modelo, qué modelo hace de simple y cuál de complejo, y si se guardan trazas.</p>
+    <p>Cambiar de modelo es cambiar una línea de este fichero. Eso es verdad en la interfaz. Lo que no es verdad es que el robot funcione igual con otro modelo: en «Los límites, medidos» se ve que los resultados cambian mucho.</p>
+  </aside>
+</section>
+
+<!-- ======================= D8 ======================= -->
+<section class="slide" id="ecosistema" data-fx="secuencia" data-step-ms="160" data-section="Por dentro" data-title="El ecosistema RAI">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · paquetes del repositorio</p>
+    <h2 class="s-title">El ecosistema RAI</h2>
+  </header>
+  <div class="s-body modgrid">
+    <div class="mod used" data-seq="0" data-a="pop"><span class="name">rai_core</span><p>Agentes, conectores, tools y mensajes multimodales.</p><span class="tag model">usado en el TFG</span></div>
+    <div class="mod g1" data-seq="1" data-a="pop"><span class="name">rai_s2s</span><p>Voz: actividad de voz, palabra de activación, transcripción y síntesis.</p><span class="tag code">interesante para el G1</span></div>
+    <div class="mod g1" data-seq="2" data-a="pop"><span class="name">rai_semap</span><p>Memoria semántica de mapa: qué objetos vio y dónde. Experimental.</p><span class="tag code">interesante para el G1</span></div>
+    <div class="mod" data-seq="3" data-a="pop"><span class="name">rai_whoami</span><p>Embodiment: <em>system prompt</em> desde docs, imágenes y URDF.</p></div>
+    <div class="mod" data-seq="4" data-a="pop"><span class="name">rai_perception</span><p>Detección y segmentación de vocabulario abierto como servicios ROS&nbsp;2.</p></div>
+    <div class="mod" data-seq="5" data-a="pop"><span class="name">rai_nomad</span><p>Nodo ROS&nbsp;2 con el modelo de navegación NoMaD.</p></div>
+    <div class="mod" data-seq="6" data-a="pop"><span class="name">rai_bench</span><p>Benchmarks de agentes: tool calling y manipulación.</p></div>
+    <div class="mod" data-seq="7" data-a="pop"><span class="name">rai_sim</span><p>Interfaz común para conectar simuladores.</p></div>
+    <div class="mod" data-seq="8" data-a="pop"><span class="name">rai_finetune</span><p>Datos de Langfuse o LangSmith para <em>fine-tuning</em>. Experimental.</p></div>
+  </div>
+  <p class="src">README de cada paquete en RobotecAI/rai (commit b018729, 12-10-2026) · Uso en el TFG: Rivas Pérez (2026), cap. 5–6; la voz quedó como trabajo futuro (§10.5).</p>
+  <aside class="notes">
+    <p>RAI es más que el núcleo: trae voz, percepción (GroundingDINO, Grounded-SAM-2) y una memoria semántica de mapa, aún experimental.</p>
+    <p>En el TFG solo se usó el núcleo. Para el G1, la voz y la memoria semántica son las piezas más interesantes, pero no las hemos probado.</p>
+  </aside>
+</section>
+
+<!-- ======================= D9 ======================= -->
+<section class="slide" id="arquitecturas" data-fx="secuencia" data-section="Por dentro" data-title="Tres arquitecturas de agente">
+  <header class="s-head">
+    <p class="kicker">b · por dentro · único, megamind y multiagente</p>
+    <h2 class="s-title">Tres arquitecturas de agente</h2>
+  </header>
+  <div class="s-body">
+    <svg class="dia" viewBox="0 0 1664 600" role="img" aria-label="Tres arquitecturas: agente único, megamind con planificador y ejecutor, y multiagente con especialistas">
+      <defs><marker id="ah-d9" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <!-- único -->
+      <g data-seq="0">
+        <text x="270" y="40" text-anchor="middle" class="h">Agente único</text>
+        <rect class="box" x="170" y="90" width="200" height="56" rx="8"/><text x="270" y="126" text-anchor="middle">Usuario</text>
+        <path class="ln" d="M270 148 V218" marker-end="url(#ah-d9)"/>
+        <rect class="box model" x="140" y="224" width="260" height="70" rx="10"/><text x="270" y="268" text-anchor="middle" class="b">LLM · ReAct</text>
+        <path class="ln" d="M270 296 V376" marker-end="url(#ah-d9)"/>
+        <g class="f-code"><rect x="161" y="384" width="34" height="34" rx="5"/><rect x="205" y="384" width="34" height="34" rx="5"/><rect x="249" y="384" width="34" height="34" rx="5"/><rect x="293" y="384" width="34" height="34" rx="5"/><rect x="337" y="384" width="34" height="34" rx="5"/></g>
+        <text x="270" y="456" text-anchor="middle" class="t3">tools</text>
+        <text x="270" y="520" text-anchor="middle" class="t2">un modelo hace todo</text>
+        <text x="270" y="556" text-anchor="middle" class="t3">lo más simple</text>
+      </g>
+      <!-- megamind -->
+      <g data-seq="1">
+        <text x="832" y="40" text-anchor="middle" class="h">Megamind</text>
+        <rect class="box model" x="702" y="90" width="260" height="70" rx="10"/><text x="832" y="134" text-anchor="middle" class="b">Planificador</text>
+        <path class="ln" d="M832 162 V218" marker-end="url(#ah-d9)"/>
+        <rect class="box model" x="702" y="224" width="260" height="70" rx="10"/><text x="832" y="268" text-anchor="middle" class="b">Ejecutor</text>
+        <path class="ln" d="M832 296 V376" marker-end="url(#ah-d9)"/>
+        <g class="f-code"><rect x="723" y="384" width="34" height="34" rx="5"/><rect x="767" y="384" width="34" height="34" rx="5"/><rect x="811" y="384" width="34" height="34" rx="5"/><rect x="855" y="384" width="34" height="34" rx="5"/><rect x="899" y="384" width="34" height="34" rx="5"/></g>
+        <text x="832" y="456" text-anchor="middle" class="t3">tools</text>
+        <text x="832" y="520" text-anchor="middle" class="t2">uno escribe el plan, otro lo ejecuta</text>
+        <text x="832" y="556" text-anchor="middle" class="t3 mono">create_megamind</text>
+      </g>
+      <!-- multiagente -->
+      <g data-seq="2">
+        <text x="1394" y="40" text-anchor="middle" class="h">Multiagente</text>
+        <rect class="box model" x="1264" y="90" width="260" height="70" rx="10"/><text x="1394" y="134" text-anchor="middle" class="b">Coordinador</text>
+        <path class="ln" d="M1340 162 L1260 218" marker-end="url(#ah-d9)"/>
+        <path class="ln" d="M1448 162 L1528 218" marker-end="url(#ah-d9)"/>
+        <rect class="box model" x="1140" y="224" width="220" height="70" rx="10"/><text x="1250" y="268" text-anchor="middle" class="b">Especialista</text>
+        <rect class="box model" x="1428" y="224" width="220" height="70" rx="10"/><text x="1538" y="268" text-anchor="middle" class="b">Especialista</text>
+        <path class="ln" d="M1250 296 V376" marker-end="url(#ah-d9)"/>
+        <path class="ln" d="M1538 296 V376" marker-end="url(#ah-d9)"/>
+        <g class="f-code"><rect x="1189" y="384" width="34" height="34" rx="5"/><rect x="1233" y="384" width="34" height="34" rx="5"/><rect x="1277" y="384" width="34" height="34" rx="5"/><rect x="1477" y="384" width="34" height="34" rx="5"/><rect x="1521" y="384" width="34" height="34" rx="5"/><rect x="1565" y="384" width="34" height="34" rx="5"/></g>
+        <text x="1394" y="456" text-anchor="middle" class="t3">catálogos cortos</text>
+        <text x="1394" y="520" text-anchor="middle" class="t2">especialistas que se llaman como tools</text>
+        <text x="1394" y="556" text-anchor="middle" class="t3 mono">create_handoff_tool</text>
+      </g>
+      <line class="grid" x1="551" y1="20" x2="551" y2="570"/><line class="grid" x1="1113" y1="20" x2="1113" y2="570"/>
+    </svg>
+  </div>
+  <p class="src">Adaptado de Rivas Pérez (2026), tabla 5.2 y fig. 5.1 · create_megamind y create_handoff_tool en rai_core 2.12.4.</p>
+  <aside class="notes">
+    <p>Agente único: un modelo hace todo. Es lo más simple y lo más rápido por paso.</p>
+    <p>Megamind: un planificador escribe el plan y un ejecutor llama a las tools paso a paso.</p>
+    <p>Multiagente: especialistas con catálogos cortos que se llaman entre sí como si fueran tools.</p>
+    <p>Mismo ciclo ReAct, repartido de tres maneras. Más modelos no significa mejor: lo vemos ahora con datos.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR C ======================= -->
+<section class="slide is-plain divider" id="sec-tfg" data-fx="backdrop" data-seed="23" data-section="TFG" data-title="Lo que demostró el TFG">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">C</p>
+    <h2 class="s-title xl">Lo que demostró el TFG</h2>
+    <p class="lead">RAI en un RB-Kairos Plus de Robotnik: límites medidos, comparación con un árbol de comportamiento y la regla de diseño.</p>
+  </div>
+  <aside class="notes"><p>Ahora, qué pasó al usar RAI en un robot real, según Rivas Pérez (2026).</p></aside>
+</section>
+
+<!-- ======================= D10 ======================= -->
+<section class="slide" id="limites" data-fx="secuencia" data-section="TFG" data-title="Los límites, medidos">
+  <header class="s-head">
+    <p class="kicker">c · tfg · tools por agente (tabla 8.6)</p>
+    <h2 class="s-title">Los límites, medidos</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="stack" style="gap:16px">
+      <svg class="dia" viewBox="0 0 1060 460" style="height:auto" role="img" aria-label="Tools por agente y estabilidad: especialista 9 o menos, muy estable; patrulla 14, estable; ejecutor megamind 18, en el límite; fusionado 31, inestable">
+        <line class="grid" x1="300" y1="40" x2="300" y2="400"/><line class="grid" x1="500" y1="40" x2="500" y2="400"/><line class="grid" x1="700" y1="40" x2="700" y2="400"/><line class="grid" x1="900" y1="40" x2="900" y2="400"/>
+        <text x="300" y="432" text-anchor="middle" class="t3">0</text><text x="500" y="432" text-anchor="middle" class="t3">10</text><text x="700" y="432" text-anchor="middle" class="t3">20</text><text x="900" y="432" text-anchor="middle" class="t3">30</text>
+        <text x="1040" y="458" text-anchor="end" class="t3">tools por modelo</text>
+        <text x="284" y="92" text-anchor="end">Especialista (multi)</text>
+        <rect class="f-ok" x="300" y="64" width="180" height="46" rx="5" data-seq="0" data-a="grow"/><text x="494" y="96" class="b" data-seq="0">≤ 9 · muy estable</text>
+        <text x="284" y="180" text-anchor="end">Patrulla (único)</text>
+        <rect class="f-ok" x="300" y="152" width="280" height="46" rx="5" data-seq="1" data-a="grow"/><text x="594" y="184" class="b" data-seq="1">14 · estable</text>
+        <text x="284" y="268" text-anchor="end">Ejecutor megamind</text>
+        <rect class="f-warn" x="300" y="240" width="360" height="46" rx="5" data-seq="2" data-a="grow"/><text x="674" y="272" class="b" data-seq="2">18 · en el límite</text>
+        <text x="284" y="356" text-anchor="end">Fusionado</text>
+        <rect class="f-err" x="300" y="328" width="620" height="46" rx="5" data-seq="3" data-a="grow"/><text x="904" y="360" text-anchor="end" class="b inv" data-seq="3">31 · inestable</text>
+        <line class="ln s-fg dash" x1="480" y1="34" x2="480" y2="404"/><text x="480" y="24" text-anchor="middle" class="t2">9: estable</text>
+        <line class="ln s-err dash" x1="700" y1="34" x2="700" y2="404" data-seq="4" data-a="draw"/><text x="700" y="24" text-anchor="middle" class="b" data-seq="4">20: colapso</text>
+      </svg>
+      <p class="side-text">Con 20 tools, <code>llama3.1:8b</code> deja de llamar a las tools y escribe el JSON como texto. Con 9 vuelve a funcionar.</p>
+    </div>
+    <aside class="stack" style="gap:18px">
+      <div class="panel stack" style="gap:12px;padding:22px 26px">
+        <p class="label">Contexto útil de 128K tokens</p>
+        <svg class="dia" viewBox="0 0 440 44" style="height:auto" role="img" aria-label="Solo entre el 3 y el 6 por ciento de la ventana de 128 mil tokens es aprovechable">
+          <rect class="f-soft" x="0" y="4" width="440" height="36" rx="5"/>
+          <rect class="f-model" x="0" y="4" width="26" height="36" rx="3" opacity=".45"/>
+          <rect class="f-model" x="0" y="4" width="13" height="36" rx="3" data-seq="5" data-a="grow"/>
+        </svg>
+        <p class="side-text" style="font-size:24px"><b>3 %</b> seguro y hasta <b>6 %</b> aprovechable → reiniciar cada 10–15 turnos. Un modelo de 2B bastó como planificador.</p>
+      </div>
+      <div class="vid"><video controls preload="metadata" playsinline src="../../../04_Archivo/definitivo/duracion-real-peticion.mp4"></video><span class="vlabel">Simulación · Rivas Pérez (2026) · acelerado</span></div>
+    </aside>
+  </div>
+  <p class="src">Rivas Pérez (2026): §5.2.1 (p. 32), §8.2 (p. 56) y tabla 8.6 (p. 61); contexto en §10.4 · Relación con <em>lost in the middle</em>: Liu et al. (2024), citado en Rivas Pérez (2026).</p>
+  <aside class="notes">
+    <p>Este es el resultado que más me sorprendió. Añadía herramientas y empezaban a fallar las que antes funcionaban. No era un bug: el modelo no aguanta tantas a la vez.</p>
+    <p>Con veinte tools, el modelo de 8B escribía la llamada como texto en vez de ejecutarla. Al bajar a nueve, todo volvió a funcionar. Y de una ventana de 128K solo se aprovecha entre un 3 y un 6 %. Un modelo de 2B bastó como planificador; uno de 3B fue el más rápido del grupo de cabeza.</p>
+    <p>Vídeo: petición sencilla, «dime qué eres y dónde estás». El marcador rojo es el tiempo real: unos tres minutos y medio. Y al final responde que no puede dar su ubicación.</p>
+  </aside>
+</section>
+
+<!-- ======================= D11 ======================= -->
+<section class="slide" id="agente-bt" data-fx="secuencia" data-section="TFG" data-title="Agente frente a BT">
+  <header class="s-head">
+    <p class="kicker">c · tfg · árbol de comportamiento (bt) frente a agente llm</p>
+    <h2 class="s-title">Agente frente a BT</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="stack" style="gap:16px">
+      <svg class="dia" viewBox="0 0 1060 430" style="height:auto" role="img" aria-label="Segundos por tarea: BT T3 38,9; BT T4 31,5; agente único 37 a 65; compuestas fallidas 183 sin llegar">
+        <line class="grid" x1="330" y1="20" x2="330" y2="360"/><line class="grid" x1="480" y1="20" x2="480" y2="360"/><line class="grid" x1="630" y1="20" x2="630" y2="360"/><line class="grid" x1="780" y1="20" x2="780" y2="360"/><line class="grid" x1="930" y1="20" x2="930" y2="360"/>
+        <text x="330" y="392" text-anchor="middle" class="t3">0</text><text x="480" y="392" text-anchor="middle" class="t3">50</text><text x="630" y="392" text-anchor="middle" class="t3">100</text><text x="780" y="392" text-anchor="middle" class="t3">150</text><text x="930" y="392" text-anchor="middle" class="t3">200</text>
+        <text x="1040" y="426" text-anchor="end" class="t3">segundos por tarea</text>
+        <text x="314" y="72" text-anchor="end">BT · T3 coordenadas</text>
+        <rect class="f-code" x="330" y="44" width="117" height="46" rx="5" data-seq="0" data-a="grow"/><text x="461" y="76" class="b" data-seq="0">38,9 s</text>
+        <text x="314" y="152" text-anchor="end">BT · T4 por nombre</text>
+        <rect class="f-code" x="330" y="124" width="95" height="46" rx="5" data-seq="1" data-a="grow"/><text x="439" y="156" class="b" data-seq="1">31,5 s</text>
+        <text x="314" y="232" text-anchor="end">Agente único (mejores)</text>
+        <rect class="f-model" x="441" y="204" width="84" height="46" rx="5" data-seq="2" data-a="grow"/><text x="539" y="236" class="b" data-seq="2">37–65 s</text>
+        <text x="314" y="312" text-anchor="end">Compuestas fallidas</text>
+        <rect class="f-err" x="330" y="284" width="549" height="46" rx="5" data-seq="3" data-a="grow"/><text x="865" y="316" text-anchor="end" class="b inv" data-seq="3">183 s · sin llegar</text>
+      </svg>
+      <p class="side-text">El BT no falló ninguna navegación. Megamind y multiagente completaron las dos navegaciones solo en 5 de 25 combinaciones.</p>
+    </div>
+    <aside class="stack" style="gap:18px">
+      <ul class="clean" data-seq="4">
+        <li>Lo fijo lo hace mejor un <span class="k-code">BT</span>: más rápido, sin variabilidad, sin GPU.</li>
+        <li>El <span class="k-model">agente</span> gana donde hay que interpretar.</li>
+        <li>Sus fallos suelen ser <span class="k-err">silenciosos</span>.</li>
+      </ul>
+      <div class="vid"><video controls preload="metadata" playsinline src="../../../04_Archivo/definitivo/Proyecto-agente-navegacion2.mp4"></video><span class="vlabel">Simulación · Rivas Pérez (2026)</span></div>
+      <p class="vidcap">Navegación y mapeo · 3:14 (párala cuando quieras)</p>
+    </aside>
+  </div>
+  <p class="src">Adaptado de Rivas Pérez (2026), fig. 9.1 (p. 64) y tabla 9.1 (p. 63); 5 de 25 en §8.2 (p. 56); fallos silenciosos en §9.3.</p>
+  <aside class="notes">
+    <p>En navegar a un punto, el árbol tarda lo que tarda el robot en moverse. El agente añade el tiempo de pensar. Y si falla, a veces no avisa.</p>
+    <p>No es un sistema de baja latencia: un ciclo con LLM tarda segundos, y a veces minutos. El BT no puede describir una imagen: ahí gana el agente.</p>
+    <p>Vídeo: momento clave, el agente admite que no detectó una pared y propone usar el LiDAR.</p>
+  </aside>
+</section>
+
+<!-- ======================= D12 ======================= -->
+<section class="slide" id="coordinar" data-fx="secuencia" data-section="TFG" data-title="Coordinar, no fusionar">
+  <header class="s-head">
+    <p class="kicker">c · tfg · navegación + manipulación</p>
+    <h2 class="s-title">Coordinar, no fusionar</h2>
+  </header>
+  <div class="s-body">
+    <svg class="dia" viewBox="0 0 1664 600" role="img" aria-label="Un agente fusionado con 31 tools es inestable; un planificador con dos especialistas de unas 8 y 10 tools es estable">
+      <defs><marker id="ah-d12" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <g data-seq="0">
+        <text x="380" y="40" text-anchor="middle" class="h">Fusionado</text>
+        <rect class="box model" x="230" y="80" width="300" height="70" rx="10"/><text x="380" y="124" text-anchor="middle" class="b">1 modelo</text>
+        <path class="ln" d="M380 152 V196" marker-end="url(#ah-d12)"/>
+      </g>
+      <g class="f-code" data-seq="1" data-a="pop">
+        <rect x="185" y="204" width="40" height="40" rx="5"/><rect x="235" y="204" width="40" height="40" rx="5"/><rect x="285" y="204" width="40" height="40" rx="5"/><rect x="335" y="204" width="40" height="40" rx="5"/><rect x="385" y="204" width="40" height="40" rx="5"/><rect x="435" y="204" width="40" height="40" rx="5"/><rect x="485" y="204" width="40" height="40" rx="5"/><rect x="535" y="204" width="40" height="40" rx="5"/>
+        <rect x="185" y="254" width="40" height="40" rx="5"/><rect x="235" y="254" width="40" height="40" rx="5"/><rect x="285" y="254" width="40" height="40" rx="5"/><rect x="335" y="254" width="40" height="40" rx="5"/><rect x="385" y="254" width="40" height="40" rx="5"/><rect x="435" y="254" width="40" height="40" rx="5"/><rect x="485" y="254" width="40" height="40" rx="5"/><rect x="535" y="254" width="40" height="40" rx="5"/>
+        <rect x="185" y="304" width="40" height="40" rx="5"/><rect x="235" y="304" width="40" height="40" rx="5"/><rect x="285" y="304" width="40" height="40" rx="5"/><rect x="335" y="304" width="40" height="40" rx="5"/><rect x="385" y="304" width="40" height="40" rx="5"/><rect x="435" y="304" width="40" height="40" rx="5"/><rect x="485" y="304" width="40" height="40" rx="5"/><rect x="535" y="304" width="40" height="40" rx="5"/>
+        <rect x="185" y="354" width="40" height="40" rx="5"/><rect x="235" y="354" width="40" height="40" rx="5"/><rect x="285" y="354" width="40" height="40" rx="5"/><rect x="335" y="354" width="40" height="40" rx="5"/><rect x="385" y="354" width="40" height="40" rx="5"/><rect x="435" y="354" width="40" height="40" rx="5"/><rect x="485" y="354" width="40" height="40" rx="5"/>
+      </g>
+      <g data-seq="2">
+        <circle class="f-err" cx="214" cy="456" r="10"/><text x="234" y="464" class="b">31 tools · inestable</text>
+        <text x="380" y="516" text-anchor="middle" class="t2">olvida tools, elige la genérica, no encadena</text>
+        <text x="380" y="552" text-anchor="middle" class="t2">rinde peor que dos agentes por separado</text>
+      </g>
+      <line class="grid" x1="832" y1="30" x2="832" y2="570"/>
+      <g data-seq="3">
+        <text x="1260" y="40" text-anchor="middle" class="h">Coordinado</text>
+        <rect class="box model" x="1100" y="80" width="320" height="70" rx="10"/><text x="1260" y="124" text-anchor="middle" class="b">Planificador ligero</text>
+        <path class="ln" d="M1200 152 L1090 210" marker-end="url(#ah-d12)"/><path class="ln" d="M1320 152 L1430 210" marker-end="url(#ah-d12)"/>
+        <rect class="box model" x="960" y="214" width="260" height="64" rx="10"/><text x="1090" y="254" text-anchor="middle" class="b">Navegación</text>
+        <rect class="box model" x="1300" y="214" width="260" height="64" rx="10"/><text x="1430" y="254" text-anchor="middle" class="b">Manipulación</text>
+      </g>
+      <g class="f-code" data-seq="4" data-a="pop">
+        <rect x="995" y="300" width="40" height="40" rx="5"/><rect x="1045" y="300" width="40" height="40" rx="5"/><rect x="1095" y="300" width="40" height="40" rx="5"/><rect x="1145" y="300" width="40" height="40" rx="5"/>
+        <rect x="995" y="350" width="40" height="40" rx="5"/><rect x="1045" y="350" width="40" height="40" rx="5"/><rect x="1095" y="350" width="40" height="40" rx="5"/><rect x="1145" y="350" width="40" height="40" rx="5"/>
+        <rect x="1310" y="300" width="40" height="40" rx="5"/><rect x="1360" y="300" width="40" height="40" rx="5"/><rect x="1410" y="300" width="40" height="40" rx="5"/><rect x="1460" y="300" width="40" height="40" rx="5"/><rect x="1510" y="300" width="40" height="40" rx="5"/>
+        <rect x="1310" y="350" width="40" height="40" rx="5"/><rect x="1360" y="350" width="40" height="40" rx="5"/><rect x="1410" y="350" width="40" height="40" rx="5"/><rect x="1460" y="350" width="40" height="40" rx="5"/><rect x="1510" y="350" width="40" height="40" rx="5"/>
+      </g>
+      <g data-seq="5">
+        <circle class="f-ok" cx="1094" cy="456" r="10"/><text x="1114" y="464" class="b">~8 y ~10 tools · estable</text>
+        <text x="1260" y="516" text-anchor="middle" class="t2">ningún modelo ve el catálogo completo</text>
+        <text x="1260" y="552" text-anchor="middle" class="t2">sumar herramientas resta capacidad</text>
+      </g>
+    </svg>
+  </div>
+  <p class="src">Adaptado de Rivas Pérez (2026), fig. 9.4 (p. 68) y §8.5. La línea de manipulación es el TFG de Castro, citado en Rivas Pérez (2026).</p>
+  <aside class="notes">
+    <p>El primer intento fue juntar navegación y manipulación en un solo agente: 31 tools. Olvidaba herramientas, elegía la genérica en vez de la específica y no encadenaba flujos. Rendía peor que dos agentes por separado.</p>
+    <p>La solución: un planificador ligero que reparte entre dos especialistas con catálogos cortos. Ningún modelo ve el catálogo completo. Sumar herramientas resta capacidad.</p>
+  </aside>
+</section>
+
+<!-- ======================= D13 ======================= -->
+<section class="slide" id="regla" data-fx="secuencia" data-section="TFG" data-title="La regla de diseño">
+  <header class="s-head">
+    <p class="kicker">c · tfg · síntesis de §6.5 y §10.2</p>
+    <h2 class="s-title">La regla de diseño</h2>
+  </header>
+  <div class="s-body stack" style="gap:56px;justify-content:center">
+    <p class="motto" data-seq="0"><span class="m">El modelo propone,</span> <span class="c">el código dispone.</span></p>
+    <div class="two">
+      <div class="panel model" data-seq="1"><h3>El modelo propone</h3><p>«Avanza medio metro». El LLM solo ve el desplazamiento: <code>Δx</code>, <code>Δy</code>, <code>Δθ</code>.</p></div>
+      <div class="panel code" data-seq="2"><h3>El código dispone</h3><p>Velocidades fijas en un YAML que el LLM no ve: <b>0,08&nbsp;m/s</b> y <b>0,15&nbsp;rad/s</b>, frente a 1,0&nbsp;m/s y 1,5&nbsp;rad/s que admite el RB-Kairos Plus.</p></div>
+    </div>
+  </div>
+  <p class="src">La frase es la formulación del proyecto; resume Rivas Pérez (2026), §6.5 («aislar al modelo de las decisiones de seguridad») y §10.2. Cifras: §8.3 (p. 57).</p>
+  <aside class="notes">
+    <p>Esta frase resume el TFG y es la regla del proyecto. El modelo puede proponer adónde ir o cuánto moverse. La velocidad, las paradas y los límites los pone el código.</p>
+    <p>En el robot real se aprendió por las malas: la base pesa, y una alucinación no puede convertirse en una velocidad peligrosa.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR D ======================= -->
+<section class="slide is-plain divider" id="sec-g1" data-fx="backdrop" data-seed="37" data-section="G1" data-title="RAI en el Unitree G1">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">D</p>
+    <h2 class="s-title xl">RAI en el Unitree G1</h2>
+    <p class="lead">Propuesta: qué corre dónde, cómo recorre el sistema la orden E1, qué tools tendría y qué nunca pasa por RAI.</p>
+  </div>
+  <aside class="notes"><p>Ahora, la propuesta para el G1. Nada de esto está implementado.</p></aside>
+</section>
+
+<!-- ======================= D14 ======================= -->
+<section class="slide" id="despliegue" data-fx="secuencia" data-section="G1" data-title="Qué corre dónde">
+  <header class="s-head">
+    <p class="kicker">d · g1 · propuesta, no medido</p>
+    <h2 class="s-title">Qué corre dónde</h2>
+  </header>
+  <div class="s-body cols">
+    <svg class="dia" viewBox="0 0 1060 600" role="img" aria-label="Despliegue: G1 con Jetson a bordo y servidor GPU fuera del robot, unidos por wifi con watchdog">
+      <g data-seq="0"><rect class="box" x="10" y="10" width="620" height="580" rx="12"/>
+        <text x="34" y="58" class="h">G1 EDU + Jetson</text>
+        <text x="34" y="92" class="t3">a bordo · no depende de la red</text></g>
+      <g data-seq="1"><rect class="box model" x="34" y="112" width="572" height="62" rx="8"/><text x="54" y="152">Agente RAI · Laya (hipótesis) · detector ligero</text></g>
+      <g data-seq="2"><rect class="box code" x="34" y="188" width="572" height="62" rx="8"/><text x="54" y="228">Grafo de escena · módulo geométrico</text></g>
+      <g data-seq="2"><rect class="box code" x="34" y="264" width="572" height="62" rx="8"/><text x="54" y="304">Localización · Nav2 (10–20 Hz)</text></g>
+      <g data-seq="2"><rect class="box code" x="34" y="340" width="572" height="62" rx="8"/><text x="54" y="380">Seguridad: parada por proximidad, límites</text></g>
+      <g data-seq="2"><rect class="box code" x="34" y="416" width="572" height="62" rx="8"/><text x="54" y="456">Locomoción de Unitree (50–500 Hz)</text></g>
+      <g data-seq="2"><rect class="box" x="34" y="492" width="572" height="62" rx="8"/><text x="54" y="532">Sensores (por confirmar)</text></g>
+      <path class="ln model dash" d="M630 290 H760" data-seq="3" data-a="draw"/>
+      <g data-seq="3"><text x="695" y="276" text-anchor="middle" class="t3">wifi</text><text x="695" y="322" text-anchor="middle" class="t3">watchdog</text></g>
+      <g data-seq="3"><rect class="box model" x="760" y="190" width="290" height="200" rx="12" style="stroke-dasharray:8 6"/>
+        <text x="782" y="238" class="h">Servidor GPU</text>
+        <text x="782" y="272" class="t3">fuera del robot</text>
+        <text x="782" y="318">LLM de parseo</text>
+        <text x="782" y="354" class="t2">Qwen o Gemma, 2–9B</text></g>
+    </svg>
+    <aside class="stack" style="justify-content:center">
+      <span class="tag hyp" style="align-self:flex-start">propuesta</span>
+      <p class="side-text">Lo pesado (el LLM) va fuera. Lo que no puede depender de la red (seguridad y marcha) va dentro.</p>
+      <p class="side-text">Ahmad et al. (2026) sirvieron VLM en el borde de la red a un G1: un modelo de 2B responde en menos de un segundo, a costa de precisión.</p>
+      <p class="note">Por confirmar con el laboratorio: modelo exacto de Jetson, variante EDU y sensores.</p>
+    </aside>
+  </div>
+  <p class="src">Propuesta del proyecto (nota 03, §5); no medido · Ahmad, Hafeez y Zaidi (2026) · Tamaños de modelo: Rivas Pérez (2026), tabla 5.1.</p>
+  <aside class="notes">
+    <p>En el G1 EDU hay una Jetson. Lo pesado, el LLM, va fuera, en un servidor con GPU. Lo que no puede depender de la red, la seguridad y la marcha, va dentro.</p>
+    <p>Esto es propuesta: aún no sabemos qué Jetson exacta lleva ni qué sensores trae nuestra unidad.</p>
+  </aside>
+</section>
+
+<!-- ======================= D15 ======================= -->
+<section class="slide" id="recorrido" data-fx="secuencia" data-step-ms="520" data-section="G1" data-title="La orden E1 recorre el sistema">
+  <header class="s-head">
+    <p class="kicker">d · g1 · arquitectura propuesta</p>
+    <h2 class="s-title">La orden E1 recorre el sistema</h2>
+  </header>
+  <div class="s-body cols">
+    <svg class="dia" viewBox="0 0 1060 600" role="img" aria-label="La orden pasa por el agente RAI, el grafo de escena, el módulo geométrico, la elección de pose, Nav2 y la locomoción del G1">
+      <path id="e1-rail" class="ln" d="M30 34 V566" data-seq="0" data-a="draw"/>
+      <g data-seq="0"><rect class="box" x="70" y="6" width="960" height="56" rx="8"/><text x="94" y="44">Orden por voz o texto: «Ve a la 203…» <tspan class="t3 mono">/from_human</tspan></text></g>
+      <g data-seq="1"><rect class="box model" x="70" y="84" width="960" height="56" rx="8"/><text x="94" y="122">El agente RAI interpreta la orden</text></g>
+      <g data-seq="2"><rect class="box code" x="70" y="162" width="960" height="56" rx="8"/><text x="94" y="200"><tspan class="mono">find_room · list_objects</tspan> → grafo de escena</text></g>
+      <g data-seq="3"><rect class="box code" x="70" y="240" width="960" height="56" rx="8"/><text x="94" y="278"><tspan class="mono">candidate_poses</tspan> → módulo geométrico, en el marco de la cama</text></g>
+      <g data-seq="4"><rect class="box model" x="70" y="318" width="960" height="56" rx="8"/><text x="94" y="356"><tspan class="mono">choose</tspan> → elige una de las poses candidatas</text></g>
+      <g data-seq="5"><rect class="box code" x="70" y="396" width="960" height="56" rx="8"/><text x="94" y="434">Nav2 planifica y esquiva</text></g>
+      <g data-seq="6"><rect class="box code" x="70" y="474" width="960" height="56" rx="8"/><text x="94" y="512">La locomoción del G1 camina</text></g>
+      <g data-seq="7"><text x="94" y="580" class="t2">RAI responde por <tspan class="mono">/to_human</tspan></text></g>
+      <circle class="dot" r="11" data-travel="#e1-rail" data-period="5600"/>
+    </svg>
+    <aside class="stack" style="justify-content:center">
+      <div class="vid"><video controls muted preload="metadata" playsinline src="../../../04_Archivo/definitivo/prueba-de-navegacion-a-chat-seguidos.mp4#t=80"></video><span class="vlabel">Simulación · Rivas Pérez (2026) · sin sonido</span></div>
+      <p class="vidcap">«Desplázate a 3 posiciones: Puesto-1, Puesto-12 y Puesto-20» · chat encadenado · tiempo real, 15:40</p>
+      <ul class="legend legend-col" style="gap:10px"><li><i style="--c:var(--model)"></i>propone el modelo</li><li><i style="--c:var(--code)"></i>dispone el código</li></ul>
+    </aside>
+  </div>
+  <p class="src">Arquitectura propuesta (notas 02 §3 y 03 §5) · Navegación por chat: Rivas Pérez (2026) · Grafo de escena: Werby et al. (2024), Gu et al. (2024) · LLM sobre grafo: Rana et al. (2023).</p>
+  <aside class="notes">
+    <p>La misma frase del principio, ahora recorriendo cajas. Llega la orden. RAI pregunta al grafo de escena dónde está la 203 y qué camas hay. El módulo geométrico, que es código, calcula poses candidatas a la derecha de la cama, en el marco de la cama. RAI elige una. Nav2 planifica. La locomoción del G1 camina. RAI responde.</p>
+    <p>RAI solo está en la parte de arriba. El grafo de escena sigue a HOV-SG y ConceptGraphs; planificar con LLM sobre un grafo, a SayPlan.</p>
+    <p>Vídeo (empieza en 1:20, sin sonido; es en tiempo real, así que conviene saltar): en el TFG el agente ya recibía órdenes por chat con nombres de lugar. El modelo traduce «Puesto-12» a una ubicación guardada; Nav2 hace el resto. Lo nuevo de la propuesta es el paso intermedio: el grafo y el marco de referencia.</p>
+  </aside>
+</section>
+
+<!-- ======================= D16 ======================= -->
+<section class="slide" id="tools-g1" data-fx="secuencia" data-step-ms="140" data-section="G1" data-title="Las herramientas del G1">
+  <header class="s-head">
+    <p class="kicker">d · g1 · propuesta, diseño propio</p>
+    <h2 class="s-title">Las herramientas del G1</h2>
+  </header>
+  <div class="s-body stack" style="gap:18px">
+    <table class="t">
+      <thead><tr><th>Tool</th><th>Qué hace</th><th>Primitiva ROS 2</th><th>Quién decide</th></tr></thead>
+      <tbody>
+        <tr data-seq="0"><td><code>find_room</code></td><td>Localiza una habitación por su número</td><td class="m">Consulta al grafo de escena (service)</td><td><span class="tag code">código</span></td></tr>
+        <tr data-seq="1"><td><code>list_objects</code></td><td>Objetos de una habitación</td><td class="m">Consulta al grafo de escena (service)</td><td><span class="tag code">código</span></td></tr>
+        <tr data-seq="2"><td><code>candidate_poses</code></td><td>K poses libres según objeto, relación y marco</td><td class="m">Módulo geométrico (service)</td><td><span class="tag code">código</span></td></tr>
+        <tr data-seq="3"><td><code>choose</code></td><td>Elige entre opciones cerradas, con probabilidad</td><td class="m">Decisión tipada (hipótesis)</td><td><span class="tag model">modelo</span></td></tr>
+        <tr data-seq="4"><td><code>navigate_to_pose</code></td><td>Envía la pose elegida a Nav2</td><td class="m">Action <code>NavigateToPose</code></td><td><span class="tag code">código, con límites</span></td></tr>
+        <tr data-seq="5"><td><code>get_current_pose</code></td><td>Dónde está el robot</td><td class="m">TF</td><td><span class="tag code">código</span></td></tr>
+        <tr data-seq="6"><td><code>describe_scene</code></td><td>Describe lo que ve la cámara</td><td class="m">Imagen → VLM</td><td><span class="tag model">modelo</span></td></tr>
+        <tr data-seq="7"><td><code>ask_user</code></td><td>Pide una aclaración</td><td class="m">Topic <code>/to_human</code></td><td><span class="tag model">modelo</span></td></tr>
+      </tbody>
+    </table>
+    <p class="side-text" data-seq="8">8 tools: por debajo del techo de 9 que fue estable en el TFG. Las velocidades no aparecen en ningún esquema.</p>
+  </div>
+  <p class="src">Diseño propio, basado en Rivas Pérez (2026), cap. 6 y tabla 8.6 · NavigateToPose de Nav2 (Open Robotics, 2024), citado en Rivas Pérez (2026).</p>
+  <aside class="notes">
+    <p>Pocas herramientas y bien separadas: es la lección del TFG. Fíjate en la última columna: casi todo lo decide código; el modelo solo elige, describe y pregunta.</p>
+    <p>Los nombres son propuesta; nada de esto está implementado.</p>
+  </aside>
+</section>
+
+<!-- ======================= D17 ======================= -->
+<section class="slide" id="nunca" data-fx="secuencia" data-section="G1" data-title="Lo que nunca pasa por RAI">
+  <header class="s-head">
+    <p class="kicker">d · g1 · capas de control por frecuencia</p>
+    <h2 class="s-title">Lo que nunca pasa por RAI</h2>
+  </header>
+  <div class="s-body cols">
+    <svg class="dia" viewBox="0 0 1060 580" role="img" aria-label="Capas por frecuencia: tarea e interpretación en RAI y modelos; plan local, locomoción y servo en código determinista">
+      <text x="175" y="20" text-anchor="end" class="t3">frecuencia</text>
+      <g data-seq="0"><rect class="box model" x="190" y="34" width="580" height="78" rx="8"/><text x="214" y="82">Tarea: interpretar la orden</text><text x="175" y="82" text-anchor="end" class="mono">0,1–1 Hz</text></g>
+      <g data-seq="1"><rect class="box model" x="190" y="126" width="580" height="78" rx="8"/><text x="214" y="174">Anclaje: qué cama, qué pose</text><text x="175" y="174" text-anchor="end" class="mono">1 Hz</text></g>
+      <g data-seq="2"><rect class="box code" x="190" y="218" width="580" height="78" rx="8"/><text x="214" y="266">Plan local y evitación (Nav2)</text><text x="175" y="266" text-anchor="end" class="mono">10–20 Hz</text></g>
+      <g data-seq="3"><rect class="box code" x="190" y="310" width="580" height="78" rx="8"/><text x="214" y="358">Locomoción y equilibrio</text><text x="175" y="358" text-anchor="end" class="mono">50–500 Hz</text></g>
+      <g data-seq="4"><rect class="box code" x="190" y="402" width="580" height="78" rx="8"/><text x="214" y="450">Servo de cada articulación</text><text x="175" y="450" text-anchor="end" class="mono">0,5–1 kHz</text></g>
+      <g data-seq="5"><path class="ln model" d="M786 36 h18 v166 h-18"/><text x="824" y="114" class="h">RAI</text><text x="824" y="146" class="t3">+ modelos</text></g>
+      <g data-seq="6"><path class="ln code" d="M786 220 h18 v258 h-18"/><text x="824" y="344" class="h">Código</text><text x="824" y="376" class="t3">determinista</text></g>
+      <text x="190" y="540" class="t2" data-seq="6">Velocidades, paradas, límites y equilibrio: siempre abajo.</text>
+    </svg>
+    <aside class="stack" style="justify-content:center;gap:18px">
+      <div class="vid"><video controls preload="metadata" playsinline src="../../../04_Archivo/definitivo/video-navegacion.mp4#t=75"></video><span class="vlabel">Simulación · Rivas Pérez (2026)</span></div>
+      <p class="vidcap">Gazebo + RViz: el agente elige el destino; Nav2 planifica y esquiva · tiempo real, 14:59</p>
+      <p class="side-text" style="font-size:24px">Dentro de RAI 2.12.4, <code>NavigateToPoseTool</code> admite <code>WorkspaceBounds</code>: rechaza destinos fuera de una caja fijada por configuración. El modelo no la ve.</p>
+    </aside>
+  </div>
+  <p class="src">Capas por frecuencia: nota 02 del proyecto, §2 · Simulación: Rivas Pérez (2026) · WorkspaceBounds: RobotecAI/rai, PR #871, release 2.12.4 (08-09-2026).</p>
+  <aside class="notes">
+    <p>Todo lo que va rápido queda fuera del modelo. Un LLM tarda segundos; el servo de una articulación necesita respuesta en un milisegundo.</p>
+    <p>Incluso RAI, en su última versión, ha añadido límites de navegación que fija quien configura, no el modelo.</p>
+    <p>Vídeo (empieza en 1:15, tiempo real): el agente solo decide a dónde ir. Cómo llegar, a qué velocidad y cuándo frenar ante un obstáculo lo decide Nav2. Es la separación de esta diapositiva funcionando.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR E ======================= -->
+<section class="slide is-plain divider" id="sec-hipotesis" data-fx="backdrop" data-seed="53" data-section="Hipótesis" data-title="Dónde entra Jev/Laya">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">E</p>
+    <h2 class="s-title xl">Dónde entra Jev/Laya</h2>
+    <p class="lead">Hipótesis sin validar: modelos que eligen con una probabilidad, una puerta antes de actuar y cómo se mediría.</p>
+  </div>
+  <aside class="notes"><p>Todo este bloque es hipótesis. Ninguna cifra es un resultado.</p></aside>
+</section>
+
+<!-- ======================= D18 ======================= -->
+<section class="slide" id="eligen" data-fx="secuencia" data-section="Hipótesis" data-title="Modelos que eligen">
+  <header class="s-head">
+    <div class="hyp-head"><p class="kicker">e · hipótesis · decisión tipada</p><span class="tag hyp">hipótesis · sin validar</span></div>
+    <h2 class="s-title">Modelos que eligen</h2>
+  </header>
+  <div class="s-body stack" style="gap:26px">
+    <p class="body-text" data-seq="0">No generan texto: responden preguntas tipadas con una probabilidad. <code>choice</code> elige una opción de una lista; <code>noul</code> da la probabilidad de que algo sea cierto; <code>score</code> sitúa algo en una escala.</p>
+    <table class="t" data-seq="1">
+      <thead><tr><th></th><th>Jev (TypeSafe AI)</th><th>Laya (Convai Innovations)</th></tr></thead>
+      <tbody>
+        <tr><td class="m">Acceso</td><td>API propietaria</td><td>Pesos abiertos, Apache 2.0</td></tr>
+        <tr><td class="m">Tamaño</td><td>No publicado</td><td>322–421 M parámetros (&lt; 1 GB)</td></tr>
+        <tr><td class="m">Latencia anunciada</td><td>70–500 ms por red</td><td>~33 ms en una GPU T4</td></tr>
+        <tr><td class="m">¿Cabe en el G1?</td><td><span class="tag err">no</span> depende de la red</td><td><span class="tag ok">sí</span> en la Jetson (por medir)</td></tr>
+        <tr><td class="m">Límites</td><td colspan="2">Solo texto, sin visión. Débiles con números. Laya, sin <em>fine-tuning</em>, rinde poco.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="src">Documentación de Jev y ficha de Laya, resumidas en la nota 02 del proyecto, §1 (fuentes de septiembre de 2026, sin revisión por pares) · Ling, Xue y Ye (2026).</p>
+  <aside class="notes">
+    <p>Esto es una idea, no un resultado. Son modelos de septiembre y nadie los ha evaluado en robótica con rigor. Ling et al. (2026) analizan 2 170 proyectos que los usan, pero sin métricas robóticas.</p>
+    <p>Lo interesante es la forma de la salida: siempre es una opción válida, con una probabilidad. No hay JSON mal formado.</p>
+  </aside>
+</section>
+
+<!-- ======================= D19 ======================= -->
+<section class="slide" id="puerta" data-fx="secuencia" data-section="Hipótesis" data-title="Una puerta antes de actuar">
+  <header class="s-head">
+    <div class="hyp-head"><p class="kicker">e · hipótesis · abstenerse o preguntar</p><span class="tag hyp">hipótesis · valores ilustrativos</span></div>
+    <h2 class="s-title">Una puerta antes de actuar</h2>
+  </header>
+  <div class="s-body">
+    <svg class="dia" viewBox="0 0 1664 600" role="img" aria-label="Ejemplo ilustrativo: con dos camas ninguna opción supera el umbral y el robot pregunta; con una cama la probabilidad supera el umbral y actúa">
+      <defs><marker id="ah-d19" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <g data-seq="0"><rect class="box model" x="10" y="250" width="250" height="90" rx="10"/><text x="135" y="302" text-anchor="middle" class="b">Agente RAI</text><text x="135" y="374" text-anchor="middle" class="t3">«¿qué cama?»</text></g>
+      <path class="ln" d="M262 295 H336" marker-end="url(#ah-d19)" data-seq="1" data-a="draw"/>
+      <g data-seq="1"><rect class="box hyp" x="340" y="240" width="290" height="110" rx="10"/><text x="485" y="290" text-anchor="middle" class="b">tool «decidir»</text><text x="485" y="326" text-anchor="middle" class="t2 mono">Laya · choice</text></g>
+      <path class="ln" d="M632 280 C 670 280, 660 120, 696 120" marker-end="url(#ah-d19)" data-seq="2" data-a="draw"/>
+      <path class="ln" d="M632 310 C 670 310, 660 430, 696 430" marker-end="url(#ah-d19)" data-seq="4" data-a="draw"/>
+      <line class="ln s-fg dash" x1="1280" y1="40" x2="1280" y2="470" data-seq="2" data-a="draw"/>
+      <text x="1280" y="28" text-anchor="middle" class="b" data-seq="2">umbral τ = 0,8</text>
+      <!-- caso A -->
+      <g data-seq="2">
+        <text x="710" y="60" class="t2">Habitación con dos camas</text>
+        <text x="710" y="122">junto a la ventana</text><rect class="f-model" x="1000" y="96" width="183" height="38" rx="4" data-a="grow"/><text x="1196" y="124" class="mono">0,52</text>
+        <text x="710" y="176">junto a la puerta</text><rect class="f-model" x="1000" y="150" width="169" height="38" rx="4" data-a="grow"/><text x="1182" y="178" class="mono">0,48</text>
+      </g>
+      <g data-seq="3"><circle class="f-warn" cx="1012" cy="226" r="9"/><text x="1032" y="234" class="b">ninguna supera τ → pregunta «¿cuál de las dos?»</text></g>
+      <!-- caso B -->
+      <g data-seq="4">
+        <text x="710" y="380" class="t2">Habitación con una cama</text>
+        <text x="710" y="440">la cama</text><rect class="f-model" x="1000" y="414" width="340" height="38" rx="4" data-a="grow"/><text x="1366" y="442" class="mono">0,97</text>
+      </g>
+      <g data-seq="5"><circle class="f-ok" cx="1012" cy="500" r="9"/><text x="1032" y="508" class="b">supera τ → actúa: candidate_poses → Nav2</text></g>
+      <text x="1000" y="586" class="t3">barras: probabilidad de cada opción · valores inventados</text>
+    </svg>
+  </div>
+  <p class="src">Propuesta del proyecto (nota 02, §3) · Abstenerse y preguntar si el modelo no está seguro: Ren et al. (2023), con predicción conforme; Lin et al. (2026), con diálogo.</p>
+  <aside class="notes">
+    <p>El TFG mostró que el agente falla en silencio. La idea es poner una puerta.</p>
+    <p>El agente necesita decidir qué cama. En vez de escribir la respuesta, llama a una tool de decisión que devuelve una probabilidad por opción. Comparamos con un umbral. Si nadie supera el umbral, el robot pregunta. Si la habitación solo tiene una cama, la probabilidad es alta y actúa.</p>
+    <p>KnowNo hace algo parecido con predicción conforme. Los números de la figura son inventados para explicar la idea.</p>
+  </aside>
+</section>
+
+<!-- ======================= D20 ======================= -->
+<section class="slide" id="prueba" data-fx="secuencia" data-section="Hipótesis" data-title="Cómo se pondría a prueba">
+  <header class="s-head">
+    <div class="hyp-head"><p class="kicker">e · hipótesis · plan de evaluación</p><span class="tag hyp">curva ilustrativa, sin datos</span></div>
+    <h2 class="s-title">Cómo se pondría a prueba</h2>
+  </header>
+  <div class="s-body cols even">
+    <svg class="dia" viewBox="0 0 800 560" role="img" aria-label="Curva riesgo-cobertura ilustrativa, sin datos">
+      <line class="axis" x1="90" y1="470" x2="780" y2="470"/><line class="axis" x1="90" y1="470" x2="90" y2="30"/>
+      <line class="grid" x1="90" y1="250" x2="780" y2="250"/>
+      <text x="90" y="502" text-anchor="middle" class="t3">0</text><text x="780" y="502" text-anchor="middle" class="t3">100 %</text>
+      <text x="435" y="546" text-anchor="middle" class="t2">cobertura: % de órdenes ejecutadas sin preguntar</text>
+      <text x="76" y="476" text-anchor="end" class="t3">0</text>
+      <text x="-250" y="40" transform="rotate(-90)" text-anchor="middle" class="t2">riesgo: % de errores</text>
+      <text x="330" y="150" text-anchor="middle" class="t3 mono" style="font-size:30px;letter-spacing:.12em">ILUSTRATIVO</text>
+      <path class="ln model" style="stroke-width:4" d="M110 460 C 300 452, 470 420, 560 350 S 720 180, 760 90" data-seq="0" data-a="draw"/>
+      <g data-seq="1"><circle class="f-err" cx="760" cy="90" r="10"/><text x="740" y="70" text-anchor="end" class="b">sin abstención</text></g>
+      <g data-seq="2"><circle class="f-model" cx="560" cy="350" r="10"/><text x="540" y="296" text-anchor="end">umbral τ: pregunta a veces</text><text x="540" y="326" text-anchor="end">y se equivoca mucho menos</text></g>
+    </svg>
+    <div class="stack" style="justify-content:center;gap:22px">
+      <p class="body-text" data-seq="3"><b>H1.</b> Elegir de una lista cerrada con probabilidad calibrada convierte los fallos silenciosos del tool calling en abstenciones.</p>
+      <ul class="clean" data-seq="4">
+        <li><b>ECE</b>: si dice 90 %, ¿acierta el 90 %?</li>
+        <li><b>Riesgo-cobertura</b>: cuánto error se evita a cambio de preguntar.</li>
+        <li><b>Aclaraciones correctas</b> en E2 (dos camas) y E6 (placa tapada).</li>
+      </ul>
+      <p class="note" data-seq="5">La capa de decisión se prueba sin simulador; para el robot completo, un banco como HumanoidVLN, que incluye el G1.</p>
+    </div>
+  </div>
+  <p class="src">Propuesta del proyecto (nota 03, §6; nota 04, plan de prueba de concepto) · Pham et al. (2026), HumanoidVLN.</p>
+  <aside class="notes">
+    <p>La curva es un dibujo, no un dato. Así mediríamos si la idea funciona: cuántos errores evitamos a cambio de cuántas preguntas.</p>
+    <p>Los escenarios E2 y E6 son los que fuerzan la duda: dos camas en la misma habitación, o la placa de la puerta tapada.</p>
+  </aside>
+</section>
+
+<!-- ======================= D21 ======================= -->
+<section class="slide" id="aporta" data-fx="secuencia" data-section="Cierre" data-title="Lo que aporta y lo que exige">
+  <header class="s-head">
+    <p class="kicker">f · por qué importa · tfg §10.2</p>
+    <h2 class="s-title">Lo que aporta y lo que exige</h2>
+  </header>
+  <div class="s-body two" style="align-content:center">
+    <div class="panel model" data-seq="0">
+      <h3>Aporta</h3>
+      <ul class="clean">
+        <li>Reutilizar lo aprendido en Rivas Pérez (2026): tools, banco de pruebas y lecciones.</li>
+        <li>Trazas de cada paso del agente (Langfuse).</li>
+        <li>Cambiar de modelo desde la configuración.</li>
+        <li>Encaje directo con Nav2 y el resto de ROS&nbsp;2.</li>
+      </ul>
+    </div>
+    <div class="panel code" data-seq="1">
+      <h3>Exige</h3>
+      <ul class="clean">
+        <li>Pocas tools, bien separadas y con esquemas simples.</li>
+        <li>Un planificador determinista debajo que ejecute y verifique.</li>
+        <li>Seguridad fuera del alcance del modelo.</li>
+        <li>Supervisión humana con trazas, no solo respuestas.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="src">Las cuatro condiciones de la derecha: Rivas Pérez (2026), §10.2 · Síntesis de la discusión: §9.4.</p>
+  <aside class="notes">
+    <p>Las cuatro condiciones de la derecha son las que, según el TFG, separan un agente que se puede enseñar de uno que se puede desplegar. Si falla cualquiera, el sistema se degrada sin avisar.</p>
+  </aside>
+</section>
+
+<!-- ======================= D22 ======================= -->
+<section class="slide" id="ideas" data-fx="secuencia" data-section="Cierre" data-title="Cuatro ideas para quedarse">
+  <header class="s-head">
+    <p class="kicker">f · resumen</p>
+    <h2 class="s-title">Cuatro ideas para quedarse</h2>
+  </header>
+  <div class="s-body stack" style="gap:56px;justify-content:center">
+    <div class="four">
+      <div class="panel" data-seq="0"><span class="n">1</span><p>RAI es un <strong>adaptador</strong> entre un LLM y ROS&nbsp;2. No entrena, no controla, no sustituye a Nav2.</p></div>
+      <div class="panel" data-seq="1"><span class="n">2</span><p>Su fuerza son las <strong>tools, el embodiment y el ciclo ReAct</strong>, con límites medidos: 9 tools, 3–6 % de contexto útil, fallos silenciosos.</p></div>
+      <div class="panel" data-seq="2"><span class="n">3</span><p>En el G1, <strong>RAI orquesta</strong> y el código determinista mueve, frena y protege.</p></div>
+      <div class="panel hyp" data-seq="3"><span class="n">4</span><span class="tag hyp" style="align-self:flex-start">hipótesis</span><p><strong>Jev/Laya</strong> podrían convertir fallos silenciosos en preguntas. Falta probarlo.</p></div>
+    </div>
+    <p class="motto" style="font-size:64px" data-seq="4"><span class="m">El modelo propone,</span> <span class="c">el código dispone.</span></p>
+  </div>
+  <aside class="notes">
+    <p>Si te quedas con una frase: el modelo propone, el código dispone.</p>
+    <p>Preguntas.</p>
+  </aside>
+</section>
+
+<!-- ======================= REFERENCIAS ======================= -->
+<section class="slide" id="referencias-1" data-section="Referencias" data-title="Referencias (1/2)">
+  <header class="s-head">
+    <p class="kicker">anexo · ✅ comprobado en el original · «vía» = citado a través del TFG</p>
+    <h2 class="s-title">Referencias (1/2)</h2>
+  </header>
+  <div class="s-body bib">
+    <p>Ahmad, S., Hafeez, M. y Zaidi, S. A. R. (2026). <em>Vision-Language Models on the Edge for Real-Time Robotic Perception</em>. arXiv:2601.14921. <span class="st">✅ abstract</span></p>
+    <p>Gu, Q., Kuwajerwala, A., Morin, S. et al. (2024). <em>ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning</em>. arXiv:2309.16650. <span class="st">✅ abstract</span></p>
+    <p>Kamali, D., Premsri, T., Rajpal, S. et al. (2026). <em>SATURN: Symbolic Spatial Reasoning for Multi-Perspective Grounding</em>. arXiv:2606.22694. <span class="st">✅ abstract</span></p>
+    <p>Langfuse (2024). <em>Langfuse: Open Source LLM Engineering Platform</em>. langfuse.com. <span class="st">vía Rivas Pérez (2026)</span></p>
+    <p>Lin, X., Zhu, X., Lu, T. et al. (2026). <em>Ask-to-Clarify: Resolving Instruction Ambiguity through Multi-turn Dialogue</em>. arXiv:2509.15061. <span class="st">✅ abstract</span></p>
+    <p>Ling, G., Xue, M. y Ye, Z. (2026). <em>Jev in the Wild: A Data-Driven Analysis of the Jev Model’s Functionality, Applications and Ecosystem</em>. arXiv:2609.30216. <span class="st">✅ abstract</span></p>
+    <p>Liu, N. F., Lin, K., Hewitt, J. et al. (2024). Lost in the Middle: How Language Models Use Long Contexts. <em>TACL</em>. <span class="st">vía Rivas Pérez (2026)</span></p>
+    <p>Open Robotics (2024). <em>Navigation 2: The ROS 2 Navigation Framework</em>. nav2.org. <span class="st">vía Rivas Pérez (2026)</span></p>
+    <p>Pham, Q.-D., Dao, A., Nguyen, T.-A. et al. (2026). <em>HumanoidVLN: A Physics-Grounded Simulator and Benchmark for Vision-Language Navigation Across Diverse Humanoid Embodiments</em>. arXiv:2608.12860. <span class="st">✅ abstract</span></p>
+  </div>
+  <aside class="notes"><p>✅ = comprobado en el original (texto completo, abstract o código). «Vía Rivas Pérez (2026)» = citado a través de la memoria del TFG, sin leer el original.</p></aside>
+</section>
+
+<section class="slide" id="referencias-2" data-section="Referencias" data-title="Referencias (2/2)">
+  <header class="s-head">
+    <p class="kicker">anexo · los vídeos son simulaciones del TFG y no forman parte de la memoria publicada</p>
+    <h2 class="s-title">Referencias (2/2)</h2>
+  </header>
+  <div class="s-body bib">
+    <p>Premsri, T. y Kordjamshidi, P. (2025). <em>FoREST: Frame of Reference Evaluation in Spatial Reasoning Tasks</em>. arXiv:2502.17775. <span class="st">✅ abstract</span></p>
+    <p>Rana, K., Haviland, J., Garg, S. et al. (2023). <em>SayPlan: Grounding Large Language Models using 3D Scene Graphs for Scalable Robot Task Planning</em>. <span class="st">✅ título y autores</span></p>
+    <p>Ren, A. Z., Dixit, A., Bodrova, A. et al. (2023). <em>Robots That Ask For Help: Uncertainty Alignment for Large Language Model Planners</em> (KnowNo). arXiv:2307.01928. <span class="st">✅ abstract</span></p>
+    <p>Rivas Pérez, J. C. (2026). <em>Memoria del Trabajo Fin de Grado</em> (Robotnik Automation, RB-Kairos Plus; RAI, ROS&nbsp;2 y Nav2). Universitat Jaume I. CC BY-NC-SA. <span class="st">✅ texto completo</span></p>
+    <p>RobotecAI (2025a). <em>RAI: Robot AI Framework</em>. robotecai.github.io/rai. Repositorio RobotecAI/rai, rai_core 2.12.4, commit b018729 (consultado el 12-10-2026). <span class="st">✅ código</span></p>
+    <p>RobotecAI (2025b). <em>RAI: Flexible Agent Framework for Embodied AI</em>. arXiv:2505.07532. <span class="st">vía Rivas Pérez (2026)</span></p>
+    <p>Wang, Y., Fang, Y., Wang, T. et al. (2026). <em>What Limits Vision-and-Language Navigation?</em> arXiv:2605.13328. <span class="st">✅ abstract</span></p>
+    <p>Werby, A., Huang, C., Büchner, M. y Burgard, W. (2024). <em>Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation</em> (HOV-SG). arXiv:2403.17846. <span class="st">✅ abstract</span></p>
+    <p>Yao, S., Zhao, J., Yu, D. et al. (2023). ReAct: Synergizing Reasoning and Acting in Language Models. <em>ICLR 2023</em>. <span class="st">vía Rivas Pérez (2026)</span></p>
+  </div>
+  <aside class="notes"><p>Los vídeos son grabaciones de simulación del TFG y no forman parte de la memoria publicada.</p></aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['nube', 'suizo', 'arcilla', 'termica', 'noche', 'rice'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

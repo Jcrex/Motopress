@@ -1,0 +1,267 @@
+/* Maquetación del deck «Navegar el G1 con lenguaje» (versión A, Haiku).
+   Todo color sale de los tokens del estilo activo.
+   Series fijas: cat-1 = el modelo propone · cat-2 = el código dispone · cat-3 = datos del entorno (mapas, personas). */
+
+.slide aside.notes { display: none; }
+[data-style="nube"] .deco-folio .n::before { content: "/g1_lenguaje/slide_"; }
+[data-style="noche"] .deco-folio .n::before { content: "SYS.G1_LENGUAJE // "; }
+
+/* ---------- piezas base ---------- */
+.slide > .src.src.src { position: absolute; z-index: 1; }
+.src { position: absolute; left: 128px; right: 220px; bottom: 46px; margin: 0; font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); text-wrap: pretty; }
+.src em { font-style: italic; }
+.t2 { color: var(--fg-2); }
+.t3 { color: var(--fg-3); }
+.k-model { font-weight: 600; color: var(--fg); box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--cat-1) 45%, transparent); }
+.k-code { font-weight: 600; color: var(--fg); box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--cat-2) 45%, transparent); }
+.k-warn { font-weight: 600; color: var(--fg); box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--warn) 50%, transparent); }
+.side-text { margin: 0; font-size: 26px; line-height: 1.42; color: var(--fg-2); text-wrap: pretty; }
+.side-text b { color: var(--fg); }
+.body-text { margin: 0; font-size: 28px; line-height: 1.42; color: var(--fg); text-wrap: pretty; }
+.small { margin: 0; font-size: 22px; line-height: 1.38; color: var(--fg-2); text-wrap: pretty; }
+.h3 { margin: 0; font: 600 30px/1.15 var(--font-display); color: var(--fg); }
+code, .mono22 { font-family: var(--font-mono); font-size: 22px; }
+
+/* color por rol: --k se fija en cada elemento */
+.is-m { --k: var(--cat-1); }
+.is-c { --k: var(--cat-2); }
+.is-t { --k: var(--cat-3); }
+.is-h { --k: var(--warn); }
+.is-ok { --k: var(--ok); }
+.is-err { --k: var(--err); }
+
+/* etiquetas con palabra */
+.pill { display: inline-flex; align-items: center; gap: 10px; padding: 4px 16px; border-radius: 999px; border: 2px solid var(--k, var(--line-2)); background: var(--bg); font: 500 22px/1.2 var(--font-mono); color: var(--fg); white-space: nowrap; }
+.pill::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--k, var(--fg-3)); flex: none; }
+.pill.is-m, .pill.is-c, .pill.is-t, .pill.is-h, .pill.is-ok, .pill.is-err { --k: var(--k); }
+
+/* cajas de color */
+.bx { display: flex; flex-direction: column; gap: 8px; min-width: 0; padding: 20px 24px; border-radius: 16px; border: 2px solid var(--k, var(--line-2)); background: color-mix(in oklab, var(--k, var(--line-2)) 14%, var(--bg)); }
+.bx.neutral { background: var(--bg-3); border-color: var(--line-2); --k: var(--line-2); }
+.bx h3 { margin: 0; font: 600 28px/1.15 var(--font-display); color: var(--fg); }
+.bx p { margin: 0; font-size: 22px; line-height: 1.35; color: var(--fg-2); }
+
+/* ---------- portada y separadores ---------- */
+.cover-body, .divider-body { align-self: end; display: flex; flex-direction: column; gap: 30px; max-width: 1240px; }
+.cover .s-title.xl { font-size: calc(var(--title-size) * 1.75); line-height: .96; }
+.cover .lead, .divider .lead { color: var(--fg-2); max-width: 1000px; }
+.cover .who { font: 500 30px/1.3 var(--font-text); color: var(--fg); margin: 0; }
+.cover .chip { background: color-mix(in oklab, var(--bg) 70%, transparent); }
+.divider-body { max-width: 1640px; }
+.divider .s-title.xl { font-size: 120px; line-height: .98; }
+.div-num { margin: 0; font: 700 220px/0.8 var(--font-display); letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 3px var(--accent); }
+[data-style="suizo"] .div-num { color: var(--accent); -webkit-text-stroke: 0; }
+
+/* ---------- D2 · la orden ---------- */
+.orden { display: grid; grid-template-rows: auto 1fr; gap: 54px; align-content: start; }
+.frase { margin: 0; font: var(--title-weight) 60px/1.35 var(--font-display); color: var(--fg); letter-spacing: var(--title-tracking); text-wrap: balance; }
+.frase .tk { display: inline-flex; flex-direction: column; align-items: flex-start; vertical-align: top; }
+.frase .tk b { font-weight: inherit; padding: 0 6px; border-radius: 8px; background: color-mix(in oklab, var(--c) 22%, transparent); box-shadow: inset 0 -6px 0 var(--c); }
+.frase .tk small { font: 500 22px/1.2 var(--font-mono); color: var(--fg-2); margin: 10px 6px 0; }
+.cuatro { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; }
+.cuatro .bx { gap: 14px; padding: 26px 28px; min-height: 300px; }
+.cuatro .q { font: 500 26px/1.3 var(--font-display); color: var(--fg); margin: 0; }
+.cuatro .n { font: 700 40px/1 var(--font-display); color: var(--k); }
+.cuatro .tags { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; margin-top: auto; }
+.cuatro .bx h3 { font-size: 36px; }
+
+/* ---------- D3 · proponer frente a disponer ---------- */
+.enfrenta { display: grid; grid-template-columns: 1fr 96px 1fr; gap: 0; height: 100%; align-items: stretch; }
+.enfrenta .col { display: flex; flex-direction: column; gap: 18px; padding: 30px 34px; border-radius: 22px; border: 2px solid var(--k); background: color-mix(in oklab, var(--k) 12%, var(--bg)); }
+.enfrenta .col h3 { margin: 0; font: 700 44px/1.1 var(--font-display); color: var(--fg); }
+.enfrenta .col ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.enfrenta .col li { position: relative; padding-left: 36px; font-size: 26px; line-height: 1.36; color: var(--fg-2); }
+.enfrenta .col li::before { content: ""; position: absolute; left: 4px; top: .5em; width: 14px; height: 14px; border-radius: 4px; background: var(--k); }
+.enfrenta .mid { display: flex; align-items: center; justify-content: center; }
+.enfrenta .mid i { display: block; width: 4px; height: 100%; background: var(--line-2); border-radius: 2px; }
+.banda { margin-top: 26px; padding: 22px 30px; border-radius: 18px; background: var(--bg-3); border: 2px solid var(--line-2); font: 600 32px/1.3 var(--font-display); color: var(--fg); }
+
+/* ---------- D5 · la pila ---------- */
+.pila { position: relative; display: flex; flex-direction: column; gap: 5px; height: 100%; }
+.pila .hd { display: grid; grid-template-columns: 290px 170px 700px 220px 1fr; gap: 14px; padding: 0 20px 4px 74px; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); }
+.pila .fila { position: relative; display: grid; grid-template-columns: 290px 170px 700px 220px 1fr; gap: 14px; align-items: center; min-height: 50px; box-sizing: border-box; padding: 6px 20px 6px 74px; border-radius: 12px; border: 2px solid var(--k); background: color-mix(in oklab, var(--k) 12%, var(--bg)); }
+.pila .fila > * { min-width: 0; }
+.pila .fila .c1 { font: 600 24px/1.2 var(--font-display); color: var(--fg); white-space: nowrap; }
+.pila .fila .c3, .pila .fila .c5 { font-size: 22px; line-height: 1.2; color: var(--fg-2); }
+.pila .fila .c4 { font-size: 22px; color: var(--fg); }
+.pila .fila .pill { font-size: 22px; padding: 2px 12px; }
+.pila .rail { position: absolute; left: 0; top: 0; width: 74px; height: 100%; pointer-events: none; }
+
+/* ---------- D6 · ritmo ---------- */
+.ritmo-svg { width: 1664px; height: 620px; display: block; }
+
+/* ---------- D7 · dónde ---------- */
+.donde { display: grid; grid-template-columns: 1fr 300px 500px; gap: 0; align-items: stretch; height: 100%; grid-template-rows: 1fr auto; }
+.donde .a-bordo { grid-column: 1; grid-row: 1; display: flex; flex-direction: column; gap: 16px; padding: 28px 30px; border-radius: 22px; border: 2px solid var(--cat-2); background: color-mix(in oklab, var(--cat-2) 12%, var(--bg)); }
+.donde .fuera { grid-column: 3; grid-row: 1; display: flex; flex-direction: column; gap: 16px; padding: 28px 30px; border-radius: 22px; border: 2px solid var(--cat-1); background: color-mix(in oklab, var(--cat-1) 12%, var(--bg)); }
+.donde .enlace { grid-column: 2; grid-row: 1; position: relative; }
+.donde .enlace svg { width: 300px; height: 100%; display: block; }
+.donde h3 { margin: 0; font: 700 38px/1.1 var(--font-display); color: var(--fg); }
+.donde .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.donde .chips .chip { font-size: 22px; color: var(--fg); background: var(--bg); }
+.perfiles { grid-column: 1 / -1; grid-row: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 22px; }
+.perfiles .bx { flex-direction: row; align-items: center; gap: 22px; padding: 18px 26px; }
+.perfiles .bx p { font-size: 24px; color: var(--fg-2); }
+.perfiles .bx .pill { flex: none; }
+
+/* ---------- D9 · mapear y localizar ---------- */
+.fases { display: grid; grid-template-columns: 1fr 1fr 430px; gap: 30px; height: 100%; }
+.fase { display: flex; flex-direction: column; gap: 0; min-width: 0; }
+.fase > h3 { margin: 0 0 14px; font: 700 30px/1.2 var(--font-display); color: var(--fg); }
+.chain { display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.chain .nodo { padding: 16px 22px; border-radius: 14px; border: 2px solid var(--k); background: color-mix(in oklab, var(--k) 14%, var(--bg)); }
+.chain .nodo b { display: block; font: 600 26px/1.2 var(--font-display); color: var(--fg); }
+.chain .nodo span { display: block; font: 400 22px/1.3 var(--font-mono); color: var(--fg-2); margin-top: 4px; }
+.chain .flecha { align-self: center; width: 0; height: 22px; border-left: 3px solid var(--line-2); position: relative; }
+.chain .flecha::after { content: ""; position: absolute; left: -9px; bottom: -2px; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 12px solid var(--line-2); }
+.lateral { display: flex; flex-direction: column; gap: 18px; padding: 26px 28px; border-radius: 22px; background: var(--bg-3); border: 2px solid var(--line-2); }
+.lateral h3 { margin: 0; font: 700 30px/1.15 var(--font-display); color: var(--fg); }
+.lateral p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--fg-2); }
+
+/* ---------- D10 · grafo ---------- */
+.grafo { display: grid; grid-template-columns: 1fr 560px; gap: 56px; height: 100%; }
+.niveles { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.nivel { display: grid; grid-template-columns: 330px 1fr; gap: 22px; align-items: center; padding: 16px 22px; border-radius: 16px; border: 2px solid var(--cat-2); background: color-mix(in oklab, var(--cat-2) 10%, var(--bg)); }
+.nivel.t { border-color: var(--cat-3); background: color-mix(in oklab, var(--cat-3) 10%, var(--bg)); }
+.nivel b { font: 600 26px/1.2 var(--font-display); color: var(--fg); }
+.nivel span.s { display: block; font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); margin-top: 4px; }
+.nivel .txt { font-size: 24px; line-height: 1.35; color: var(--fg-2); }
+.consulta { display: flex; flex-direction: column; gap: 22px; }
+.codebox { margin: 0; padding: 24px 28px; font: 400 23px/1.55 var(--font-mono); background: var(--bg-2); border: 2px solid var(--line-2); border-radius: 18px; color: var(--fg); white-space: pre; }
+.codebox .c { color: var(--fg-3); }
+.codebox .s { color: var(--accent-ink); }
+
+/* ---------- D11 · costmap ---------- */
+.costmap { display: grid; grid-template-columns: 960px 1fr; gap: 40px; height: 100%; align-items: center; }
+.costmap svg { width: 960px; height: 600px; display: block; }
+.costmap .lado { display: flex; flex-direction: column; gap: 18px; }
+.costmap .suma { padding: 22px 26px; border-radius: 18px; border: 2px solid var(--line-2); background: var(--bg-3); }
+.costmap .suma b { display: block; font: 600 28px/1.2 var(--font-display); color: var(--fg); }
+.costmap .suma p { margin: 6px 0 0; font-size: 24px; line-height: 1.35; color: var(--fg-2); }
+.costmap .planif { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ---------- D13 · parseo ---------- */
+.parseo { display: grid; grid-template-columns: 1fr 180px 1fr; gap: 40px; align-items: center; height: 100%; }
+.parseo .frase2 { margin: 0; font: 600 46px/1.4 var(--font-display); color: var(--fg); text-wrap: balance; }
+.parseo .frase2 .r { font-weight: inherit; padding: 2px 8px; border-radius: 8px; background: color-mix(in oklab, var(--c) 24%, transparent); box-shadow: inset 0 -5px 0 var(--c); }
+.parseo .lgnd { display: flex; flex-direction: column; gap: 12px; margin-top: 30px; }
+.parseo .lgnd span { font: 400 22px/1.3 var(--font-mono); color: var(--fg-2); display: flex; align-items: center; gap: 12px; }
+.parseo .lgnd i { width: 18px; height: 18px; border-radius: 5px; background: var(--c); flex: none; }
+.parseo .flecha { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.parseo .flecha .bx { width: 170px; text-align: center; align-items: center; padding: 16px 12px; }
+.parseo .flecha .bx b { font: 600 24px/1.2 var(--font-display); color: var(--fg); }
+.parseo .flecha .bx span { font: 400 22px/1.2 var(--font-mono); color: var(--fg-2); }
+.parseo .nota { margin: 26px 0 0; font-size: 26px; line-height: 1.4; color: var(--fg-2); }
+
+/* ---------- D14 · RAI en anillo ---------- */
+.ring { position: relative; width: 1664px; height: 600px; }
+.ring > svg { position: absolute; inset: 0; width: 1664px; height: 600px; }
+.ring .agente { position: absolute; left: 682px; top: 230px; width: 300px; height: 140px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; border-radius: 22px; background: var(--fg); color: var(--bg); }
+.ring .agente b { font: 700 36px/1.1 var(--font-display); color: var(--bg); }
+.ring .agente span { font: 400 22px/1.2 var(--font-mono); color: var(--bg); opacity: .85; }
+.ring .tool { position: absolute; width: 330px; height: 92px; box-sizing: border-box; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 12px 20px; border-radius: 16px; border: 2px solid var(--k); background: color-mix(in oklab, var(--k) 14%, var(--bg)); }
+.ring .tool b { font: 600 25px/1.1 var(--font-mono); color: var(--fg); }
+.ring .tool .pill { font-size: 22px; padding: 2px 12px; align-self: flex-start; }
+.ring .pie { position: absolute; left: 470px; top: 486px; width: 724px; margin: 0; text-align: center; font-size: 26px; line-height: 1.4; color: var(--fg-2); }
+
+/* ---------- D15 · TFG ---------- */
+.medidos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; height: 100%; }
+.medidos .bx { gap: 18px; padding: 34px 36px; }
+.medidos .lb { font: 500 24px/1.2 var(--font-mono); color: var(--fg-3); margin: 0; }
+.medidos .big { margin: 0; font: 700 124px/1 var(--font-display); letter-spacing: -0.03em; color: var(--fg); }
+.medidos .big.word { font-size: 96px; color: var(--err); }
+.medidos p.t { margin: 0; font-size: 26px; line-height: 1.4; color: var(--fg-2); }
+.cierre15 { margin-top: 30px; font: 600 34px/1.3 var(--font-display); color: var(--fg); }
+
+/* ---------- D17 · Laya ---------- */
+.laya { display: grid; grid-template-columns: 1fr 560px; gap: 40px; height: 100%; }
+.prim { display: flex; flex-direction: column; gap: 16px; }
+.prim .bx { flex-direction: row; gap: 26px; align-items: center; padding: 22px 28px; }
+.prim .bx .nm { font: 700 40px/1 var(--font-mono); color: var(--k); flex: none; width: 200px; }
+.prim .bx p { font-size: 24px; line-height: 1.38; color: var(--fg-2); }
+.prim .bx p b { color: var(--fg); }
+.ficha { display: flex; flex-direction: column; gap: 0; padding: 26px 30px; border-radius: 22px; background: var(--bg-3); border: 2px solid var(--line-2); }
+.ficha h3 { margin: 0 0 12px; font: 700 30px/1.2 var(--font-display); color: var(--fg); }
+.ficha dl { display: grid; grid-template-columns: 1fr; gap: 0; margin: 0; }
+.ficha dt { font: 500 22px/1.3 var(--font-mono); color: var(--fg-3); margin-top: 14px; }
+.ficha dd { margin: 0; font-size: 26px; line-height: 1.35; color: var(--fg); }
+
+/* ---------- D18 · tabla ---------- */
+table.t { width: 100%; border-collapse: collapse; font-size: 25px; }
+table.t th { text-align: left; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); padding: 0 16px 12px; border-bottom: 2px solid var(--line-2); }
+table.t td { padding: 13px 16px; border-bottom: 1px solid var(--line); color: var(--fg); vertical-align: middle; line-height: 1.3; }
+table.t td.m { color: var(--fg-2); }
+table.t td .pill { font-size: 22px; }
+.pie18 { margin-top: 30px; font: 600 32px/1.3 var(--font-display); color: var(--fg); }
+.pie18 .k-code { font-weight: 600; }
+
+/* ---------- D19 · puerta ---------- */
+.puerta { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; height: 100%; }
+.caso { display: flex; flex-direction: column; gap: 14px; padding: 26px 30px; border-radius: 22px; border: 2px solid var(--line-2); background: var(--bg-3); }
+.caso h3 { margin: 0; font: 700 32px/1.15 var(--font-display); color: var(--fg); }
+.caso svg { width: 100%; height: 300px; display: block; }
+.caso .res { font-size: 26px; line-height: 1.38; color: var(--fg-2); margin: 0; }
+.caso .res b { color: var(--fg); }
+.aviso { margin: 0; font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); }
+
+/* ---------- D20 · secuencia ---------- */
+.secuencia-svg { width: 1664px; height: 620px; display: block; }
+
+/* ---------- D21 · montaje ---------- */
+.montaje { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: 1fr 1fr; gap: 24px; height: 100%; }
+.montaje .bx { gap: 12px; padding: 22px 26px; }
+.montaje .n { font: 700 40px/1 var(--font-display); color: var(--k); }
+.montaje .bx h3 { font-size: 28px; }
+.montaje .bx p { font-size: 23px; line-height: 1.36; color: var(--fg-2); }
+.montaje .bx p b { color: var(--fg); font-weight: 600; }
+.montaje .bx .pill { align-self: flex-start; margin-top: auto; font-size: 22px; }
+
+/* ---------- D22 · falta ---------- */
+.falta { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 40px; align-content: start; }
+.falta .it { display: flex; align-items: center; gap: 20px; padding: 16px 22px; border-radius: 16px; background: var(--bg-3); border: 2px solid var(--line-2); font-size: 26px; line-height: 1.3; color: var(--fg); }
+.falta .it .pill { flex: none; }
+.motto { margin: 0; font: var(--title-weight) 60px/1.15 var(--font-display); letter-spacing: var(--title-tracking); color: var(--fg); text-wrap: balance; }
+.motto .m { box-shadow: inset 0 -0.18em 0 color-mix(in oklab, var(--cat-1) 55%, transparent); }
+.motto .c { box-shadow: inset 0 -0.18em 0 color-mix(in oklab, var(--cat-2) 55%, transparent); }
+
+/* ---------- referencias ---------- */
+.bib { columns: 2; column-gap: 56px; }
+.bib p { margin: 0 0 22px; break-inside: avoid; font-size: 26px; line-height: 1.38; color: var(--fg-2); }
+.bib p em { color: var(--fg); }
+.bib .st { font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); white-space: nowrap; }
+
+/* SVG: el texto usa fg, fg-2 y fg-3; las series, sus tokens (--k) */
+svg text { fill: var(--fg); font-family: var(--font-text); font-size: 24px; }
+svg .t2 { fill: var(--fg-2); }
+svg .t3 { fill: var(--fg-3); font-size: 22px; }
+svg .mono { font-family: var(--font-mono); font-size: 22px; }
+svg .b { font-weight: 600; }
+svg .ln { fill: none; stroke: var(--fg-3); stroke-width: 2.5; }
+svg .ln.k { stroke: var(--k); }
+svg .dash { stroke-dasharray: 8 6; }
+svg .grid { stroke: var(--line); stroke-width: 1.5; }
+svg .axis { stroke: var(--line-2); stroke-width: 2; }
+svg .ink { fill: var(--k); }
+svg .bar { fill: color-mix(in oklab, var(--k) 88%, var(--bg)); }
+svg .soft { fill: color-mix(in oklab, var(--k) 16%, var(--bg)); }
+svg .solid { fill: var(--k); }
+svg .halo { paint-order: stroke; stroke: var(--bg); stroke-width: 7px; stroke-linejoin: round; }
+svg .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
+svg .arrowhead { fill: var(--fg-3); }
+svg .lane { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 2; }
+svg .ok { fill: var(--ok); }
+svg .err { fill: var(--err); }
+svg .warnf { fill: var(--warn); }
+svg .sep { stroke: var(--line-2); stroke-width: 3; stroke-dasharray: 10 8; }
+[data-a="grow"] { transform-box: fill-box; transform-origin: left center; }
+[data-a="pop"] { transform-box: fill-box; transform-origin: center; }
+
+/* formas de diagrama con --k */
+svg .soft { fill: color-mix(in oklab, var(--k) 22%, var(--bg)); stroke: var(--k); stroke-width: 2; }
+svg .sheet { fill: color-mix(in oklab, var(--k) 40%, var(--bg)); stroke: var(--k); stroke-width: 2; }
+svg .sheet.vlm { fill: color-mix(in oklab, var(--k) 14%, var(--bg)); stroke-dasharray: 8 6; }
+svg .box { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 2; }
+svg .thr { stroke: var(--warn); stroke-width: 3; stroke-dasharray: 8 6; }
+svg .halo { font-size: 22px; }
+.enfrenta { height: calc(100% - 110px); }
+.medidos .big.word { font-size: 76px; }

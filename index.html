@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="es" data-style="rice">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas del motor</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=Unbounded:wght@400..800&family=Manrope:wght@400..700&family=Martian+Mono:wght@400..600&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Public+Sans:wght@400..700&family=Sometype+Mono:wght@400..600&family=Doto:wght,ROND@400..900,0..100&family=Host+Grotesk:wght@400..700&family=Fragment+Mono&display=swap">
+<link rel="stylesheet" href="themes/tokens.css">
+<link rel="stylesheet" href="engine/engine.css">
+<link rel="stylesheet" href="themes/styles.css">
+<link rel="stylesheet" href="atlas/atlas.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ======================= PORTADA ======================= -->
+<section class="slide is-plain cover" id="portada" data-fx="backdrop" data-seed="3" data-section="Inicio" data-title="Atlas artístico">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">motor de presentaciones · html, css y js</p>
+    <h1 class="s-title xl">Atlas artístico</h1>
+    <p class="lead">Diez direcciones de arte, cada una en claro y oscuro, para presentar robótica con ROS 2, aprendizaje automático, análisis de datos y un escritorio Arch con Hyprland.</p>
+    <div class="row cover-keys">
+      <span class="chip"><b>S</b> cambia de estilo</span>
+      <span class="chip"><b>D</b> claro u oscuro</span>
+      <span class="chip"><b>O</b> vista general</span>
+      <span class="chip"><b>→</b> avanzar</span>
+    </div>
+  </div>
+</section>
+
+<!-- ======================= 01 SISTEMA ======================= -->
+<section class="slide" id="estilos" data-fx="estilos" data-section="Sistema" data-title="Diez direcciones de arte">
+  <header class="s-head">
+    <p class="kicker">sistema · direcciones de arte</p>
+    <h2 class="s-title">Diez direcciones de arte</h2>
+  </header>
+  <div class="s-body style-grid" data-role="grid"></div>
+</section>
+
+<section class="slide" id="color-teoria" data-fx="teoria" data-section="Sistema" data-title="Teoría del color">
+  <header class="s-head">
+    <p class="kicker">sistema · teoría del color</p>
+    <h2 class="s-title">Teoría del color del estilo activo</h2>
+  </header>
+  <div class="s-body cols wide-side">
+    <div class="teoria-main" data-role="main"></div>
+    <aside class="panel teoria-side" data-role="side"></aside>
+  </div>
+</section>
+
+<section class="slide" id="color-rueda" data-fx="rueda" data-section="Sistema" data-title="Armonía en OKLCH">
+  <header class="s-head">
+    <p class="kicker">sistema · círculo cromático perceptual</p>
+    <h2 class="s-title">Armonía en OKLCH</h2>
+  </header>
+  <div class="s-body cols even">
+    <div class="fx" data-role="wheel"></div>
+    <div class="stack" data-role="side"></div>
+  </div>
+</section>
+
+<section class="slide" id="tipografia" data-fx="tipo" data-section="Sistema" data-title="Tipografía">
+  <header class="s-head">
+    <p class="kicker">sistema · tipografía</p>
+    <h2 class="s-title">Pareja tipográfica y escala</h2>
+  </header>
+  <div class="s-body tipo" data-role="body"></div>
+</section>
+
+<section class="slide" id="paletas" data-fx="paletas" data-section="Sistema" data-title="Paletas para datos">
+  <header class="s-head">
+    <p class="kicker">sistema · color para gráficos</p>
+    <h2 class="s-title">Paletas para datos</h2>
+  </header>
+  <div class="s-body paletas" data-role="body"></div>
+</section>
+
+<!-- ======================= 02 ROS 2 ======================= -->
+<section class="slide is-plain divider" id="sec-ros" data-fx="backdrop" data-seed="11" data-section="ROS 2" data-title="Robótica con ROS 2">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">02</p>
+    <h2 class="s-title xl">Robótica con ROS&nbsp;2</h2>
+    <p class="lead">Grafo de nodos, LiDAR, mapa de ocupación, árbol de transformadas, plano de la base y telemetría.</p>
+  </div>
+</section>
+
+<section class="slide" id="ros-grafo" data-fx="rosgraph" data-section="ROS 2" data-title="Grafo de nodos">
+  <header class="s-head">
+    <p class="kicker">ros 2 · rqt_graph</p>
+    <h2 class="s-title">Grafo de nodos y tópicos</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx" data-role="graph"></div>
+    <aside class="stack">
+      <div class="panel stack">
+        <p class="label">Cómo leerlo</p>
+        <ul class="legend legend-col">
+          <li><i class="shape-ellipse"></i>Nodo: un proceso</li>
+          <li><i class="shape-rect"></i>Tópico: un canal con tipo</li>
+          <li><i class="shape-dot"></i>Mensaje en tránsito</li>
+        </ul>
+      </div>
+      <p class="muted side-text">El control cierra un bucle: la odometría vuelve al controlador, y el mapa y los objetos detectados alimentan al planificador.</p>
+      <p class="note">Frecuencias de ejemplo.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="lidar" data-fx="lidar" data-section="ROS 2" data-title="Escaneo LiDAR">
+  <header class="s-head">
+    <p class="kicker">ros 2 · sensor_msgs/msg/LaserScan</p>
+    <h2 class="s-title">Escaneo LiDAR 2D</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx" data-role="scan"></div>
+    <aside class="stack">
+      <div class="panel">
+        <dl class="readout" data-role="readout"></dl>
+      </div>
+      <div class="ramp-legend" data-role="ramp"></div>
+      <p class="note">Habitación simulada: 360 rayos lanzados contra paredes y obstáculos.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="ocupacion" data-fx="astar" data-section="ROS 2" data-title="Mapa de ocupación">
+  <header class="s-head">
+    <p class="kicker">nav_msgs/msg/OccupancyGrid · A*</p>
+    <h2 class="s-title">Mapa de ocupación y ruta</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx" data-role="map"></div>
+    <aside class="stack">
+      <ul class="legend legend-col" data-role="legend"></ul>
+      <div class="panel"><dl class="readout" data-role="stats"></dl></div>
+      <p class="note">Mapa generado en el navegador. A* con distancia octil y 8 vecinos.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="tf" data-fx="tftree" data-section="ROS 2" data-title="Árbol TF">
+  <header class="s-head">
+    <p class="kicker">tf2 · REP 105</p>
+    <h2 class="s-title">Árbol de transformadas</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx" data-role="tree"></div>
+    <aside class="stack">
+      <div class="panel stack">
+        <p class="label">Convención de ejes</p>
+        <ul class="legend legend-col">
+          <li><i style="--c:var(--x)"></i>x, adelante</li>
+          <li><i style="--c:var(--y)"></i>y, izquierda</li>
+          <li><i style="--c:var(--z)"></i>z, arriba</li>
+        </ul>
+      </div>
+      <p class="muted side-text">map → odom → base_link sigue REP 105. Las uniones del robot son estáticas; odom → base_footprint cambia con cada lectura de odometría.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="plano-robot" data-fx="blueprint" data-section="ROS 2" data-title="Plano de la base">
+  <header class="s-head">
+    <p class="kicker">urdf · vista superior y alzado</p>
+    <h2 class="s-title">Plano de la base móvil</h2>
+  </header>
+  <div class="s-body fx" data-role="drawing"></div>
+</section>
+
+<section class="slide" id="telemetria" data-fx="scope" data-section="ROS 2" data-title="Telemetría">
+  <header class="s-head">
+    <p class="kicker">sensor_msgs/msg/Imu · 100 Hz</p>
+    <h2 class="s-title">Telemetría en vivo</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx scope" data-role="scope"></div>
+    <aside class="stack" data-role="side"></aside>
+  </div>
+</section>
+
+<!-- ======================= 03 IA · ML ======================= -->
+<section class="slide is-plain divider" id="sec-ml" data-fx="backdrop" data-seed="23" data-section="IA · ML" data-title="Aprendizaje automático">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">03</p>
+    <h2 class="s-title xl">Aprendizaje automático</h2>
+    <p class="lead">Curvas de entrenamiento, matriz de confusión, espacio latente y arquitectura de una red.</p>
+  </div>
+</section>
+
+<section class="slide" id="entrenamiento" data-fx="training" data-section="IA · ML" data-title="Entrenamiento">
+  <header class="s-head">
+    <p class="kicker">pytorch · curvas de aprendizaje</p>
+    <h2 class="s-title">Entrenamiento y validación</h2>
+  </header>
+  <div class="s-body training" data-role="body"></div>
+</section>
+
+<section class="slide" id="confusion" data-fx="confusion" data-section="IA · ML" data-title="Matriz de confusión">
+  <header class="s-head">
+    <p class="kicker">detector de objetos · 6 clases</p>
+    <h2 class="s-title">Matriz de confusión</h2>
+  </header>
+  <div class="s-body cols wide-side">
+    <div class="fx" data-role="matrix"></div>
+    <aside class="stack" data-role="side"></aside>
+  </div>
+</section>
+
+<section class="slide" id="latente" data-fx="latent" data-section="IA · ML" data-title="Espacio latente">
+  <header class="s-head">
+    <p class="kicker">umap · embeddings de escenas</p>
+    <h2 class="s-title">Espacio latente</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="fx" data-role="plot"></div>
+    <aside class="stack">
+      <ul class="legend legend-col" data-role="legend"></ul>
+      <p class="muted side-text">Cada punto es una escena vista por la cámara. Las escenas parecidas acaban juntas: así se detectan clases mal etiquetadas.</p>
+      <p class="note">1 800 puntos sintéticos en 6 grupos.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="red" data-fx="nnet" data-section="IA · ML" data-title="Arquitectura de red">
+  <header class="s-head">
+    <p class="kicker">política de navegación · perceptrón multicapa</p>
+    <h2 class="s-title">Arquitectura de la red</h2>
+  </header>
+  <div class="s-body fx" data-role="net"></div>
+</section>
+
+<!-- ======================= 04 DATOS ======================= -->
+<section class="slide is-plain divider" id="sec-datos" data-fx="backdrop" data-seed="37" data-section="Datos" data-title="Análisis de datos">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">04</p>
+    <h2 class="s-title xl">Análisis de datos</h2>
+    <p class="lead">Tres estilos de nube de palabras, ridgeline, calendario de actividad, flujo de un pipeline y un panel de indicadores.</p>
+  </div>
+</section>
+
+<section class="slide" id="nubes" data-fx="clouds" data-section="Datos" data-title="Nubes de palabras">
+  <header class="s-head">
+    <p class="kicker">texto · frecuencia de términos</p>
+    <h2 class="s-title">Tres nubes de palabras</h2>
+  </header>
+  <div class="s-body cols three clouds">
+    <figure class="cloud-card"><div class="fx" data-role="spiral"></div><figcaption><b>Espiral</b> · d3-cloud, tamaño por frecuencia</figcaption></figure>
+    <figure class="cloud-card"><div class="fx wall" data-role="wall"></div><figcaption><b>Muro tipográfico</b> · filas justificadas, peso por rango</figcaption></figure>
+    <figure class="cloud-card"><div class="fx" data-role="bubbles"></div><figcaption><b>Burbujas</b> · empaquetado circular, área por frecuencia</figcaption></figure>
+  </div>
+</section>
+
+<section class="slide" id="ridgeline" data-fx="ridge" data-section="Datos" data-title="Ridgeline">
+  <header class="s-head">
+    <p class="kicker">distribuciones · ridgeline</p>
+    <h2 class="s-title">Latencia de inferencia por hora</h2>
+  </header>
+  <div class="s-body cols wide-side">
+    <div class="fx" data-role="ridge"></div>
+    <aside class="stack">
+      <p class="muted side-text">Una curva por hora del día, apiladas como el registro del púlsar CP 1919. La cola larga aparece cuando el robot comparte GPU con el mapeo.</p>
+      <p class="note">Distribuciones sintéticas, milisegundos.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="calendario" data-fx="calendar" data-section="Datos" data-title="Calendario">
+  <header class="s-head">
+    <p class="kicker">git log · actividad diaria</p>
+    <h2 class="s-title">Calendario de commits</h2>
+  </header>
+  <div class="s-body calendar" data-role="body"></div>
+</section>
+
+<section class="slide" id="sankey" data-fx="sankey" data-section="Datos" data-title="Pipeline de datos">
+  <header class="s-head">
+    <p class="kicker">pipeline de datos · gigabytes</p>
+    <h2 class="s-title">Del rosbag al dataset</h2>
+  </header>
+  <div class="s-body fx" data-role="flow"></div>
+</section>
+
+<section class="slide" id="kpis" data-fx="kpis" data-section="Datos" data-title="Indicadores">
+  <header class="s-head">
+    <p class="kicker">operación del robot · últimos 30 días</p>
+    <h2 class="s-title">Panel de indicadores</h2>
+  </header>
+  <div class="s-body kpis" data-role="body"></div>
+</section>
+
+<!-- ======================= 05 ARCH · HYPRLAND ======================= -->
+<section class="slide is-plain divider" id="sec-arch" data-fx="backdrop" data-seed="53" data-section="Arch · Hyprland" data-title="Arch y Hyprland">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">05</p>
+    <h2 class="s-title xl">Arch y Hyprland</h2>
+    <p class="lead">El escritorio como lenguaje visual: mosaico de ventanas, barra de estado, terminal y atajos.</p>
+  </div>
+</section>
+
+<section class="slide" id="escritorio" data-fx="desktop" data-section="Arch · Hyprland" data-title="Escritorio Hyprland">
+  <header class="s-head">
+    <p class="kicker">hyprland · distribución dwindle</p>
+    <h2 class="s-title">Escritorio en mosaico</h2>
+  </header>
+  <div class="s-body desktop" data-role="desk"></div>
+</section>
+
+<section class="slide" id="fetch" data-fx="fetch" data-section="Arch · Hyprland" data-title="Ficha del sistema">
+  <header class="s-head">
+    <p class="kicker">kitty · fastfetch</p>
+    <h2 class="s-title">Ficha del sistema</h2>
+  </header>
+  <div class="s-body fetch" data-role="term"></div>
+</section>
+
+<section class="slide" id="atajos" data-section="Arch · Hyprland" data-title="Atajos del motor">
+  <header class="s-head">
+    <p class="kicker">motor · teclado</p>
+    <h2 class="s-title">Atajos del motor</h2>
+  </header>
+  <div class="s-body keys">
+    <div class="key-row"><span class="keycap">→</span><span class="keycap wide">Espacio</span><p>Siguiente paso o diapositiva</p></div>
+    <div class="key-row"><span class="keycap">←</span><p>Paso o diapositiva anterior</p></div>
+    <div class="key-row"><span class="keycap">S</span><span class="keycap wide">⇧ S</span><p>Estilo siguiente o anterior</p></div>
+    <div class="key-row"><span class="keycap">1</span><span class="keycap">…</span><span class="keycap">0</span><p>Ir a uno de los diez estilos</p></div>
+    <div class="key-row"><span class="keycap">D</span><p>Alternar claro y oscuro</p></div>
+    <div class="key-row"><span class="keycap">O</span><p>Vista general de todas las diapositivas</p></div>
+    <div class="key-row"><span class="keycap">F</span><p>Pantalla completa</p></div>
+    <div class="key-row"><span class="keycap">H</span><p>Ocultar o mostrar los controles</p></div>
+  </div>
+</section>
+
+<!-- ======================= 06 REFERENCIAS ======================= -->
+<section class="slide" id="referencias" data-fx="refs" data-section="Referencias" data-title="Referencias">
+  <header class="s-head">
+    <p class="kicker">referencias · de dónde sale cada estilo</p>
+    <h2 class="s-title">Atlas de referencias</h2>
+  </header>
+  <div class="s-body refs" data-role="grid"></div>
+</section>
+
+<section class="slide" id="comparativa" data-fx="compare" data-section="Referencias" data-title="Comparativa">
+  <header class="s-head">
+    <p class="kicker">un contenido, veinte lecturas</p>
+    <h2 class="s-title">Comparativa de estilos</h2>
+  </header>
+  <div class="s-body compare" data-role="grid"></div>
+</section>
+
+<section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="71" data-section="Referencias" data-title="Uso en Claude Code">
+  <div class="fx-bg"></div>
+  <div class="closing-body">
+    <p class="kicker">siguiente paso</p>
+    <h2 class="s-title">Cómo usarlo en Claude Code</h2>
+    <ol class="steps">
+      <li><b>Copia la carpeta</b><span>motor/ en tu proyecto. No necesita compilación.</span></li>
+      <li><b>Escribe secciones</b><span>&lt;section class="slide" data-fx="lidar"&gt; con el contenido de cada diapositiva.</span></li>
+      <li><b>Elige estilo y modo</b><span>data-style="nube" en &lt;html&gt;; el modo sigue al sistema o a la tecla D.</span></li>
+    </ol>
+  </div>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['rice', 'noche', 'suizo', 'aurora', 'cromo', 'arcilla', 'nube', 'termica', 'celula', 'matriz'];</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="themes/meta.js"></script>
+<script src="engine/engine.js"></script>
+<script src="fx/sistema.js"></script>
+<script src="fx/fondos.js"></script>
+<script src="fx/ros.js"></script>
+<script src="fx/ml.js"></script>
+<script src="fx/datos.js"></script>
+<script src="fx/arch.js"></script>
+</body>
+</html>

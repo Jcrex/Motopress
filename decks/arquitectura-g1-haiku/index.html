@@ -1,0 +1,776 @@
+<!doctype html>
+<html lang="es" data-style="nube">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Navegar el G1 con lenguaje</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="arq.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ======================= D1 · PORTADA ======================= -->
+<section class="slide is-plain cover" id="portada" data-fx="backdrop" data-seed="5" data-section="Inicio" data-title="Navegar el G1 con lenguaje">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">máster en sistemas inteligentes · uji · machine learning · proyecto 1</p>
+    <h1 class="s-title xl">Navegar el G1 con lenguaje</h1>
+    <p class="lead">RAI, un LLM, Laya y SLAM: qué hace cada pieza, dónde corre y cómo se monta.</p>
+    <p class="who">Juan Carlos Rivas Pérez · Alan Landaluce Moreyra</p>
+    <div class="row"><span class="chip">octubre de 2026</span><span class="chip">propuesta, sin implementar</span><span class="chip"><b>N</b>&nbsp;notas del orador</span></div>
+  </div>
+  <aside class="notes">
+    <p>Esta presentación continúa la anterior sobre RAI. Ahora explicamos la pila entera: qué hace cada pieza para navegar el Unitree G1 con una orden en lenguaje, dónde corre y en qué orden se montaría.</p>
+    <p>Todo es propuesta. No está implementado ni medido. La idea que recorre las diapositivas: el modelo propone y el código dispone.</p>
+    <p>Pulsa N para abrir las notas del orador en una ventana aparte.</p>
+  </aside>
+</section>
+
+<!-- ======================= D2 ======================= -->
+<section class="slide" id="piezas" data-fx="secuencia" data-section="El problema" data-title="Una orden, cuatro piezas">
+  <header class="s-head">
+    <p class="kicker">a · el problema · escenario E1</p>
+    <h2 class="s-title">Una orden, cuatro piezas</h2>
+  </header>
+  <div class="s-body orden">
+    <p class="frase" data-seq="0">«Ve a <span class="tk" style="--c:var(--cat-3)"><b>la 203</b><small>habitación</small></span> y colócate <span class="tk" style="--c:var(--cat-5)"><b>a la derecha de</b><small>relación</small></span> <span class="tk" style="--c:var(--cat-4)"><b>la cama</b><small>objeto</small></span>»</p>
+    <div class="cuatro">
+      <div class="bx is-c" data-seq="1"><p class="n">1</p><h3>SLAM</h3><p class="q">¿Dónde estoy y qué hay alrededor?</p><div class="tags"><span class="pill is-c">código dispone</span></div></div>
+      <div class="bx is-m" data-seq="2"><p class="n">2</p><h3>LLM</h3><p class="q">¿Qué me están pidiendo?</p><div class="tags"><span class="pill is-m">modelo propone</span></div></div>
+      <div class="bx is-m" data-seq="3"><p class="n">3</p><h3>Laya</h3><p class="q">¿Qué opción elijo y con cuánta confianza?</p><div class="tags"><span class="pill is-m">modelo propone</span></div></div>
+      <div class="bx neutral" data-seq="4"><p class="n">4</p><h3>RAI</h3><p class="q">¿Quién llama a quién y en qué orden?</p><div class="tags"><span class="pill is-m">agente: modelo</span><span class="pill is-c">tools: código</span></div></div>
+    </div>
+  </div>
+  <p class="src"><em>How can natural-language spatial instructions be grounded into safe navigation goals for a humanoid robot operating in a dynamic indoor environment?</em></p>
+  <aside class="notes">
+    <p>Usamos siempre la misma orden: «Ve a la 203 y colócate a la derecha de la cama». Tiene tres retos distintos: entender qué se pide, anclarlo en el espacio y moverse sin chocar.</p>
+    <p>Las cuatro tarjetas son las piezas que responden a esas preguntas. La de RAI es la del orquestador: el agente es un modelo y las herramientas son código.</p>
+    <p>La pregunta de investigación del proyecto está al pie. La misma frase recorre toda la presentación.</p>
+  </aside>
+</section>
+
+<!-- ======================= D3 ======================= -->
+<section class="slide" id="regla" data-fx="secuencia" data-section="El problema" data-title="Proponer frente a disponer">
+  <header class="s-head">
+    <p class="kicker">a · el problema · la regla de diseño</p>
+    <h2 class="s-title">Proponer frente a disponer</h2>
+  </header>
+  <div class="s-body">
+    <div class="enfrenta">
+      <div class="col is-m" data-seq="0">
+        <span class="pill is-m">modelo propone</span>
+        <h3>Un modelo propone</h3>
+        <ul>
+          <li>Interpretar la orden</li>
+          <li>Elegir entre opciones cerradas</li>
+          <li>Describir la escena</li>
+          <li>Pedir aclaración</li>
+        </ul>
+      </div>
+      <div class="mid" data-seq="1"><i></i></div>
+      <div class="col is-c" data-seq="2">
+        <span class="pill is-c">código dispone</span>
+        <h3>El código dispone</h3>
+        <ul>
+          <li>Geometría y poses</li>
+          <li>Velocidades</li>
+          <li>Paradas y límites</li>
+          <li>Equilibrio</li>
+        </ul>
+      </div>
+    </div>
+    <p class="banda" data-seq="3" style="position:absolute;left:0;right:0;bottom:0;margin:0;">Ninguna velocidad, parada ni límite sale de un modelo estocástico.</p>
+  </div>
+  <p class="src">Fuente: Rivas Pérez (2026), conclusión 10.2.</p>
+  <aside class="notes">
+    <p>La regla: lo que es lenguaje o juicio lo propone un modelo; lo que es geometría, velocidad o seguridad lo dispone el código.</p>
+    <p>Es la conclusión 10.2 del TFG, aplicada ahora al G1. Por eso el modelo puede equivocarse sin que el robot haga algo peligroso.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR B ======================= -->
+<section class="slide is-plain divider" id="sec-pila" data-fx="backdrop" data-seed="11" data-section="La pila" data-title="La pila completa">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">B</p>
+    <h2 class="s-title xl">La pila completa</h2>
+    <p class="lead">Diez capas, de la orden al motor.</p>
+  </div>
+  <aside class="notes"><p>Ahora la pila: diez capas, de la orden hasta el motor. Vamos de arriba abajo, igual que baja la orden.</p></aside>
+</section>
+
+<!-- ======================= D5 ======================= -->
+<section class="slide" id="pila" data-fx="secuencia" data-section="La pila" data-title="La pila, capa a capa">
+  <header class="s-head">
+    <p class="kicker">b · la pila · de la orden al motor</p>
+    <h2 class="s-title">La pila, capa a capa</h2>
+  </header>
+  <div class="s-body">
+    <div class="pila">
+      <svg class="rail" viewBox="0 0 74 590" preserveAspectRatio="none" aria-hidden="true">
+        <path id="pila-ruta" class="ln" d="M37 10 V580" data-seq="0" data-a="draw"/>
+        <circle class="dot" r="10" cx="37" cy="10" data-travel="#pila-ruta" data-period="6000" data-rest="0"/>
+      </svg>
+      <div class="hd"><span>capa</span><span>tipo</span><span>componente</span><span>dónde</span><span>frecuencia</span></div>
+      <div class="fila is-m" data-seq="1"><span class="c1">Parseo (System 2)</span><span class="pill is-m">propone</span><span class="c3">LLM local 2–9B (Qwen/Gemma) → consulta JSON</span><span class="c4">fuera</span><span class="c5">por orden</span></div>
+      <div class="fila is-m" data-seq="2"><span class="c1">Orquestación</span><span class="pill is-m">propone</span><span class="c3">Agente RAI + tools</span><span class="c4">a bordo</span><span class="c5">por orden</span></div>
+      <div class="fila is-c" data-seq="3"><span class="c1">Representación</span><span class="pill is-c">dispone</span><span class="c3">Grafo planta → habitación → objeto + capa de personas</span><span class="c4">construcción fuera</span><span class="c5">por evento</span></div>
+      <div class="fila is-c" data-seq="4"><span class="c1">Relación espacial</span><span class="pill is-c">dispone</span><span class="c3">Módulo geométrico: marco de la cama, lado derecho, K poses libres</span><span class="c4">a bordo</span><span class="c5">por orden</span></div>
+      <div class="fila is-m" data-seq="5"><span class="c1">Decisión (System 1)</span><span class="pill is-m">propone</span><span class="c3">Laya: choice / noul / score + umbral τ</span><span class="c4">a bordo</span><span class="c5">1–5 Hz</span></div>
+      <div class="fila is-m" data-seq="6"><span class="c1">Percepción</span><span class="pill is-m">propone</span><span class="c3">GroundingDINO + SAM 2 (o YOLO-World), OCR de placas</span><span class="c4">a bordo / fuera</span><span class="c5">1–5 Hz</span></div>
+      <div class="fila is-c" data-seq="7"><span class="c1">Localización y mapa</span><span class="pill is-c">dispone</span><span class="c3">FAST-LIO2 + mapa previo; SLAM Toolbox 2D</span><span class="c4">a bordo</span><span class="c5">10 Hz</span></div>
+      <div class="fila is-c" data-seq="8"><span class="c1">Planificación</span><span class="pill is-c">dispone</span><span class="c3">Nav2: Smac (global) + MPPI (local)</span><span class="c4">a bordo</span><span class="c5">10–20 Hz</span></div>
+      <div class="fila is-c" data-seq="9"><span class="c1">Locomoción</span><span class="pill is-c">dispone</span><span class="c3">Política RL de Unitree (cmd_vel)</span><span class="c4">a bordo</span><span class="c5">50–500 Hz</span></div>
+      <div class="fila is-c" data-seq="10"><span class="c1">Seguridad</span><span class="pill is-c">dispone</span><span class="c3">Límites por zona, parada por proximidad, watchdog</span><span class="c4">a bordo</span><span class="c5">continuo</span></div>
+    </div>
+  </div>
+  <p class="src">Fuente: propuesta del proyecto (nota 03, §5); no medido. FAST-LIO2 y SLAM Toolbox: por verificar.</p>
+  <aside class="notes">
+    <p>La orden baja por la pila. Cada fila dice quién decide, dónde corre y con qué frecuencia.</p>
+    <p>Las filas en morado son de modelos; las naranjas, de código. Las frecuencias son la propuesta del proyecto, no medidas.</p>
+    <p>Las dos primeras capas y la de decisión son las que cambian si cambiamos de modelo. Las de abajo no dependen de ningún modelo.</p>
+  </aside>
+</section>
+
+<!-- ======================= D6 ======================= -->
+<section class="slide" id="ritmo" data-fx="secuencia" data-section="La pila" data-title="Cada pieza a su ritmo">
+  <header class="s-head">
+    <p class="kicker">b · la pila · frecuencias</p>
+    <h2 class="s-title">Cada pieza a su ritmo</h2>
+  </header>
+  <div class="s-body">
+    <svg class="ritmo-svg" viewBox="0 0 1664 620" role="img" aria-label="Eje logarítmico de 0,1 Hz a 1 kHz con las bandas de frecuencia de cada pieza; los modelos quedan a la izquierda de una línea y el código determinista a la derecha">
+      <text x="0" y="40" style="font-size:28px;fill:var(--fg)" class="b">Todo lo que va rápido queda fuera del modelo.</text>
+      <line class="grid" x1="420" y1="120" x2="420" y2="560"/>
+      <line class="grid" x1="721" y1="120" x2="721" y2="560"/>
+      <line class="grid" x1="1022" y1="120" x2="1022" y2="560"/>
+      <line class="grid" x1="1323" y1="120" x2="1323" y2="560"/>
+      <line class="grid" x1="1624" y1="120" x2="1624" y2="560"/>
+      <line class="sep" x1="976" y1="100" x2="976" y2="560"/>
+      <text x="956" y="104" text-anchor="end" class="t2">modelos</text>
+      <text x="996" y="104" text-anchor="start" class="t2">código determinista</text>
+
+      <text x="0" y="178" data-seq="0" data-a="fade">LLM y RAI · tarea</text>
+      <rect class="soft" style="--k:var(--cat-1)" x="420" y="152" width="301" height="36" rx="6" data-seq="0" data-a="grow"/>
+      <text x="432" y="177" class="t2" data-seq="0">0,1–1 Hz</text>
+
+      <text x="721" y="212" text-anchor="middle" class="t2" data-seq="1">anclaje 1 Hz</text>
+      <text x="0" y="248" data-seq="1" data-a="fade">Laya · anclaje y social</text>
+      <circle class="ink" style="--k:var(--cat-1)" cx="721" cy="240" r="11" data-seq="1" data-a="pop"/>
+      <rect class="soft" style="--k:var(--cat-1)" x="721" y="222" width="210" height="36" rx="6" data-seq="1" data-a="grow"/>
+      <text x="733" y="247" class="t2" data-seq="1">1–5 Hz · social</text>
+
+      <text x="0" y="318" data-seq="2" data-a="fade">SLAM · localización</text>
+      <circle class="ink" style="--k:var(--cat-2)" cx="1022" cy="310" r="11" data-seq="2" data-a="pop"/>
+      <text x="1044" y="317" class="t2" data-seq="2">10 Hz</text>
+
+      <text x="0" y="388" data-seq="3" data-a="fade">Nav2 · plan local</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="1022" y="362" width="91" height="36" rx="6" data-seq="3" data-a="grow"/>
+      <text x="1125" y="387" class="t2" data-seq="3">10–20 Hz</text>
+
+      <text x="0" y="458" data-seq="4" data-a="fade">Locomoción</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="1232" y="432" width="301" height="36" rx="6" data-seq="4" data-a="grow"/>
+      <text x="1244" y="457" class="t2" data-seq="4">50–500 Hz</text>
+
+      <text x="0" y="528" data-seq="5" data-a="fade">Servo</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="1533" y="502" width="91" height="36" rx="6" data-seq="5" data-a="grow"/>
+      <text x="1518" y="527" text-anchor="end" class="t2" data-seq="5">0,5–1 kHz</text>
+
+      <line class="axis" x1="420" y1="560" x2="1624" y2="560"/>
+      <line class="axis" x1="420" y1="560" x2="420" y2="568"/>
+      <line class="axis" x1="721" y1="560" x2="721" y2="568"/>
+      <line class="axis" x1="1022" y1="560" x2="1022" y2="568"/>
+      <line class="axis" x1="1323" y1="560" x2="1323" y2="568"/>
+      <line class="axis" x1="1624" y1="560" x2="1624" y2="568"/>
+      <text x="420" y="598" text-anchor="middle" class="t3">0,1 Hz</text>
+      <text x="721" y="598" text-anchor="middle" class="t3">1 Hz</text>
+      <text x="1022" y="598" text-anchor="middle" class="t3">10 Hz</text>
+      <text x="1323" y="598" text-anchor="middle" class="t3">100 Hz</text>
+      <text x="1624" y="598" text-anchor="middle" class="t3">1 kHz</text>
+      <text x="0" y="598" class="t3">escala logarítmica</text>
+    </svg>
+  </div>
+  <p class="src">Fuente: nota 02, §2 (bandas de frecuencia de Laya y del modelo social); plan local, locomoción y servo: propuesta del proyecto. No medido.</p>
+  <aside class="notes">
+    <p>Cada pieza necesita un ritmo distinto. El eje es logarítmico: de 0,1 Hz a 1 kHz.</p>
+    <p>A la izquierda de la línea están los modelos: el LLM y RAI van a una petición por orden, y Laya, a 1–5 Hz. A la derecha, el código determinista.</p>
+    <p>Todo lo que va rápido queda fuera del modelo. Por eso Laya no controla el robot, solo elige.</p>
+  </aside>
+</section>
+
+<!-- ======================= D7 ======================= -->
+<section class="slide" id="donde" data-fx="secuencia" data-section="La pila" data-title="Qué corre dónde">
+  <header class="s-head">
+    <p class="kicker">b · la pila · despliegue</p>
+    <h2 class="s-title">Qué corre dónde</h2>
+  </header>
+  <div class="s-body">
+    <div class="donde" style="grid-template-rows: 1fr auto auto;">
+      <div class="a-bordo" data-seq="0">
+        <h3>G1 EDU + Jetson · a bordo</h3>
+        <div class="chips">
+          <span class="chip">agente RAI</span><span class="chip">Laya</span><span class="chip">detector ligero</span><span class="chip">consulta al grafo</span><span class="chip">módulo geométrico</span><span class="chip">SLAM y localización</span><span class="chip">Nav2</span><span class="chip">seguridad</span><span class="chip">locomoción</span>
+        </div>
+      </div>
+      <div class="enlace" data-seq="1">
+        <svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <path id="wifi" class="ln dash" d="M10 150 H290" data-a="draw"/>
+          <circle class="dot" r="10" cx="10" cy="150" data-travel="#wifi" data-period="3200" data-rest="0"/>
+          <text x="150" y="122" text-anchor="middle" class="t2">Wi-Fi</text>
+          <text x="150" y="186" text-anchor="middle" class="t3">watchdog</text>
+        </svg>
+      </div>
+      <div class="fuera" data-seq="2">
+        <h3>Servidor GPU · fuera</h3>
+        <div class="chips">
+          <span class="chip">LLM de parseo (2–9B)</span><span class="chip">construcción del grafo</span>
+        </div>
+      </div>
+      <div class="perfiles">
+        <div class="bx is-ok" data-seq="3"><span class="pill is-ok">HW-B · principal</span><p>Jetson en uso: todo lo de a bordo corre en el robot.</p></div>
+        <div class="bx is-h" data-seq="4"><span class="pill is-h">HW-A · modo degradado</span><p>Sin Jetson: lo neuronal sale fuera; el robot solo localiza, planifica, para y camina.</p></div>
+      </div>
+      <p class="small" data-seq="5" style="grid-column:1 / -1; margin-top:14px;"><span class="pill is-h" style="margin-right:12px;">por confirmar</span>Modelo exacto de Jetson (posiblemente Orin NX 16 GB, según TANGO y un artículo de ACM, visto solo por resumen), variante EDU y sensores.</p>
+    </div>
+  </div>
+  <p class="src">Propuesta del proyecto (nota 03, §5). Modelo de Jetson: por confirmar.</p>
+  <aside class="notes">
+    <p>Hay dos sitios. A bordo, lo que tiene que funcionar sin depender de la red: el agente, Laya, la percepción ligera, la geometría, Nav2, la seguridad y la locomoción.</p>
+    <p>Fuera, el LLM de parseo y la construcción del grafo. El perfil HW-A es el plan si no hay Jetson: el robot sigue localizando, planificando y parando, pero pierde lo neuronal.</p>
+    <p>El modelo exacto de Jetson, la variante EDU y los sensores están por confirmar. No los damos por hechos.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR C ======================= -->
+<section class="slide is-plain divider" id="sec-slam" data-fx="backdrop" data-seed="23" data-section="SLAM" data-title="SLAM: saber dónde estás">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">C</p>
+    <h2 class="s-title xl">SLAM: saber dónde estás</h2>
+    <p class="lead">Primero se mapea; después, solo se localiza.</p>
+  </div>
+  <aside class="notes"><p>Antes de navegar, el robot tiene que saber dónde está. Primero se mapea con el robot guiado; después, cada día, solo se localiza.</p></aside>
+</section>
+
+<!-- ======================= D9 ======================= -->
+<section class="slide" id="slam" data-fx="secuencia" data-section="SLAM" data-title="Mapear, luego localizar">
+  <header class="s-head">
+    <p class="kicker">c · mapa y localización · dos fases</p>
+    <h2 class="s-title">Mapear, luego localizar</h2>
+  </header>
+  <div class="s-body">
+    <div class="fases">
+      <div class="fase" data-seq="0">
+        <h3>Fase 1 · mapeo (una vez, con el robot guiado)</h3>
+        <div class="chain">
+          <div class="nodo is-c" data-seq="1"><b>LiDAR 3D + IMU</b><span>sensores (por confirmar)</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-c" data-seq="2"><b>Odometría LiDAR-inercial</b><span>FAST-LIO2</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-c" data-seq="3"><b>Nube de puntos 3D</b><span>del entorno recorrido</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-c" data-seq="4"><b>Proyección a mapa 2D</b><span>SLAM Toolbox</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-t" data-seq="5"><b>Mapa previo del hospital</b><span>se guarda para operar</span></div>
+        </div>
+      </div>
+      <div class="fase" data-seq="6">
+        <h3>Fase 2 · operación (cada día)</h3>
+        <div class="chain">
+          <div class="nodo is-c" data-seq="7"><b>Localización sobre el mapa previo</b><span>cada día</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-c" data-seq="8"><b>TF: map → odom → base_link</b><span>árbol de transformadas</span></div>
+          <div class="flecha"></div>
+          <div class="nodo is-c" data-seq="9"><b>Nav2</b><span>consume la pose</span></div>
+        </div>
+      </div>
+      <aside class="lateral" data-seq="10">
+        <h3>Por qué LiDAR-inercial</h3>
+        <p>En un humanoide, la cámara oscila con la marcha y la odometría visual deriva.</p>
+        <p>Por eso la localización se apoya en el LiDAR y en la inercia, no en la cámara sola.</p>
+      </aside>
+    </div>
+  </div>
+  <p class="src">FAST-LIO2 y SLAM Toolbox: por verificar. Idea de la odometría: nota 01, §4. Propuesta del proyecto, no implementada.</p>
+  <aside class="notes">
+    <p>En la fase de mapeo, el LiDAR y la IMU dan la odometría; la nube de puntos se proyecta a un mapa 2D y se guarda como mapa previo del hospital.</p>
+    <p>En operación, el robot solo se localiza sobre ese mapa y publica la TF hasta Nav2. No construye un mapa nuevo cada día.</p>
+    <p>Las dos herramientas concretas, FAST-LIO2 y SLAM Toolbox, están por verificar.</p>
+  </aside>
+</section>
+
+<!-- ======================= D10 ======================= -->
+<section class="slide" id="grafo" data-fx="secuencia" data-section="SLAM" data-title="Del mapa al grafo">
+  <header class="s-head">
+    <p class="kicker">c · mapa y localización · grafo semántico</p>
+    <h2 class="s-title">Del mapa al grafo</h2>
+  </header>
+  <div class="s-body grafo">
+    <div class="niveles">
+      <div class="nivel" data-seq="0"><div><b>1 · métrico</b><span class="s">rejilla de ocupación</span></div><span class="txt">Celdas libres u ocupadas del mapa previo: dónde se puede caminar.</span></div>
+      <div class="nivel" data-seq="1"><div><b>2 · topológico-semántico</b><span class="s">planta → habitaciones → objetos</span></div><span class="txt">Planta; habitaciones 201–215; objetos: cama, silla, lavabo, puerta.</span></div>
+      <div class="nivel t" data-seq="2"><div><b>3 · capa de personas</b><span class="s">con posición</span></div><span class="txt">Paciente, sanitario, visitante. Cambia mientras el robot se mueve.</span></div>
+    </div>
+    <div class="consulta" data-seq="3">
+      <pre class="codebox"><span class="c"># ejemplo ilustrativo</span>
+find_room("203")
+  → habitación 203
+list_objects("203")
+  → cama_A <span class="c">(cabecero → pies)</span></pre>
+      <p class="small">La construcción va fuera del robot; la consulta, dentro. Los nombres de las herramientas son propuestos, no implementados.</p>
+    </div>
+  </div>
+  <p class="src">Grafo al estilo HOV-SG (Werby et al., 2024) y ConceptGraphs (Gu et al., 2024). Construcción fuera, consulta a bordo.</p>
+  <aside class="notes">
+    <p>Tres niveles que se construyen en orden. El métrico sirve para caminar; el topológico-semántico, para entender «la 203» y «la cama»; y la capa de personas, para no pasar por encima de nadie.</p>
+    <p>A la derecha, una consulta de ejemplo: encontrar la habitación 203 y listar sus objetos con su orientación, cabecero y pies.</p>
+    <p>El grafo se construye fuera del robot, y dentro solo se consulta.</p>
+  </aside>
+</section>
+
+<!-- ======================= D11 ======================= -->
+<section class="slide" id="costmap" data-fx="secuencia" data-section="SLAM" data-title="El costmap de Nav2">
+  <header class="s-head">
+    <p class="kicker">c · navegación · costmap</p>
+    <h2 class="s-title">El costmap de Nav2</h2>
+  </header>
+  <div class="s-body costmap">
+    <svg viewBox="0 0 960 600" role="img" aria-label="Cuatro capas que se suman a un costmap final: estática, STVL, social y semántica gaussiana">
+      <defs><marker id="ah-cm" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <polygon class="sheet" style="--k:var(--seq-2)" points="120,20 580,20 520,120 60,120" data-seq="0" data-a="pop"/>
+      <polygon class="sheet" style="--k:var(--seq-3)" points="120,150 580,150 520,250 60,250" data-seq="1" data-a="pop"/>
+      <polygon class="sheet" style="--k:var(--seq-4)" points="120,280 580,280 520,380 60,380" data-seq="2" data-a="pop"/>
+      <polygon class="sheet vlm" style="--k:var(--cat-1)" points="120,410 580,410 520,510 60,510" data-seq="3" data-a="pop"/>
+      <path class="ln" d="M556 70 H600" data-seq="0" data-a="draw"/>
+      <path class="ln" d="M556 200 H600" data-seq="1" data-a="draw"/>
+      <path class="ln" d="M556 330 H600" data-seq="2" data-a="draw"/>
+      <path class="ln" d="M556 460 H600" data-seq="3" data-a="draw"/>
+      <text x="612" y="54" class="b" data-seq="0">estática</text>
+      <text x="612" y="84" class="t2" data-seq="0">mapa previo</text>
+      <text x="612" y="184" class="b" data-seq="1">STVL</text>
+      <text x="612" y="214" class="t2" data-seq="1">obstáculos 3D que caducan</text>
+      <text x="612" y="314" class="b" data-seq="2">social</text>
+      <text x="612" y="344" class="t2" data-seq="2">espacio personal</text>
+      <text x="612" y="444" class="b" data-seq="3">semántica gaussiana</text>
+      <text x="612" y="474" class="t2" data-seq="3">zonas marcadas por un VLM</text>
+      <path class="ln" d="M310 512 V532" marker-end="url(#ah-cm)" data-seq="4" data-a="draw"/>
+      <rect x="60" y="534" width="500" height="54" rx="14" class="box" data-seq="4" data-a="pop"/>
+      <text x="310" y="569" text-anchor="middle" class="b" data-seq="4">costmap final · suma de costes</text>
+    </svg>
+    <div class="lado" data-seq="5">
+      <p class="body-text">Las capas suman coste; <b>ninguna mueve el robot</b>.</p>
+      <div class="suma"><b>Estática, STVL y social: código</b><p>Mapa previo, obstáculos 3D y espacio personal se calculan con reglas.</p></div>
+      <div class="suma"><b>Semántica: modelo</b><p>Un VLM marca las zonas; el código decide cuánto coste añade cada una.</p></div>
+      <div class="planif"><span class="pill is-c">planificador global: Smac</span><span class="pill is-c">controlador local: MPPI</span></div>
+    </div>
+  </div>
+  <p class="src">Fuente: Rivas Pérez (2026), cap. 7 (STVL y capa VLM gaussiana, adaptado); propuesta del proyecto.</p>
+  <aside class="notes">
+    <p>El costmap es la suma de cuatro capas: el mapa previo, los obstáculos 3D que caducan (STVL), el espacio personal alrededor de las personas y una capa semántica marcada por un modelo de lenguaje visual.</p>
+    <p>Ninguna capa mueve el robot. Solo suman coste. Quien planifica es Smac y quien sigue la ruta es MPPI, y ambos trabajan con límites del código.</p>
+    <p>La capa semántica viene del TFG; el resto es propuesta de este proyecto.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR D ======================= -->
+<section class="slide is-plain divider" id="sec-llm" data-fx="backdrop" data-seed="37" data-section="LLM y RAI" data-title="LLM y RAI: entender y orquestar">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">D</p>
+    <h2 class="s-title xl">LLM y RAI: entender y orquestar</h2>
+    <p class="lead">Un modelo convierte la orden en una consulta; RAI coordina las herramientas.</p>
+  </div>
+  <aside class="notes"><p>Ahora el lenguaje: cómo una frase se convierte en una consulta y cómo RAI coordina las herramientas que usa el robot.</p></aside>
+</section>
+
+<!-- ======================= D13 ======================= -->
+<section class="slide" id="parseo" data-fx="secuencia" data-section="LLM y RAI" data-title="De la frase a una consulta">
+  <header class="s-head">
+    <p class="kicker">d · llm · parseo</p>
+    <h2 class="s-title">De la frase a una consulta</h2>
+  </header>
+  <div class="s-body">
+    <div class="parseo">
+      <div data-seq="0">
+        <p class="frase2">«Ve a <span class="r" style="--c:var(--cat-3)">la 203</span> y colócate <span class="r" style="--c:var(--cat-5)">a la derecha de</span> <span class="r" style="--c:var(--cat-4)">la cama</span>»</p>
+        <div class="lgnd">
+          <span><i style="--c:var(--cat-3)"></i>habitación</span>
+          <span><i style="--c:var(--cat-4)"></i>objeto</span>
+          <span><i style="--c:var(--cat-5)"></i>relación</span>
+        </div>
+      </div>
+      <div class="flecha" data-seq="1">
+        <div class="bx is-m"><b>LLM 2–9B</b><span>fuera del robot</span></div>
+        <span class="pill is-m">modelo propone</span>
+        <span style="font-size:64px;line-height:1;color:var(--fg-3);">→</span>
+      </div>
+      <div data-seq="2">
+        <pre class="codebox">{
+  "room": "203",
+  "anchor": "cama",
+  "relation": "derecha_de",
+  "frame": null
+}</pre>
+        <p class="nota"><code>frame: null</code>: el LLM no decide el marco de referencia; eso se resuelve después.</p>
+      </div>
+    </div>
+  </div>
+  <p class="src">Fuente: nota 02, §3.</p>
+  <aside class="notes">
+    <p>El LLM solo rellena un JSON con campos cerrados: la habitación, el objeto y la relación.</p>
+    <p>El marco de referencia queda en null a propósito. Qué significa «derecha» depende de la cama, del robot o del paciente, y esa decisión la resuelven la geometría y Laya, no el modelo de lenguaje.</p>
+  </aside>
+</section>
+
+<!-- ======================= D14 ======================= -->
+<section class="slide" id="rai" data-fx="secuencia" data-section="LLM y RAI" data-title="RAI orquesta, no conduce">
+  <header class="s-head">
+    <p class="kicker">d · rai · orquestación</p>
+    <h2 class="s-title">RAI orquesta, no conduce</h2>
+  </header>
+  <div class="s-body">
+    <div class="ring">
+      <svg viewBox="0 0 1664 600" aria-hidden="true">
+        <path class="ln" d="M832 300 L330 56" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L330 206" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L330 356" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L330 506" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L1334 56" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L1334 206" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L1334 356" data-seq="1" data-a="draw"/>
+        <path class="ln" d="M832 300 L1334 506" data-seq="1" data-a="draw"/>
+      </svg>
+      <div class="agente" data-seq="0"><b>Agente RAI</b><span>ciclo ReAct</span></div>
+      <div class="tool is-c" style="left:0;top:10px;" data-seq="2"><b>find_room</b><span class="pill is-c">código dispone</span></div>
+      <div class="tool is-c" style="left:0;top:160px;" data-seq="3"><b>list_objects</b><span class="pill is-c">código dispone</span></div>
+      <div class="tool is-c" style="left:0;top:310px;" data-seq="4"><b>candidate_poses</b><span class="pill is-c">código dispone</span></div>
+      <div class="tool is-m" style="left:0;top:460px;" data-seq="5"><b>choose</b><span class="pill is-m">modelo · Laya</span></div>
+      <div class="tool is-c" style="left:1334px;top:10px;" data-seq="2"><b>navigate_to_pose</b><span class="pill is-c">código dispone</span></div>
+      <div class="tool is-c" style="left:1334px;top:160px;" data-seq="3"><b>get_current_pose</b><span class="pill is-c">código dispone</span></div>
+      <div class="tool is-m" style="left:1334px;top:310px;" data-seq="4"><b>describe_scene</b><span class="pill is-m">modelo propone</span></div>
+      <div class="tool is-m" style="left:1334px;top:460px;" data-seq="5"><b>ask_user</b><span class="pill is-m">modelo propone</span></div>
+      <p class="pie" data-seq="6">8 tools, por debajo del techo de 9 que fue estable en el TFG. Ninguna lleva velocidades. navigate_to_pose va con límites.</p>
+    </div>
+  </div>
+  <p class="src">Diseño propio basado en Rivas Pérez (2026), cap. 6 y tabla 8.6. Nombres de tools propuestos, no implementados.</p>
+  <aside class="notes">
+    <p>RAI no conduce. El agente elige una herramienta; RAI comprueba los argumentos y la ejecuta.</p>
+    <p>Son ocho tools, por debajo del límite de nueve que resultó estable en el TFG. Ninguna lleva velocidades: el movimiento lo hace Nav2 con sus límites.</p>
+    <p>Las que deciden algo son del modelo: choose (con Laya), describe_scene y ask_user. Las demás son código.</p>
+  </aside>
+</section>
+
+<!-- ======================= D15 ======================= -->
+<section class="slide" id="tfg" data-fx="secuencia" data-section="LLM y RAI" data-title="Lo que el TFG midió">
+  <header class="s-head">
+    <p class="kicker">d · lo medido en el TFG</p>
+    <h2 class="s-title">Lo que el TFG midió</h2>
+  </header>
+  <div class="s-body" style="display:flex;flex-direction:column;">
+    <div class="medidos" style="height:auto;">
+      <div class="bx neutral" data-seq="0"><p class="lb">TOOLS POR MODELO</p><p class="big">9 vs 20</p><p class="t">Techo de tool calling de los LLM pequeños: con 20 tools, el modelo dejó de llamarlas.</p></div>
+      <div class="bx neutral" data-seq="1"><p class="lb">CONTEXTO ÚTIL</p><p class="big">3–6 %</p><p class="t">Fracción útil de una ventana de 128K tokens: hay que reiniciar cada 10–15 turnos.</p></div>
+      <div class="bx neutral" data-seq="2"><p class="lb">FALLOS</p><p class="big word">silencioso</p><p class="t">El agente falla sin avisar: el error no siempre se ve.</p></div>
+    </div>
+    <p class="cierre15" data-seq="3">Un LLM pequeño basta para planificar, pero no para decidir solo.</p>
+  </div>
+  <p class="src">Fuente: Rivas Pérez (2026), §5.2.1, §8.2 y tabla 8.6; fallos silenciosos en §9.3.</p>
+  <aside class="notes">
+    <p>Tres números del TFG. Con veinte tools, el modelo de 8B empezó a escribir la llamada como texto en lugar de ejecutarla; con nueve, funcionaba.</p>
+    <p>De una ventana de 128K solo se aprovecha entre un 3 y un 6 %.</p>
+    <p>Y los fallos suelen ser silenciosos: el agente falla sin avisar. Por eso un modelo pequeño basta para planificar, pero no para decidir solo.</p>
+  </aside>
+</section>
+
+<!-- ======================= SEPARADOR E ======================= -->
+<section class="slide is-plain divider" id="sec-laya" data-fx="backdrop" data-seed="53" data-section="Laya" data-title="Laya: decidir con confianza">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="div-num">E</p>
+    <h2 class="s-title xl">Laya: decidir con confianza</h2>
+    <p class="lead">Un modelo que no escribe: elige.</p>
+  </div>
+  <aside class="notes"><p>Laya es el modelo que decide. No escribe: elige entre opciones cerradas y da una probabilidad, que es lo que se calibra.</p></aside>
+</section>
+
+<!-- ======================= D17 ======================= -->
+<section class="slide" id="laya" data-fx="secuencia" data-section="Laya" data-title="Laya no escribe, elige">
+  <header class="s-head">
+    <p class="kicker">e · laya · primitivas</p>
+    <h2 class="s-title">Laya no escribe, elige</h2>
+  </header>
+  <div class="s-body laya">
+    <div class="prim">
+      <div class="bx is-m" data-seq="0"><span class="nm">choice</span><p>Una opción de una lista, con su distribución. <b>Ej.:</b> ¿qué cama? cama_A, cama_B, ambigua.</p></div>
+      <div class="bx is-m" data-seq="1"><span class="nm">noul</span><p>Probabilidad de que un enunciado sea verdadero. <b>Ej.:</b> «hay una persona en la zona».</p></div>
+      <div class="bx is-m" data-seq="2"><span class="nm">score</span><p>Posición en una escala de 2–10. <b>Ej.:</b> nivel de precaución social.</p></div>
+    </div>
+    <div class="ficha" data-seq="3">
+      <h3>Ficha técnica</h3>
+      <dl>
+        <dt>arquitectura</dt><dd>encoder bidireccional (ModernBERT-large)</dd>
+        <dt>tamaño y licencia</dt><dd>421 M parámetros · pesos &lt; 1 GB · Apache 2.0</dd>
+        <dt>ejecución</dt><dd>ONNX Runtime</dd>
+        <dt>latencia (cifra de los autores)</dt><dd>~33 ms por pregunta en una T4 · <span class="pill is-h" style="font-size:22px;padding:2px 12px;">no medida por nosotros</span></dd>
+        <dt>opciones recomendadas</dt><dd>menos de 20</dd>
+      </dl>
+    </div>
+  </div>
+  <p class="src">Fuente: ficha de Laya en Hugging Face (Convai, 2026); nota 02, §1.</p>
+  <aside class="notes">
+    <p>Laya tiene tres primitivas: elegir una opción, decir la probabilidad de que algo sea cierto, y puntuar en una escala.</p>
+    <p>Es un encoder pequeño, de 421 millones de parámetros, con pesos de menos de un gigabyte y licencia Apache 2.0.</p>
+    <p>Los 33 milisegundos por pregunta son la cifra de los autores en una T4. Nosotros no la hemos medido, y la Jetson puede ser distinta.</p>
+  </aside>
+</section>
+
+<!-- ======================= D18 ======================= -->
+<section class="slide" id="preguntas" data-fx="secuencia" data-section="Laya" data-title="Las preguntas del hospital">
+  <header class="s-head">
+    <p class="kicker">e · laya · preguntas de la orden</p>
+    <h2 class="s-title">Las preguntas del hospital</h2>
+  </header>
+  <div class="s-body" style="display:flex;flex-direction:column;justify-content:center;">
+    <table class="t" data-seq="0">
+      <thead><tr><th>pregunta</th><th>primitiva</th><th>salidas</th></tr></thead>
+      <tbody>
+        <tr><td>¿qué cama?</td><td><code>choice</code></td><td class="m">cama_A, cama_B, ambigua</td></tr>
+        <tr><td>¿qué marco define «derecha»?</td><td><code>choice</code></td><td class="m">intrínseco de la cama, robot, usuario, ambiguo</td></tr>
+        <tr><td>¿qué pose?</td><td><code>choice</code></td><td class="m">P1…Pk, k ≤ 10, ya libres de colisión</td></tr>
+        <tr><td>¿hay persona en la zona?</td><td><code>noul</code></td><td class="m">probabilidad de que sea verdadero</td></tr>
+        <tr><td>nivel de precaución social</td><td><code>score</code></td><td class="m">escala 1–5</td></tr>
+        <tr><td>¿pedir confirmación?</td><td><code>noul</code></td><td class="m">probabilidad de que sea verdadero</td></tr>
+      </tbody>
+    </table>
+    <p class="pie18" data-seq="1">Las opciones las genera el <span class="k-code">código</span>; Laya solo elige.</p>
+  </div>
+  <p class="src">Fuente: nota 02, §3.</p>
+  <aside class="notes">
+    <p>Estas son las seis preguntas que la orden deja abiertas en el hospital.</p>
+    <p>Cada una tiene opciones que genera el código. Las poses ya son libres de colisión cuando Laya las ve.</p>
+    <p>Laya solo elige entre ellas. La escala de la precaución social es de 1 a 5 en esta tabla.</p>
+  </aside>
+</section>
+
+<!-- ======================= D19 ======================= -->
+<section class="slide" id="puerta" data-fx="secuencia" data-section="Laya" data-title="Una puerta antes de actuar">
+  <header class="s-head">
+    <p class="kicker">e · laya · abstención</p>
+    <h2 class="s-title">Una puerta antes de actuar</h2>
+  </header>
+  <div class="s-body puerta">
+    <div class="caso" data-seq="0">
+      <h3>Dos camas</h3>
+      <span class="aviso">valores ilustrativos</span>
+      <svg viewBox="0 0 740 300" role="img" aria-label="Dos camas con probabilidades 0,52 y 0,48: ninguna supera el umbral 0,8">
+        <line class="thr" x1="550" y1="20" x2="550" y2="250"/>
+        <text x="550" y="16" text-anchor="middle" class="t2">τ = 0,8</text>
+        <text x="0" y="90" class="t2">cama_A</text>
+        <rect class="bar" style="--k:var(--cat-1)" x="150" y="60" width="260" height="44" rx="6" data-seq="1" data-a="grow"/>
+        <text x="422" y="92" data-seq="1">0,52</text>
+        <text x="0" y="170" class="t2">cama_B</text>
+        <rect class="bar" style="--k:var(--cat-1)" x="150" y="140" width="240" height="44" rx="6" data-seq="2" data-a="grow"/>
+        <text x="402" y="172" data-seq="2">0,48</text>
+        <line class="axis" x1="150" y1="250" x2="650" y2="250"/>
+        <text x="150" y="282" text-anchor="middle" class="t3">0</text>
+        <text x="650" y="282" text-anchor="middle" class="t3">1</text>
+      </svg>
+      <p class="res" data-seq="3">Ninguna supera τ → <b>ask_user</b>: «¿cuál de las dos?»</p>
+      <span class="pill is-h" style="align-self:flex-start;">abstención: pregunta</span>
+    </div>
+    <div class="caso" data-seq="4">
+      <h3>Una cama</h3>
+      <span class="aviso">valores ilustrativos</span>
+      <svg viewBox="0 0 740 300" role="img" aria-label="Una cama con probabilidad 0,97: supera el umbral 0,8">
+        <line class="thr" x1="550" y1="20" x2="550" y2="250"/>
+        <text x="550" y="16" text-anchor="middle" class="t2">τ = 0,8</text>
+        <text x="0" y="130" class="t2">cama_A</text>
+        <rect class="bar" style="--k:var(--cat-1)" x="150" y="100" width="485" height="44" rx="6" data-seq="5" data-a="grow"/>
+        <text x="647" y="132" data-seq="5">0,97</text>
+        <line class="axis" x1="150" y1="250" x2="650" y2="250"/>
+        <text x="150" y="282" text-anchor="middle" class="t3">0</text>
+        <text x="650" y="282" text-anchor="middle" class="t3">1</text>
+      </svg>
+      <p class="res" data-seq="6">Supera τ → <b>candidate_poses</b> → Nav2.</p>
+      <span class="pill is-ok" style="align-self:flex-start;">actúa</span>
+    </div>
+  </div>
+  <p class="src">Valores ilustrativos, no medidos. Propuesta (nota 02, §3); abstención como en KnowNo (Ren et al., 2023).</p>
+  <aside class="notes">
+    <p>Dos ejemplos con valores ilustrativos. Si ninguna opción supera el umbral, el robot no actúa: pregunta.</p>
+    <p>Si una supera el umbral, el robot sigue: genera poses candidatas y se las pasa a Nav2.</p>
+    <p>El umbral de 0,8 es un valor de ejemplo. No está decidido: lo fija el proyecto.</p>
+  </aside>
+</section>
+
+<!-- ======================= D20 ======================= -->
+<section class="slide" id="recorrido" data-fx="secuencia" data-step-ms="420" data-section="Montaje" data-title="La orden E1, paso a paso">
+  <header class="s-head">
+    <p class="kicker">f · montaje · la orden E1</p>
+    <h2 class="s-title">La orden E1, paso a paso</h2>
+  </header>
+  <div class="s-body">
+    <svg class="secuencia-svg" viewBox="0 0 1664 620" role="img" aria-label="Secuencia de la orden E1 entre Usuario, RAI con LLM, Grafo y geometría, Laya, Nav2 y G1">
+      <defs><marker id="ah-seq" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path class="arrowhead" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <!-- líneas de vida -->
+      <line class="sep" x1="140" y1="66" x2="140" y2="612"/>
+      <line class="sep" x1="417" y1="66" x2="417" y2="612"/>
+      <line class="sep" x1="694" y1="66" x2="694" y2="612"/>
+      <line class="sep" x1="971" y1="66" x2="971" y2="612"/>
+      <line class="sep" x1="1248" y1="66" x2="1248" y2="612"/>
+      <line class="sep" x1="1525" y1="66" x2="1525" y2="612"/>
+      <!-- carriles -->
+      <rect class="lane" x="25" y="0" width="230" height="52" rx="10"/><text x="140" y="34" text-anchor="middle" class="b">Usuario</text>
+      <rect class="soft" style="--k:var(--cat-1)" x="302" y="0" width="230" height="52" rx="10"/><text x="417" y="34" text-anchor="middle" class="b">RAI + LLM</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="579" y="0" width="230" height="52" rx="10"/><text x="694" y="34" text-anchor="middle" class="b">Grafo y geometría</text>
+      <rect class="soft" style="--k:var(--cat-1)" x="856" y="0" width="230" height="52" rx="10"/><text x="971" y="34" text-anchor="middle" class="b">Laya</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="1133" y="0" width="230" height="52" rx="10"/><text x="1248" y="34" text-anchor="middle" class="b">Nav2</text>
+      <rect class="soft" style="--k:var(--cat-2)" x="1410" y="0" width="230" height="52" rx="10"/><text x="1525" y="34" text-anchor="middle" class="b">G1</text>
+
+      <!-- 1 -->
+      <path class="ln" d="M142 110 H415" marker-end="url(#ah-seq)" data-seq="0" data-a="draw"/>
+      <text x="278" y="100" text-anchor="middle" class="halo" data-seq="0">1 · la orden E1</text>
+      <!-- 2 -->
+      <text x="417" y="152" text-anchor="middle" class="halo" style="fill:var(--cat-1)" data-seq="1">2 · LLM → JSON</text>
+      <!-- 3 -->
+      <path class="ln" d="M419 198 H692" marker-end="url(#ah-seq)" data-seq="2" data-a="draw"/>
+      <text x="555" y="188" text-anchor="middle" class="halo" data-seq="2">3 · find_room · list_objects</text>
+      <!-- 4 -->
+      <path class="ln" d="M419 242 H692" marker-end="url(#ah-seq)" data-seq="3" data-a="draw"/>
+      <text x="555" y="232" text-anchor="middle" class="halo" data-seq="3">4 · candidate_poses</text>
+      <!-- 4b retorno -->
+      <path class="ln dash" d="M692 286 H419" marker-end="url(#ah-seq)" data-seq="4" data-a="fade"/>
+      <text x="555" y="278" text-anchor="middle" class="halo t2" data-seq="4">K poses libres</text>
+      <!-- 5 -->
+      <path class="ln" d="M419 330 H969" marker-end="url(#ah-seq)" data-seq="5" data-a="draw"/>
+      <text x="694" y="320" text-anchor="middle" class="halo" data-seq="5">5 · choose(opciones)</text>
+      <!-- 5b retorno -->
+      <path class="ln dash" d="M969 374 H419" marker-end="url(#ah-seq)" data-seq="6" data-a="fade"/>
+      <text x="694" y="366" text-anchor="middle" class="halo t2" data-seq="6">pose + confianza p</text>
+      <!-- 6 -->
+      <text x="417" y="440" text-anchor="middle" class="halo" style="fill:var(--fg)" data-seq="7">6 · ¿p ≥ τ?</text>
+      <!-- 6a -->
+      <path class="ln k" style="--k:var(--cat-2)" d="M419 462 H1246" marker-end="url(#ah-seq)" data-seq="8" data-a="draw"/>
+      <text x="832" y="452" text-anchor="middle" class="halo" style="fill:var(--cat-2)" data-seq="8">6a · si p ≥ τ: navigate_to_pose</text>
+      <!-- 7 -->
+      <path class="ln k" style="--k:var(--cat-2)" d="M1250 506 H1523" marker-end="url(#ah-seq)" data-seq="9" data-a="draw"/>
+      <text x="1387" y="496" text-anchor="middle" class="halo" style="fill:var(--cat-2)" data-seq="9">7 · cmd_vel</text>
+      <!-- 8 -->
+      <path class="ln dash" d="M1523 550 H419" marker-end="url(#ah-seq)" data-seq="10" data-a="fade"/>
+      <text x="971" y="542" text-anchor="middle" class="halo" data-seq="10">8 · «He llegado»</text>
+      <!-- 6b -->
+      <path class="ln dash" style="stroke:var(--warn)" d="M417 594 H142" marker-end="url(#ah-seq)" data-seq="11" data-a="fade"/>
+      <text x="280" y="586" text-anchor="middle" class="halo" data-seq="11">6b · si p &lt; τ: ask_user</text>
+    </svg>
+  </div>
+  <p class="src">Propuesta del proyecto. Sin tiempos: no están medidos. Nombres de tools propuestos, no implementados.</p>
+  <aside class="notes">
+    <p>Recorrido de la orden E1 con los mensajes en orden. Cada flecha es una llamada entre piezas.</p>
+    <p>El LLM convierte la frase en JSON; el grafo y la geometría dan las poses; Laya elige una y da su confianza.</p>
+    <p>Si la confianza supera el umbral, Nav2 recibe la pose. Si no, el robot pregunta. No hay tiempos porque nada de esto está medido.</p>
+  </aside>
+</section>
+
+<!-- ======================= D21 ======================= -->
+<section class="slide" id="montaje" data-fx="secuencia" data-section="Montaje" data-title="Orden de montaje">
+  <header class="s-head">
+    <p class="kicker">f · montaje · fases y criterio de hecho</p>
+    <h2 class="s-title">Orden de montaje</h2>
+  </header>
+  <div class="s-body">
+    <div class="montaje">
+      <div class="bx is-c" data-seq="0"><span class="n">1</span><h3>Mapa y Nav2</h3><p><b>Criterio de hecho:</b> el robot (o la simulación) llega a una pose dada a mano.</p><span class="pill is-c">código dispone</span></div>
+      <div class="bx is-c" data-seq="1"><span class="n">2</span><h3>Percepción y grafo</h3><p><b>Criterio de hecho:</b> <code>list_objects("203")</code> devuelve las camas con su orientación.</p><span class="pill is-c">código dispone</span></div>
+      <div class="bx is-m" data-seq="2"><span class="n">3</span><h3>RAI + LLM</h3><p><b>Criterio de hecho:</b> la orden en texto produce el JSON correcto.</p><span class="pill is-m">modelo propone</span></div>
+      <div class="bx is-c" data-seq="3"><span class="n">4</span><h3>Módulo geométrico</h3><p><b>Criterio de hecho:</b> K poses libres a la derecha de la cama, en su marco.</p><span class="pill is-c">código dispone</span></div>
+      <div class="bx is-m" data-seq="4"><span class="n">5</span><h3>Laya y umbral</h3><p><b>Criterio de hecho:</b> accuracy, ECE y riesgo-cobertura en S1 zero-shot, S2 fine-tuned, S3 LLM con JSON y S5 reglas. Se puede hacer ya en el PC, sin robot.</p><span class="pill is-m">modelo propone</span></div>
+      <div class="bx is-c" data-seq="5"><span class="n">6</span><h3>Seguridad e integración</h3><p><b>Criterio de hecho:</b> watchdog, límites por zona y parada por proximidad; escenarios E1–E6.</p><span class="pill is-c">código dispone</span></div>
+    </div>
+  </div>
+  <p class="src">Fuente: nota 04 (plan de prueba de concepto). Orden de fases sin fechas.</p>
+  <aside class="notes">
+    <p>Seis fases, cada una con un criterio de hecho que se puede comprobar. Primero el movimiento, luego la percepción, luego el lenguaje.</p>
+    <p>La fase 5 es la que se puede empezar ya en el PC, sin robot, con la prueba de concepto de Laya.</p>
+    <p>No ponemos fechas. Cada fase se cierra cuando se cumple su criterio.</p>
+  </aside>
+</section>
+
+<!-- ======================= D22 ======================= -->
+<section class="slide" id="falta" data-fx="secuencia" data-section="Montaje" data-title="Lo que falta saber">
+  <header class="s-head">
+    <p class="kicker">f · cierre · lo que falta saber</p>
+    <h2 class="s-title">Lo que falta saber</h2>
+  </header>
+  <div class="s-body" style="display:flex;flex-direction:column;justify-content:space-between;">
+    <div class="falta">
+      <div class="it" data-seq="0"><span class="pill is-h">pendiente</span>modelo exacto de Jetson y memoria</div>
+      <div class="it" data-seq="1"><span class="pill is-h">pendiente</span>variante EDU (DoF)</div>
+      <div class="it" data-seq="2"><span class="pill is-h">pendiente</span>sensores reales del G1 del laboratorio</div>
+      <div class="it" data-seq="3"><span class="pill is-h">pendiente</span>convención clínica: «derecha de la cama» = derecha del paciente</div>
+      <div class="it" data-seq="4"><span class="pill is-h">pendiente</span>latencia real de Laya en la Jetson</div>
+      <div class="it" data-seq="5"><span class="pill is-h">pendiente</span>acceso al robot o simulador (HumanoidVLN en Isaac Sim, o un mundo de hospital propio)</div>
+    </div>
+    <p class="motto" data-seq="6">Lo que sí está claro: <span class="m">el modelo propone</span>, <span class="c">el código dispone</span>.</p>
+  </div>
+  <p class="src">Estado a 13-10-2026. Lo marcado como pendiente no está verificado.</p>
+  <aside class="notes">
+    <p>Esto es lo que falta saber. Hasta cerrarlo, todo lo de la Jetson, los sensores y la latencia de Laya es una suposición.</p>
+    <p>El acceso al robot o a un simulador decide cuándo podemos medir. Sin eso, la presentación sigue siendo propuesta.</p>
+    <p>La última línea resume la regla de diseño que sí está clara.</p>
+  </aside>
+</section>
+
+<!-- ======================= REFERENCIAS ======================= -->
+<section class="slide" id="referencias-1" data-section="Referencias" data-title="Referencias (1/2)">
+  <header class="s-head">
+    <p class="kicker">anexo · ✅ comprobado en el original · 🔎 visto por resumen · 📚 por verificar</p>
+    <h2 class="s-title">Referencias (1/2)</h2>
+  </header>
+  <div class="s-body bib">
+    <p>Convai (2026). <em>Laya</em>: ficha del modelo en Hugging Face. <span class="st">🔎 ficha</span></p>
+    <p>Gu, Q., Kuwajerwala, A., Morin, S. et al. (2024). <em>ConceptGraphs: Open-Vocabulary 3D Scene Graphs for Perception and Planning</em>. arXiv:2309.16650. <span class="st">✅ abstract</span></p>
+    <p>Ling, G., Xue, M. y Ye, Z. (2026). <em>Jev in the Wild: A Data-Driven Analysis of the Jev Model’s Functionality, Applications and Ecosystem</em>. arXiv:2609.30216. <span class="st">✅ abstract</span></p>
+    <p>Macenski, S. y Jambrecic, I. (2021). <em>SLAM Toolbox: SLAM for the dynamic world</em>. <span class="st">📚 por verificar</span></p>
+    <p>Open Robotics (2024). <em>Navigation 2: The ROS 2 Navigation Framework</em>. nav2.org. <span class="st">vía Rivas Pérez (2026)</span></p>
+    <p>Rana, K., Haviland, J., Garg, S. et al. (2023). <em>SayPlan: Grounding Large Language Models using 3D Scene Graphs for Scalable Robot Task Planning</em>. <span class="st">✅ título y autores</span></p>
+  </div>
+  <aside class="notes"><p>✅ = comprobado en el original. 🔎 = visto solo por resumen o buscador. 📚 = citado de memoria, por verificar antes de afirmarlo en el paper. «Vía Rivas Pérez (2026)» = citado a través de la memoria del TFG.</p></aside>
+</section>
+
+<section class="slide" id="referencias-2" data-section="Referencias" data-title="Referencias (2/2)">
+  <header class="s-head">
+    <p class="kicker">anexo · ✅ comprobado en el original · 🔎 visto por resumen · 📚 por verificar</p>
+    <h2 class="s-title">Referencias (2/2)</h2>
+  </header>
+  <div class="s-body bib">
+    <p>Ren, A. Z., Dixit, A., Bodrova, A. et al. (2023). <em>Robots That Ask For Help: Uncertainty Alignment for Large Language Model Planners</em> (KnowNo). arXiv:2307.01928. <span class="st">✅ abstract</span></p>
+    <p>Rivas Pérez, J. C. (2026). <em>Memoria del Trabajo Fin de Grado</em> (Robotnik Automation, RB-Kairos Plus; RAI, ROS&nbsp;2 y Nav2). Universitat Jaume I. CC BY-NC-SA. <span class="st">✅ texto completo</span></p>
+    <p>RobotecAI (2025a). <em>RAI: Robot AI Framework</em>. robotecai.github.io/rai. Repositorio RobotecAI/rai, rai_core 2.12.4, commit b018729 (consultado el 12-10-2026). <span class="st">✅ código</span></p>
+    <p>Werby, A., Huang, C., Büchner, M. y Burgard, W. (2024). <em>Hierarchical Open-Vocabulary 3D Scene Graphs for Language-Grounded Robot Navigation</em> (HOV-SG). arXiv:2403.17846. <span class="st">✅ abstract</span></p>
+    <p>Xu, W., Cai, Y., He, D. et al. (2022). <em>FAST-LIO2: Fast Direct LiDAR-inertial Odometry</em>. <span class="st">📚 por verificar</span></p>
+    <p>Yao, S., Zhao, J., Yu, D. et al. (2023). ReAct: Synergizing Reasoning and Acting in Language Models. <em>ICLR 2023</em>. <span class="st">vía Rivas Pérez (2026)</span></p>
+  </div>
+  <aside class="notes"><p>Las referencias marcadas con 📚 se citan de memoria y deben verificarse antes de usarlas en el paper.</p></aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['nube', 'suizo', 'arcilla', 'termica', 'noche', 'rice'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

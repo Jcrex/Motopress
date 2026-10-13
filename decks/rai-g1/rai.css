@@ -1,0 +1,153 @@
+/* Maquetación propia del deck «RAI en el Unitree G1». Todo color sale de los tokens del estilo activo.
+   Dos series fijas en todo el deck: cat-1 = el modelo propone · cat-2 = el código dispone. */
+:root {
+  --model: var(--cat-1);
+  --code: var(--cat-2);
+  --third: var(--cat-3);
+}
+.slide { --model-soft: color-mix(in oklab, var(--model) 16%, var(--bg)); --code-soft: color-mix(in oklab, var(--code) 16%, var(--bg)); --hyp-soft: color-mix(in oklab, var(--warn) 16%, var(--bg)); }
+.slide aside.notes { display: none; }
+[data-style="nube"] .deco-folio .n::before { content: "/rai_g1/slide_"; }
+[data-style="noche"] .deco-folio .n::before { content: "SYS.RAI_G1 // "; }
+
+/* ---------- portada, separadores y cierre ---------- */
+.cover-body, .divider-body { align-self: end; display: flex; flex-direction: column; gap: 30px; max-width: 1180px; }
+.cover .s-title.xl { font-size: calc(var(--title-size) * 1.9); }
+.cover .lead, .divider .lead { color: var(--fg-2); }
+.cover .chip { background: color-mix(in oklab, var(--bg) 70%, transparent); }
+.cover .who { font: 500 30px/1.3 var(--font-text); color: var(--fg); margin: 0; }
+.div-num { margin: 0; font: 700 220px/0.8 var(--font-display); letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 3px var(--accent); }
+[data-style="suizo"] .div-num { color: var(--accent); -webkit-text-stroke: 0; }
+
+/* ---------- piezas del deck ---------- */
+.slide > .src.src.src { position: absolute; z-index: 1; }
+.src { position: absolute; left: 128px; right: 220px; bottom: 46px; margin: 0; font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); text-wrap: pretty; }
+.k-model, .k-code, .k-warn, .k-err, .k-ok { font-weight: 600; color: var(--fg); }
+.k-model { box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--model) 45%, transparent); }
+.k-code { box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--code) 45%, transparent); }
+.k-warn { box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--warn) 50%, transparent); }
+.k-err { box-shadow: inset 0 -0.32em 0 color-mix(in oklab, var(--err) 45%, transparent); }
+.tag { display: inline-flex; align-items: center; gap: 10px; padding: 4px 14px; border-radius: 999px; border: 1px solid var(--line-2); font: 500 22px/1.2 var(--font-mono); color: var(--fg); white-space: nowrap; background: var(--bg); }
+.tag::before { content: ""; width: 12px; height: 12px; border-radius: 50%; background: var(--c, var(--fg-3)); flex: none; }
+.tag.model { --c: var(--model); } .tag.code { --c: var(--code); } .tag.hyp { --c: var(--warn); } .tag.ok { --c: var(--ok); } .tag.err { --c: var(--err); }
+.hyp-head { display: flex; gap: 18px; align-items: center; }
+.hyp-head .tag { font-size: 22px; border-color: var(--warn); background: var(--hyp-soft); }
+.side-text { margin: 0; font-size: 26px; line-height: 1.42; color: var(--fg-2); text-wrap: pretty; }
+.side-text strong, .side-text b { color: var(--fg); }
+.body-text { margin: 0; font-size: 28px; line-height: 1.42; color: var(--fg); text-wrap: pretty; }
+ul.clean { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 16px; }
+ul.clean li { position: relative; padding-left: 30px; font-size: 26px; line-height: 1.38; color: var(--fg-2); text-wrap: pretty; }
+ul.clean li::before { content: ""; position: absolute; left: 4px; top: .55em; width: 10px; height: 10px; border-radius: 2px; background: var(--fg-3); }
+ul.clean li b, ul.clean li strong { color: var(--fg); }
+.panel h3, .stack h3 { margin: 0; font: 600 30px/1.15 var(--font-display); color: var(--fg); }
+.panel.model { border-color: var(--model); background: var(--model-soft); }
+.panel.code { border-color: var(--code); background: var(--code-soft); }
+.panel.hyp { border-color: var(--warn); }
+code { font-family: var(--font-mono); font-size: .9em; }
+
+/* vídeo */
+.vid { position: relative; width: 100%; aspect-ratio: 16 / 9; background: var(--bg-3); border: var(--stroke) solid var(--line-2); border-radius: var(--radius); overflow: hidden; }
+.vid video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+.vid .vlabel { position: absolute; left: 10px; top: 10px; padding: 4px 10px; border-radius: 6px; font: 500 18px/1.2 var(--font-mono); color: #fff; background: rgb(0 0 0 / .62); pointer-events: none; }
+.vidcap { margin: 0; font: 400 22px/1.35 var(--font-text); color: var(--fg-2); text-wrap: pretty; }
+
+/* SVG del deck: el texto usa fg, fg-2 y fg-3; las series, sus tokens */
+svg.dia { width: 100%; height: 100%; display: block; overflow: visible; }
+svg.dia text { fill: var(--fg); font-family: var(--font-text); font-size: 24px; }
+svg.dia .t2 { fill: var(--fg-2); }
+svg.dia .t3 { fill: var(--fg-3); font-size: 22px; }
+svg.dia .mono { font-family: var(--font-mono); font-size: 22px; }
+svg.dia .h { font-family: var(--font-display); font-weight: 700; font-size: 30px; }
+svg.dia .b { font-weight: 600; }
+svg.dia .box { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 2; }
+svg.dia .box.model { fill: var(--model-soft); stroke: var(--model); }
+svg.dia .box.code { fill: var(--code-soft); stroke: var(--code); }
+svg.dia .box.hyp { fill: var(--hyp-soft); stroke: var(--warn); stroke-dasharray: 8 6; }
+svg.dia .box.solid { fill: var(--fg); stroke: none; }
+svg.dia .inv { fill: var(--bg); }
+svg.dia .ln { fill: none; stroke: var(--fg-3); stroke-width: 2.5; }
+svg.dia .ln.model { stroke: var(--model); } svg.dia .ln.code { stroke: var(--code); }
+svg.dia .dash { stroke-dasharray: 7 6; }
+svg.dia .grid { stroke: var(--line); stroke-width: 1.5; }
+svg.dia .axis { stroke: var(--line-2); stroke-width: 2; }
+svg.dia .f-model { fill: var(--model); } svg.dia .f-code { fill: var(--code); } svg.dia .f-third { fill: var(--third); }
+svg.dia .f-ok { fill: var(--ok); } svg.dia .f-warn { fill: var(--warn); } svg.dia .f-err { fill: var(--err); }
+svg.dia .f-soft { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 1.5; }
+svg.dia .s-warn { stroke: var(--warn); } svg.dia .s-err { stroke: var(--err); } svg.dia .s-fg { stroke: var(--fg-2); }
+svg.dia .dot { fill: var(--accent); stroke: var(--bg); stroke-width: 3; }
+svg.dia .arrowhead { fill: var(--fg-3); }
+[data-a="grow"] { transform-box: fill-box; transform-origin: left center; }
+[data-a="rise"] { transform-box: fill-box; transform-origin: center bottom; }
+[data-a="pop"] { transform-box: fill-box; transform-origin: center; }
+
+/* ---------- D2 · la orden ---------- */
+.orden { display: grid; grid-template-rows: auto auto; gap: 64px; align-content: start; }
+.frase { margin: 0; font: var(--title-weight) 62px/1.35 var(--font-display); color: var(--fg); letter-spacing: var(--title-tracking); text-wrap: balance; }
+.frase .tk { display: inline-flex; flex-direction: column; align-items: flex-start; vertical-align: top; }
+.frase .tk b { font-weight: inherit; padding: 0 6px; border-radius: 8px; background: color-mix(in oklab, var(--c) 22%, transparent); box-shadow: inset 0 -6px 0 var(--c); }
+.frase .tk small { font: 500 22px/1.2 var(--font-mono); color: var(--fg-2); margin: 10px 6px 0; }
+.retos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.retos .panel { display: flex; flex-direction: column; gap: 12px; }
+.retos .n { font: 700 44px/1 var(--font-display); color: var(--accent-ink); }
+.retos p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--fg-2); }
+
+/* ---------- D4 · pila ---------- */
+.pila { display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+.capa { display: grid; grid-template-columns: 330px 1fr; gap: 24px; align-items: center; padding: 22px 28px; border-radius: var(--radius); border: var(--stroke) solid var(--line-2); background: var(--bg-3); }
+.capa .nm { display: flex; flex-direction: column; gap: 4px; }
+.capa .nm b { font: 600 32px/1.1 var(--font-display); color: var(--fg); }
+.capa .nm span { font: 400 22px/1.2 var(--font-mono); color: var(--fg-3); }
+.capa .parts { display: flex; flex-wrap: wrap; gap: 10px 12px; }
+.capa .parts .chip { font-size: 22px; color: var(--fg); background: var(--bg); }
+.capa.top { border-color: var(--third); }
+.capa.mid { border-color: var(--model); background: var(--model-soft); }
+.capa.bot { border-color: var(--code); background: var(--code-soft); }
+
+/* ---------- D6 · una tool ---------- */
+.pasos { display: flex; flex-direction: column; gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: p; }
+.pasos li { counter-increment: p; display: grid; grid-template-columns: 50px 1fr; gap: 16px; align-items: center; padding: 14px 20px; border-radius: var(--radius); background: var(--bg-3); border: 1px solid var(--line); font-size: 25px; line-height: 1.3; color: var(--fg); }
+.pasos li::before { content: counter(p); display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; font: 600 24px/1 var(--font-mono); color: var(--fg); border: 3px solid var(--c, var(--fg-3)); }
+.pasos li.model { --c: var(--model); } .pasos li.code { --c: var(--code); }
+.pasos li > div { min-width: 0; }
+.pasos li small { display: block; font: 400 21px/1.3 var(--font-mono); color: var(--fg-3); margin-top: 2px; }
+
+/* ---------- D7 · config ---------- */
+.codebox { margin: 0; padding: 22px 28px; font: 400 24px/1.55 var(--font-mono); background: var(--bg-2); border: 1px solid var(--line-2); border-radius: var(--radius); color: var(--fg); white-space: pre; }
+.codebox .c { color: var(--fg-3); } .codebox .s { color: var(--accent-ink); } .codebox .k { font-weight: 600; }
+
+/* ---------- D8 · ecosistema ---------- */
+.modgrid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 20px; height: 100%; }
+.mod { display: flex; flex-direction: column; gap: 8px; padding: 20px 24px; border-radius: var(--radius); background: var(--bg-3); border: var(--stroke) solid var(--line); min-height: 0; }
+.mod .name { font: 600 26px/1.1 var(--font-mono); color: var(--fg); }
+.mod p { margin: 0; font-size: 22px; line-height: 1.35; color: var(--fg-2); }
+.mod .tag { align-self: flex-start; margin-top: auto; }
+.mod.used { border-color: var(--model); background: var(--model-soft); }
+.mod.g1 { border-color: var(--code); }
+
+/* ---------- tablas ---------- */
+table.t { width: 100%; border-collapse: collapse; font-size: 25px; }
+table.t th { text-align: left; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); padding: 0 16px 12px; border-bottom: var(--stroke) solid var(--line-2); }
+table.t td { padding: 12px 16px; border-bottom: 1px solid var(--line); color: var(--fg); vertical-align: middle; line-height: 1.3; }
+table.t td.m { color: var(--fg-2); }
+table.t td:first-child { white-space: nowrap; }
+
+/* ---------- D13 y cierre ---------- */
+.motto { margin: 0; font: var(--title-weight) 84px/1.1 var(--font-display); letter-spacing: var(--title-tracking); color: var(--fg); text-wrap: balance; }
+.motto .m { box-shadow: inset 0 -0.18em 0 color-mix(in oklab, var(--model) 55%, transparent); }
+.motto .c { box-shadow: inset 0 -0.18em 0 color-mix(in oklab, var(--code) 55%, transparent); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+.two .panel { display: flex; flex-direction: column; gap: 14px; }
+.two .panel p { margin: 0; font-size: 26px; line-height: 1.42; color: var(--fg-2); }
+.four { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; }
+.four .panel { display: flex; flex-direction: column; gap: 12px; }
+.four .panel .n { font: 700 44px/1 var(--font-display); color: var(--accent-ink); }
+.four .panel p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--fg-2); }
+.four .panel p strong { color: var(--fg); }
+
+/* ---------- referencias ---------- */
+.bib { columns: 2; column-gap: 56px; }
+.bib p { margin: 0 0 16px; break-inside: avoid; font-size: 22px; line-height: 1.35; color: var(--fg-2); }
+.bib p em { color: var(--fg); }
+.bib .st { font: 500 22px/1 var(--font-mono); color: var(--fg-3); white-space: nowrap; }
+/* Arcilla pone el folio abajo a la izquierda: el pie sube por encima */
+[data-style="arcilla"] .slide > .src.src.src { bottom: 84px; }

@@ -1,0 +1,445 @@
+/* Direcciones de arte. Cada estilo cambia mucho más que el color:
+   fondo, decorado del lienzo, títulos, paneles, teclas, ventanas y la transición entre diapositivas. */
+
+/* =========================================================
+   RICE · Catppuccin + Hyprland
+   ========================================================= */
+[data-style="rice"] .slide {
+  background:
+    radial-gradient(1100px 680px at 92% -8%, color-mix(in oklab, var(--accent) 15%, transparent), transparent 62%),
+    radial-gradient(900px 620px at -6% 112%, color-mix(in oklab, var(--accent-2) 13%, transparent), transparent 60%),
+    var(--bg);
+}
+[data-style="rice"] .deco-bar {
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  position: absolute; left: 40px; right: 40px; top: 28px; height: 56px;
+  font: 500 22px/1 var(--font-mono); color: var(--fg-2);
+}
+[data-style="rice"] .deco-bar > span {
+  display: flex; align-items: center; gap: 10px; height: 100%; padding: 0 20px;
+  background: color-mix(in oklab, var(--bg-3) 80%, transparent);
+  border: 1px solid var(--line); border-radius: 16px;
+}
+[data-style="rice"] .deco-bar .ws b { display: inline-grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; font-weight: 600; color: var(--fg-3); }
+[data-style="rice"] .deco-bar .ws b.on { background: var(--accent); color: var(--on-accent); width: 54px; }
+[data-style="rice"] .kicker {
+  align-self: flex-start;
+  padding: 8px 20px; border-radius: 999px;
+  background: color-mix(in oklab, var(--accent) 16%, transparent);
+}
+[data-style="rice"] .panel {
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--bg-3) 72%, transparent);
+  -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+}
+/* El borde activo de Hyprland: degradado que gira (animación borderangle) */
+[data-style="rice"] .focus-border, [data-style="rice"] .win.is-focus {
+  border: 3px solid transparent;
+  background:
+    linear-gradient(var(--bg-2), var(--bg-2)) padding-box,
+    conic-gradient(from var(--angle), var(--accent), var(--accent-2), var(--accent-3), var(--accent)) border-box;
+  animation: rice-angle 7s linear infinite;
+}
+[data-style="rice"] .panel.focus-border { background: linear-gradient(var(--bg-3), var(--bg-3)) padding-box, conic-gradient(from var(--angle), var(--accent), var(--accent-2), var(--accent-3), var(--accent)) border-box; }
+@keyframes rice-angle { to { --angle: 360deg; } }
+[data-style="rice"] .keycap { border-radius: 16px; border-bottom-width: 3px; background: color-mix(in oklab, var(--accent) 14%, var(--bg-3)); }
+
+/* =========================================================
+   NOCHE · Tokyo Night + FUI
+   ========================================================= */
+[data-style="noche"] .slide { background: radial-gradient(1400px 900px at 50% 120%, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%), var(--bg); }
+[data-style="noche"] .deco-corners { display: block; position: absolute; inset: 52px 56px; }
+[data-style="noche"] .deco-corners i { position: absolute; width: 56px; height: 56px; border: 0 solid var(--accent); opacity: .85; }
+[data-style="noche"] .deco-corners i:nth-child(1) { left: 0; top: 0; border-left-width: 3px; border-top-width: 3px; }
+[data-style="noche"] .deco-corners i:nth-child(2) { right: 0; top: 0; border-right-width: 3px; border-top-width: 3px; }
+[data-style="noche"] .deco-corners i:nth-child(3) { left: 0; bottom: 0; border-left-width: 3px; border-bottom-width: 3px; }
+[data-style="noche"] .deco-corners i:nth-child(4) { right: 0; bottom: 0; border-right-width: 3px; border-bottom-width: 3px; }
+[data-style="noche"] .deco-scan {
+  display: block; position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, color-mix(in oklab, var(--fg) 5%, transparent) 0 1px, transparent 1px 4px);
+  mix-blend-mode: overlay;
+}
+[data-style="noche"] .deco-folio {
+  display: flex; justify-content: space-between; position: absolute; left: 128px; right: 128px; top: 62px;
+  font: 500 20px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3);
+}
+[data-style="noche"] .deco-folio .n::before { content: "SYS.ATLAS // "; color: var(--accent-ink); }
+[data-style="noche"] .kicker::before { content: "[ "; color: var(--fg-3); }
+[data-style="noche"] .kicker::after { content: " ]"; color: var(--fg-3); }
+[data-style="noche"] .s-title { text-shadow: 0 0 28px color-mix(in oklab, var(--accent) 38%, transparent); }
+[data-style="noche"] .panel {
+  background: color-mix(in oklab, var(--bg-3) 55%, transparent);
+  border-color: var(--line-2);
+  clip-path: polygon(0 0, calc(100% - 26px) 0, 100% 26px, 100% 100%, 26px 100%, 0 calc(100% - 26px));
+}
+[data-style="noche"] .keycap { border-radius: 2px; border-width: 1.5px; border-bottom-width: 1.5px; box-shadow: 0 0 0 1px var(--bg), 0 0 18px -4px var(--accent); color: var(--accent-ink); }
+[data-style="noche"] .win { border-radius: 3px; }
+[data-style="noche"] .win.is-focus { border-color: var(--accent); box-shadow: 0 0 30px -8px var(--accent); }
+
+/* =========================================================
+   SUIZO · Editorial de datos
+   ========================================================= */
+[data-style="suizo"] .deco-grid {
+  display: block; position: absolute; top: 0; bottom: 0; left: 128px; width: 1664px;
+  background: repeating-linear-gradient(90deg, color-mix(in oklab, var(--fg) 3.2%, transparent) 0 109.33px, transparent 109.33px 141.33px);
+}
+[data-style="suizo"] .deco-folio {
+  display: flex; align-items: baseline; gap: 22px; position: absolute; right: 128px; top: 52px;
+  font: 700 26px/1 var(--font-display); color: var(--fg);
+}
+[data-style="suizo"] .deco-folio .sec { font: italic 400 30px/1 var(--font-serif); color: var(--fg-2); }
+[data-style="suizo"] .deco-corners { display: block; position: absolute; left: 128px; top: 52px; width: 34px; height: 34px; background: var(--accent); }
+[data-style="suizo"] .kicker { font: italic 400 36px/1.1 var(--font-serif); color: var(--fg-2); letter-spacing: 0; }
+[data-style="suizo"] .kicker::before { content: attr(data-n) "  "; font: 700 26px/1 var(--font-display); color: var(--accent-ink); letter-spacing: .02em; vertical-align: 3px; }
+[data-style="suizo"] .panel { background: transparent; border: 0; border-top: 4px solid var(--fg); border-radius: 0; padding: 22px 0 0; }
+[data-style="suizo"] .keycap { border-radius: 0; border: 3px solid var(--fg); border-bottom-width: 3px; background: transparent; }
+[data-style="suizo"] .win { border-radius: 0; border-width: 0; border-top: 4px solid var(--fg); background: transparent; }
+[data-style="suizo"] .win.is-focus { border-top-color: var(--accent); }
+[data-style="suizo"] .chip { border-radius: 0; border-width: 0 0 0 4px; border-color: var(--accent); }
+
+/* =========================================================
+   AURORA · Rosé Pine generativo
+   ========================================================= */
+[data-style="aurora"] .slide {
+  background:
+    radial-gradient(1000px 700px at 100% 0%, color-mix(in oklab, var(--accent) 18%, transparent), transparent 65%),
+    radial-gradient(900px 700px at 0% 100%, color-mix(in oklab, var(--accent-2) 16%, transparent), transparent 65%),
+    radial-gradient(700px 500px at 60% 110%, color-mix(in oklab, var(--accent-3) 12%, transparent), transparent 70%),
+    var(--bg);
+}
+[data-style="aurora"] .deco-grain {
+  display: block; position: absolute; inset: 0; opacity: .16; mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='240' height='240' filter='url(%23n)'/></svg>");
+}
+[data-style="aurora"] .kicker { display: inline-flex; align-items: center; gap: 16px; }
+[data-style="aurora"] .kicker::before { content: ""; width: 56px; height: 3px; border-radius: 2px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
+[data-style="aurora"] .panel {
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklab, var(--bg-3) 58%, transparent);
+  border: 1px solid color-mix(in oklab, var(--fg) 14%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2); backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: 0 30px 80px -40px color-mix(in oklab, var(--accent) 60%, transparent);
+}
+[data-style="aurora"] .keycap { border-radius: 22px; border-bottom-width: 2px; background: color-mix(in oklab, var(--bg-3) 70%, transparent); box-shadow: 0 14px 30px -18px var(--accent); }
+[data-style="aurora"] .win { border-radius: var(--radius-lg); border-color: color-mix(in oklab, var(--fg) 14%, transparent); }
+
+/* =========================================================
+   CROMO · Metal líquido
+   Títulos cromados, bordes biselados, cápsulas iridiscentes.
+   ========================================================= */
+[data-style="cromo"] {
+  --chrome: linear-gradient(180deg, #ffffff 0%, #dfe3e8 30%, #8d939d 47%, #3c4149 52%, #b9bfc8 68%, #f2f4f7 100%);
+  --sheen: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.9) 50%, transparent 58%);
+  --bevel-hi: rgba(255,255,255,.10); --drop: rgba(0,0,0,.65);
+}
+[data-style="cromo"][data-theme="light"] {
+  --chrome: linear-gradient(180deg, #6b727c 0%, #23272d 44%, #050607 50%, #737a85 63%, #2a2e35 100%);
+  --sheen: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.75) 50%, transparent 58%);
+  --bevel-hi: rgba(255,255,255,.9); --drop: rgba(40,46,56,.35);
+}
+@media (prefers-color-scheme: light) {
+  :root[data-style="cromo"]:not([data-theme="dark"]) {
+    --chrome: linear-gradient(180deg, #6b727c 0%, #23272d 44%, #050607 50%, #737a85 63%, #2a2e35 100%);
+    --sheen: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.75) 50%, transparent 58%);
+    --bevel-hi: rgba(255,255,255,.9); --drop: rgba(40,46,56,.35);
+  }
+}
+[data-style="cromo"] .slide {
+  background:
+    radial-gradient(1300px 760px at 88% 8%, color-mix(in oklab, var(--fg) 8%, transparent), transparent 62%),
+    radial-gradient(900px 640px at -5% 105%, color-mix(in oklab, var(--accent-2) 7%, transparent), transparent 60%),
+    var(--bg);
+}
+[data-style="cromo"] .s-title, [data-style="cromo"] .div-num {
+  color: transparent; -webkit-text-stroke: 0;
+  background: var(--sheen) 160% 0 / 260% 100% no-repeat, var(--chrome);
+  -webkit-background-clip: text; background-clip: text;
+}
+[data-style="cromo"] .slide.is-active .s-title { animation: cromo-sheen calc(var(--dur) * 2.2) var(--ease) both; }
+@keyframes cromo-sheen { from { background-position: 160% 0, 0 0; } to { background-position: -60% 0, 0 0; } }
+[data-style="cromo"] .kicker {
+  align-self: flex-start; padding: 9px 18px; border-radius: 999px; font-size: 19px; color: var(--fg);
+  border: 1.5px solid transparent;
+  background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)) border-box;
+}
+[data-style="cromo"] .panel, [data-style="cromo"] .win {
+  border: 1px solid transparent; border-radius: var(--radius-lg);
+  background:
+    linear-gradient(165deg, var(--bg-3), var(--bg-2)) padding-box,
+    linear-gradient(165deg, color-mix(in oklab, var(--fg) 48%, transparent), color-mix(in oklab, var(--fg) 6%, transparent) 42%, color-mix(in oklab, var(--fg) 24%, transparent)) border-box;
+  box-shadow: inset 0 1px 0 var(--bevel-hi), 0 30px 60px -34px var(--drop);
+}
+[data-style="cromo"] .win-bar { border-bottom-color: color-mix(in oklab, var(--fg) 12%, transparent); }
+[data-style="cromo"] .keycap {
+  border: 0; border-radius: 14px; color: #111317;
+  background: linear-gradient(180deg, #fbfcfd, #c3c8d0 52%, #8e959f);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -3px 0 rgba(0,0,0,.22), 0 8px 18px -8px var(--drop);
+}
+[data-style="cromo"] .chip { font-size: 19px; border-color: color-mix(in oklab, var(--fg) 26%, transparent); }
+[data-style="cromo"] .deco-folio {
+  display: flex; align-items: center; gap: 16px; position: absolute; right: 128px; bottom: 56px;
+  font: 500 17px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--fg-3);
+}
+[data-style="cromo"] .deco-folio .n { order: 2; color: var(--fg); }
+[data-style="cromo"] .deco-folio::before { content: ""; order: 1; width: 72px; height: 3px; border-radius: 2px; background: var(--chrome); }
+
+/* =========================================================
+   ARCILLA · Render 3D mate
+   Superficies blandas, sombras largas y suaves, nada de bordes.
+   ========================================================= */
+[data-style="arcilla"] { --clay-hi: rgba(255,255,255,.7); --clay-sh: rgba(92,60,30,.42); --clay-in: rgba(80,55,30,.08); }
+[data-style="arcilla"][data-theme="dark"] { --clay-hi: rgba(255,255,255,.07); --clay-sh: rgba(0,0,0,.6); --clay-in: rgba(0,0,0,.25); }
+@media (prefers-color-scheme: dark) {
+  :root[data-style="arcilla"]:not([data-theme="light"]) { --clay-hi: rgba(255,255,255,.07); --clay-sh: rgba(0,0,0,.6); --clay-in: rgba(0,0,0,.25); }
+}
+[data-style="arcilla"] .slide { background: radial-gradient(1500px 900px at 72% 28%, color-mix(in oklab, var(--bg-3) 75%, transparent), transparent 70%), var(--bg); }
+[data-style="arcilla"] .s-title, [data-style="arcilla"] .div-num { font-variation-settings: "SOFT" 100, "WONK" 0; }
+[data-style="arcilla"] .kicker {
+  display: inline-flex; align-items: center; gap: 12px; align-self: flex-start;
+  padding: 9px 20px 9px 12px; border-radius: 999px; background: var(--bg-3); color: var(--fg-2);
+  font: 500 22px/1.2 var(--font-text);
+  box-shadow: inset 0 2px 0 var(--clay-hi), 0 12px 24px -16px var(--clay-sh);
+}
+[data-style="arcilla"] .kicker::before {
+  content: ""; width: 18px; height: 18px; border-radius: 50%; flex: none;
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--accent) 45%, #fff), var(--accent) 55%, color-mix(in oklab, var(--accent) 70%, #000));
+}
+[data-style="arcilla"] .panel, [data-style="arcilla"] .win {
+  border: 0; border-radius: var(--radius-lg); background: var(--bg-3);
+  box-shadow: inset 0 2px 0 var(--clay-hi), inset 0 -3px 0 var(--clay-in), 0 34px 60px -36px var(--clay-sh), 0 8px 16px -10px var(--clay-sh);
+}
+[data-style="arcilla"] .win-bar { border-bottom-color: color-mix(in oklab, var(--fg) 8%, transparent); }
+[data-style="arcilla"] .keycap {
+  border: 0; border-radius: 20px; background: var(--bg-3);
+  box-shadow: inset 0 2px 0 var(--clay-hi), inset 0 -7px 0 var(--clay-in), 0 12px 20px -12px var(--clay-sh);
+}
+[data-style="arcilla"] .chip { border: 0; background: var(--bg-3); box-shadow: inset 0 1px 0 var(--clay-hi), 0 6px 12px -8px var(--clay-sh); }
+[data-style="arcilla"] .deco-folio {
+  display: flex; align-items: center; gap: 14px; position: absolute; left: 128px; bottom: 46px;
+  font: 500 20px/1 var(--font-text); color: var(--fg-2);
+}
+[data-style="arcilla"] .deco-folio .n {
+  display: inline-grid; place-items: center; width: 46px; height: 46px; border-radius: 50%;
+  font: 700 18px/1 var(--font-text); color: var(--on-accent);
+  background: radial-gradient(circle at 35% 30%, color-mix(in oklab, var(--accent) 55%, #fff), var(--accent) 60%);
+  box-shadow: 0 8px 14px -8px var(--clay-sh);
+}
+
+/* =========================================================
+   NUBE · Gemelo digital
+   Líneas de 1 px, cruces de registro, ejes XYZ y lecturas de tópico.
+   ========================================================= */
+[data-style="nube"] .slide { background: var(--bg); }
+[data-style="nube"] .deco-grid {
+  display: block; position: absolute; inset: 0; background: var(--line-2); opacity: .55;
+  -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><path d='M60 54v12M54 60h12' stroke='black' stroke-width='1.2'/></svg>") 4px 0 / 120px 120px;
+  mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><path d='M60 54v12M54 60h12' stroke='black' stroke-width='1.2'/></svg>") 4px 0 / 120px 120px;
+}
+[data-style="nube"] .deco-folio {
+  display: flex; gap: 18px; position: absolute; right: 128px; top: 56px;
+  font: 400 18px/1 var(--font-mono); color: var(--fg-3);
+}
+[data-style="nube"] .deco-folio .n::before { content: "/atlas/slide_"; }
+[data-style="nube"] .deco-folio .sec:not(:empty)::before { content: "frame: "; }
+[data-style="nube"] .deco-scan {
+  display: block; position: absolute; right: 128px; bottom: 58px; width: 60px; height: 60px;
+  background:
+    linear-gradient(var(--x), var(--x)) 0 100% / 56px 2.5px no-repeat,
+    linear-gradient(var(--z), var(--z)) 0 100% / 2.5px 56px no-repeat;
+}
+[data-style="nube"] .deco-scan::after { content: ""; position: absolute; left: 0; bottom: 0; width: 40px; height: 2.5px; background: var(--y); transform-origin: 0 50%; transform: rotate(-38deg); }
+[data-style="nube"] .kicker { display: inline-flex; align-items: center; gap: 14px; font: 400 22px/1.2 var(--font-mono); color: var(--fg-2); }
+[data-style="nube"] .kicker::before { content: ""; width: 10px; height: 10px; background: var(--accent); flex: none; }
+[data-style="nube"] .panel { background: color-mix(in oklab, var(--bg-3) 94%, transparent); border: 1px solid var(--line); border-radius: var(--radius-lg); }
+[data-style="nube"] .keycap { border-radius: 6px; border-width: 1px; border-bottom-width: 1px; font-weight: 500; background: var(--bg-3); }
+[data-style="nube"] .win { border-radius: var(--radius-lg); border-color: var(--line); }
+[data-style="nube"] .chip { border-radius: 4px; border-width: 1px; border-color: var(--line-2); }
+
+/* =========================================================
+   TÉRMICA · Infrarrojo
+   Escala de temperatura, títulos que se calientan, lectura de cámara.
+   ========================================================= */
+[data-style="termica"] {
+  --heat: linear-gradient(180deg, #fffbe6 0%, #fde26a 22%, #fbaa23 40%, #f2682a 58%, #d9334f 76%, #9a1a8c 100%);
+  --heat-bar: linear-gradient(to top, #1c0a4a, #53108a 18%, #9a1a8c 34%, #d9334f 50%, #f2682a 64%, #fbaa23 78%, #fde26a 90%, #fffbe6);
+  --title-fill: transparent; --title-bg: var(--heat);
+}
+[data-style="termica"][data-theme="light"] {
+  --heat-bar: linear-gradient(to top, #e8e8e5, #bdbdba 30%, #8c8c89 50%, #4a4a48 68%, #111 80%, var(--accent) 80%, var(--accent));
+  --title-fill: var(--fg); --title-bg: none;
+}
+@media (prefers-color-scheme: light) {
+  :root[data-style="termica"]:not([data-theme="dark"]) {
+    --heat-bar: linear-gradient(to top, #e8e8e5, #bdbdba 30%, #8c8c89 50%, #4a4a48 68%, #111 80%, var(--accent) 80%, var(--accent));
+    --title-fill: var(--fg); --title-bg: none;
+  }
+}
+[data-style="termica"] .slide { background: radial-gradient(1000px 700px at 100% 100%, color-mix(in oklab, var(--accent) 9%, transparent), transparent 70%), var(--bg); }
+[data-style="termica"] .s-title, [data-style="termica"] .div-num {
+  color: var(--title-fill); -webkit-text-stroke: 0;
+  background: var(--title-bg); background-size: 100% 260%; background-position: 0 0;
+  -webkit-background-clip: text; background-clip: text;
+}
+[data-style="termica"] .slide.is-active .s-title { animation: termica-heat calc(var(--dur) * 2.4) var(--ease) both; }
+@keyframes termica-heat { from { background-position: 0 100%; } to { background-position: 0 0; } }
+[data-style="termica"] .kicker { display: inline-flex; align-items: center; gap: 14px; }
+[data-style="termica"] .kicker::before { content: ""; width: 11px; height: 11px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 14px var(--accent); flex: none; }
+[data-style="termica"] .deco-scan { display: block; position: absolute; right: 56px; top: 200px; bottom: 200px; width: 14px; background: var(--heat-bar); }
+[data-style="termica"] .deco-scan::before, [data-style="termica"] .deco-scan::after {
+  position: absolute; right: 0; font: 500 16px/1 var(--font-mono); color: var(--fg-3); white-space: nowrap;
+}
+[data-style="termica"] .deco-scan::before { content: "74,0 °C"; top: -28px; }
+[data-style="termica"] .deco-scan::after { content: "18,0 °C"; bottom: -28px; }
+[data-style="termica"] .deco-folio {
+  display: flex; gap: 22px; position: absolute; left: 128px; top: 56px;
+  font: 500 17px/1 var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-3);
+}
+[data-style="termica"] .deco-folio .n::before { content: "IR "; color: var(--accent-ink); }
+[data-style="termica"] .deco-folio .sec::after { content: "  ·  ε 0,95"; }
+[data-style="termica"] .panel { background: var(--bg-3); border: 1px solid var(--line-2); border-radius: var(--radius-lg); }
+[data-style="termica"] .keycap { border-radius: 4px; border-width: 1.5px; border-bottom-width: 4px; }
+[data-style="termica"] .win { border-radius: 4px; }
+
+/* =========================================================
+   CÉLULA · Microscopía
+   Barra de escala, canales del microscopio y titulares de revista científica.
+   ========================================================= */
+[data-style="celula"] { --chan: "40× · DAPI · GFP · mCherry"; }
+[data-style="celula"][data-theme="light"] { --chan: "40× · H&E"; }
+@media (prefers-color-scheme: light) { :root[data-style="celula"]:not([data-theme="dark"]) { --chan: "40× · H&E"; } }
+[data-style="celula"] .slide { background: radial-gradient(1000px 1000px at 76% 47%, color-mix(in oklab, var(--accent-3) 6%, transparent), transparent 62%), var(--bg); }
+[data-style="celula"] .kicker { font: italic 400 32px/1.15 var(--font-serif); color: var(--fg-2); letter-spacing: 0; }
+[data-style="celula"] .s-title { font-optical-sizing: auto; }
+[data-style="celula"] .deco-folio {
+  display: flex; align-items: center; gap: 16px; position: absolute; right: 128px; top: 56px;
+  font: 400 17px/1 var(--font-mono); color: var(--fg-3);
+}
+[data-style="celula"] .deco-folio::before {
+  content: ""; width: 54px; height: 12px;
+  background:
+    radial-gradient(circle, var(--accent-3) 0 5px, transparent 5.5px) 0 0 / 18px 12px no-repeat,
+    radial-gradient(circle, var(--accent) 0 5px, transparent 5.5px) 18px 0 / 18px 12px no-repeat,
+    radial-gradient(circle, var(--accent-2) 0 5px, transparent 5.5px) 36px 0 / 18px 12px no-repeat;
+}
+[data-style="celula"] .deco-folio .n, [data-style="celula"] .deco-folio .sec { display: none; }
+[data-style="celula"] .deco-folio::after { content: var(--chan); }
+[data-style="celula"] .deco-scan { display: block; position: absolute; right: 128px; bottom: 60px; width: 150px; height: 5px; border-radius: 3px; background: var(--fg-2); }
+[data-style="celula"] .deco-scan::after { content: "50 µm"; position: absolute; right: 0; bottom: 14px; font: 400 17px/1 var(--font-mono); color: var(--fg-3); }
+[data-style="celula"] .slide.is-plain .deco-scan { display: none; }
+[data-style="celula"] .deco-corners { display: block; position: absolute; left: 128px; bottom: 50px; font: 400 17px/1 var(--font-mono); color: var(--fg-3); }
+[data-style="celula"] .deco-corners i { display: none; }
+[data-style="celula"] .panel { border-radius: var(--radius-lg); border-color: var(--line); background: color-mix(in oklab, var(--bg-3) 92%, transparent); }
+[data-style="celula"] .keycap { border-radius: 12px; border-width: 1px; border-bottom-width: 3px; }
+[data-style="celula"] .win { border-radius: var(--radius-lg); }
+[data-style="celula"] .cover-body, [data-style="celula"] .divider-body { max-width: 900px; }
+[data-style="celula"] .div-num { color: var(--accent); -webkit-text-stroke: 0; font-style: italic; font-weight: 400; letter-spacing: -0.02em; }
+
+/* =========================================================
+   MATRIZ · Puntos LED
+   Titulares de matriz de puntos, tira de luz glifo y teclas negras.
+   ========================================================= */
+[data-style="matriz"] { font-variation-settings: "ROND" 100; }
+[data-style="matriz"] .slide { background: var(--bg); }
+[data-style="matriz"] .s-title { line-height: 1.08; }
+[data-style="matriz"] .kicker { display: inline-flex; align-items: center; gap: 14px; font: 400 20px/1.2 var(--font-mono); color: var(--fg-2); }
+[data-style="matriz"] .kicker::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; }
+[data-style="matriz"] .deco-scan {
+  display: block; position: absolute; right: 54px; top: 50%; width: 6px; height: 300px; margin-top: -150px; border-radius: 3px;
+  background: var(--fg); box-shadow: 0 0 22px color-mix(in oklab, var(--fg) 55%, transparent);
+  animation: glyph-pulse 3.6s ease-in-out infinite;
+}
+@keyframes glyph-pulse { 0%, 100% { opacity: .12; } 45% { opacity: .95; } }
+[data-style="matriz"] .deco-folio { display: flex; align-items: center; gap: 18px; position: absolute; left: 128px; bottom: 44px; font: 400 17px/1 var(--font-mono); letter-spacing: .14em; text-transform: uppercase; color: var(--fg-3); }
+[data-style="matriz"] .deco-folio .n { font: 800 44px/1 var(--font-display); letter-spacing: 0; color: var(--fg); }
+[data-style="matriz"] .deco-folio .sec:not(:empty)::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 12px 2px 0; background: var(--accent); }
+[data-style="matriz"] .panel { background: var(--bg-3); border-color: var(--line); border-radius: var(--radius-lg); }
+[data-style="matriz"] .keycap { border: 0; border-radius: 10px; background: var(--fg); color: var(--bg); font-weight: 500; }
+[data-style="matriz"] .win { border-radius: var(--radius-lg); border-color: var(--line-2); }
+[data-style="matriz"] .chip { border-color: var(--fg-3); }
+[data-style="matriz"] .value, [data-style="matriz"] .steps b, [data-style="matriz"] .style-card h3 { font-family: var(--font-text); letter-spacing: -0.01em; text-transform: none; }
+[data-style="matriz"] .div-num { color: var(--accent); -webkit-text-stroke: 0; font-weight: 900; letter-spacing: 0; }
+
+/* =========================================================
+   Transiciones entre diapositivas (View Transitions)
+   ========================================================= */
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: var(--dur); animation-timing-function: var(--ease); }
+
+/* Rice: cambio de espacio de trabajo de Hyprland (deslizamiento) */
+:root[data-style="rice"]::view-transition-old(root) { animation-name: vt-out-left; }
+:root[data-style="rice"]::view-transition-new(root) { animation-name: vt-in-right; }
+:root[data-style="rice"][data-dir="prev"]::view-transition-old(root) { animation-name: vt-out-right; }
+:root[data-style="rice"][data-dir="prev"]::view-transition-new(root) { animation-name: vt-in-left; }
+@keyframes vt-out-left { to { transform: translateX(-28%); opacity: 0; } }
+@keyframes vt-in-right { from { transform: translateX(28%); opacity: 0; } }
+@keyframes vt-out-right { to { transform: translateX(28%); opacity: 0; } }
+@keyframes vt-in-left { from { transform: translateX(-28%); opacity: 0; } }
+
+/* Noche: fallo de señal */
+:root[data-style="noche"]::view-transition-old(root) { animation: vt-fade-out 200ms steps(3) both; }
+:root[data-style="noche"]::view-transition-new(root) { animation: vt-glitch var(--dur) steps(6) both; }
+@keyframes vt-glitch {
+  0% { clip-path: inset(0 0 100% 0); transform: translateX(-14px); }
+  30% { clip-path: inset(30% 0 40% 0); transform: translateX(10px); }
+  55% { clip-path: inset(0 0 22% 0); transform: translateX(-6px); }
+  80% { clip-path: inset(0); transform: translateX(3px); }
+  100% { clip-path: inset(0); transform: none; }
+}
+@keyframes vt-fade-out { to { opacity: 0; } }
+
+/* Suizo: corte vertical seco */
+:root[data-style="suizo"]::view-transition-old(root) { animation-name: vt-up-out; }
+:root[data-style="suizo"]::view-transition-new(root) { animation-name: vt-up-in; }
+@keyframes vt-up-out { to { transform: translateY(-6%); opacity: 0; } }
+@keyframes vt-up-in { from { transform: translateY(6%); opacity: 0; } }
+
+/* Aurora: fundido con desenfoque */
+:root[data-style="aurora"]::view-transition-old(root) { animation-name: vt-blur-out; }
+:root[data-style="aurora"]::view-transition-new(root) { animation-name: vt-blur-in; }
+@keyframes vt-blur-out { to { opacity: 0; filter: blur(18px); transform: scale(1.02); } }
+@keyframes vt-blur-in { from { opacity: 0; filter: blur(18px); transform: scale(.985); } }
+
+/* Cromo: telón de metal líquido que gotea de arriba abajo */
+:root[data-style="cromo"]::view-transition-old(root) { animation: none; }
+:root[data-style="cromo"]::view-transition-new(root) { animation: vt-melt var(--dur) var(--ease) both; }
+@keyframes vt-melt {
+  0% { clip-path: polygon(0 0, 100% 0, 100% 0%, 90% 0%, 80% 0%, 70% 0%, 60% 0%, 50% 0%, 40% 0%, 30% 0%, 20% 0%, 10% 0%, 0 0%); }
+  45% { clip-path: polygon(0 0, 100% 0, 100% 52%, 90% 70%, 80% 48%, 70% 61%, 60% 44%, 50% 74%, 40% 50%, 30% 58%, 20% 41%, 10% 66%, 0 47%); }
+  100% { clip-path: polygon(0 0, 100% 0, 100% 130%, 90% 150%, 80% 128%, 70% 141%, 60% 124%, 50% 154%, 40% 130%, 30% 138%, 20% 121%, 10% 146%, 0 127%); }
+}
+/* Arcilla: la diapositiva llega blanda, se aplasta y recupera la forma */
+:root[data-style="arcilla"]::view-transition-old(root) { animation: vt-clay-out 280ms ease-in both; }
+:root[data-style="arcilla"]::view-transition-new(root) { animation: vt-clay-in var(--dur) var(--ease) both; }
+@keyframes vt-clay-out { to { transform: scale(.96); opacity: 0; } }
+@keyframes vt-clay-in {
+  0% { transform: translateY(40px) scale(.9); clip-path: inset(5% round 90px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: none; clip-path: inset(0 round 0); }
+}
+/* Nube: barrido de escáner de arriba abajo */
+:root[data-style="nube"]::view-transition-old(root) { animation: vt-fade-out var(--dur) linear both; }
+:root[data-style="nube"]::view-transition-new(root) { animation: vt-scan var(--dur) var(--ease) both; }
+@keyframes vt-scan { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+/* Térmica: destello de calibración (NUC) */
+:root[data-style="termica"]::view-transition-old(root) { animation: vt-fade-out 220ms ease-out both; }
+:root[data-style="termica"]::view-transition-new(root) { animation: vt-nuc var(--dur) var(--ease) both; }
+@keyframes vt-nuc {
+  0% { opacity: 0; filter: brightness(2.6) saturate(0) contrast(.6); }
+  30% { opacity: 1; filter: brightness(1.7) saturate(.3) contrast(.8); }
+  100% { filter: none; }
+}
+/* Célula: diafragma de campo que se abre en círculo */
+:root[data-style="celula"]::view-transition-old(root) { animation: none; }
+:root[data-style="celula"]::view-transition-new(root) { animation: vt-iris var(--dur) var(--ease) both; }
+@keyframes vt-iris { from { clip-path: circle(0% at 74% 48%); } to { clip-path: circle(125% at 74% 48%); } }
+/* Matriz: los puntos de la diapositiva nueva crecen hasta tocarse */
+@property --led { syntax: "<length>"; inherits: false; initial-value: 0px; }
+:root[data-style="matriz"]::view-transition-old(root) { animation: none; }
+:root[data-style="matriz"]::view-transition-new(root) {
+  -webkit-mask-image: radial-gradient(circle, #000 var(--led), transparent calc(var(--led) + .5px));
+  mask-image: radial-gradient(circle, #000 var(--led), transparent calc(var(--led) + .5px));
+  -webkit-mask-size: 24px 24px; mask-size: 24px 24px;
+  animation: vt-leds var(--dur) var(--ease) both;
+}
+@keyframes vt-leds { from { --led: 0px; } to { --led: 18px; } }
+
+::view-transition-group(hud), ::view-transition-group(progress) { animation: none; }
