@@ -1,15 +1,17 @@
 // Empaqueta un deck en un único archivo HTML (CSS y JS locales en línea).
-// Uso: node tools/bundle.mjs [entrada=index.html] [salida=dist/atlas.html] [--fragment]
+// Uso: node tools/bundle.mjs [entrada=index.html] [salida] [--fragment] [--out=<carpeta>]
+//   salida: archivo de destino. Si se omite, <carpeta de salida>/<nombre del deck>.html
+//           (output/ por defecto; cámbiala con --out=<carpeta> o MOTOR_OUT, ver tools/salida.mjs).
 //   --fragment: sin <!doctype>, <html>, <head> ni <body> (formato de artefacto de Claude).
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { ROOT, outDir, positional } from './salida.mjs';
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const args = positional();
 const fragment = process.argv.includes('--fragment');
 const input = path.resolve(ROOT, args[0] || 'index.html');
-const output = path.resolve(ROOT, args[1] || 'dist/atlas.html');
+const deck = path.dirname(input) === ROOT ? 'atlas' : path.basename(path.dirname(input));
+const output = args[1] ? path.resolve(ROOT, args[1]) : path.join(outDir(), `${deck}${fragment ? '-frag' : ''}.html`);
 let html = fs.readFileSync(input, 'utf8');
 const base = path.dirname(input);
 const read = (rel) => fs.readFileSync(path.resolve(base, rel), 'utf8');

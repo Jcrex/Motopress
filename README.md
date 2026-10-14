@@ -46,7 +46,10 @@ motor/
 ├── fx/                   efectos: sistema, fondos (WebGL y 2D de los estilos nuevos), ros, ml, datos, arch
 ├── tools/
 │   ├── build-themes.mjs  genera tokens.css y meta.js y ajusta las paletas de gráficos
-│   └── bundle.mjs        empaqueta un deck en un único HTML
+│   ├── bundle.mjs        empaqueta un deck en un único HTML
+│   ├── verificar.mjs     capturas de un deck en varios estilos y modos, con errores y desbordes
+│   └── salida.mjs        carpeta de salida común (output/, --out o MOTOR_OUT)
+├── output/               presentaciones empaquetadas y capturas (no se sube a git)
 └── dist/atlas.html       versión de un solo archivo
 ```
 
@@ -117,9 +120,12 @@ Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto W
 ## Empaquetar y exportar
 
 ```bash
-node tools/bundle.mjs index.html dist/atlas.html              # un solo HTML
-node tools/bundle.mjs index.html dist/atlas-frag.html --fragment  # sin doctype/head/body
+node tools/bundle.mjs index.html dist/atlas.html              # un solo HTML, en una ruta concreta
+node tools/bundle.mjs decks/rai-g1/index.html                 # sin destino: output/rai-g1.html
+node tools/bundle.mjs decks/rai-g1/index.html --fragment      # output/rai-g1-frag.html, sin doctype/head/body
 ```
+
+Sin archivo de destino, el resultado va a la carpeta de salida: `output/` por defecto, o la que indiques con `--out=<carpeta>` o con la variable `MOTOR_OUT` (la opción manda sobre la variable). `node tools/verificar.mjs <deck>` guarda allí sus capturas, en `capturas/<deck>/`.
 
 Para PDF, imprime desde Chrome: la hoja de impresión pone cada diapositiva en una página de 1920×1080.
 

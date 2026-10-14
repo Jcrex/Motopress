@@ -13,7 +13,9 @@ Este repositorio es un motor de diapositivas HTML/CSS/JS. Cuando el usuario pida
    - El texto de los gráficos usa `fg`, `fg-2` o `fg-3`, no el color de la serie.
    - `render()` deja el estado final completo; `play()` solo anima. Respeta `api.reduced`.
    - Marca como «de ejemplo» o «sintéticos» los datos que no vengan del usuario.
-4. Verifica: sirve la carpeta con un servidor estático y haz capturas con Playwright en al menos dos estilos y ambos modos; revisa errores de consola y desbordes.
-5. Para entregar un solo archivo: `node tools/bundle.mjs decks/<nombre>/index.html dist/<nombre>.html`.
+4. Verifica: sirve la raíz del repositorio (`python -m http.server 8000`) y ejecuta `node tools/verificar.mjs <nombre> [estilo1,estilo2]`. Hace capturas de todas las diapositivas en dos estilos (por defecto `suizo` y `noche`) y en claro y oscuro, e imprime errores de consola y elementos que se salen del lienzo. Abre varias capturas y revísalas. Si Chromium ya está instalado, pásalo con `CHROMIUM_PATH=/ruta/a/chrome`.
+5. Para entregar un solo archivo: `node tools/bundle.mjs decks/<nombre>/index.html` (queda en `output/<nombre>.html`).
+
+Todo lo que generan las herramientas va a la carpeta de salida: `output/` por defecto, con las presentaciones empaquetadas en la raíz y las capturas en `capturas/<nombre>/`. Para usar otra carpeta, añade `--out=<carpeta>` a la orden o define `MOTOR_OUT=<carpeta>`; la opción manda sobre la variable y las rutas relativas parten de la raíz del repositorio. Si el usuario indica una carpeta de salida, úsala con `--out=`.
 
 Para cambiar colores o fuentes de un estilo, edita `themes/source.json` y ejecuta `node tools/build-themes.mjs --report`; no edites `themes/tokens.css` a mano.
