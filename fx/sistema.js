@@ -166,8 +166,27 @@
     });
   }
 
-  // null: el estilo no parte el título en letras (anima el título en CSS).
-  const titleEase = (Motor.titleEase = { rice: 'back.out(1.7)', noche: 'steps(4)', suizo: 'power3.out', aurora: 'expo.out' });
+  // Pintor vacío: deja el fondo liso (data-painter="none").
+  painters.none = { init() {}, frame(s) { s.ctx.clearRect(0, 0, s.w, s.h); } };
+
+  /* Pintor de una diapositiva. data-painter en la sección (o en <html> para todo el deck) admite
+     un nombre para todos los estilos («hilos») o una lista por estilo («noche:escaner aurora:hilos»);
+     los estilos que no aparecen usan su pintor propio. */
+  function painterOf(api) {
+    const pick = (attr) => {
+      if (!attr) return null;
+      for (const tok of attr.trim().split(/[\s,]+/)) {
+        const [a, b] = tok.split(':');
+        const name = b === undefined ? a : a === api.style ? b : null;
+        if (name && painters[name]) return painters[name];
+        if (name) console.warn('[motor] pintor desconocido: ' + name);
+      }
+      return null;
+    };
+    return pick(api.el.dataset.painter) || pick(document.documentElement.dataset.painter) || painters[api.style] || painters.rice;
+  }
+  Motor.painterOf = painterOf;
+
   Motor.fx('backdrop', {
     render(api) {
       const host = api.q('.fx-bg');
@@ -175,23 +194,57 @@
       const c = api.canvas(host);
       const s = (api.s = { ...c, host, seed: +(api.el.dataset.seed || 1), style: api.style, quiet: api.el.classList.contains('closing') });
       host.style.opacity = s.quiet && api.style !== 'rice' ? 0.45 : '';
-      (painters[api.style] || painters.rice).init(s, api);
-      (painters[api.style] || painters.rice).frame(s, api, 4, true);
+      const p = (s.painter = painterOf(api));
+      p.init(s, api);
+      p.frame(s, api, 4, true);
     },
     play(api) {
-      const title = api.q('.s-title');
-      const split = () => {
-        if (!api.el.classList.contains('is-active') || !window.gsap || !window.SplitText || !title || titleEase[api.style] === null) return;
-        if (api.el._split) api.el._split.revert();
-        api.el._split = SplitText.create(title, { type: 'words,chars' });
-        gsap.fromTo(api.el._split.chars, { yPercent: 38, opacity: 0.12 }, { yPercent: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: api.style === 'aurora' ? 0.04 : 0.022, ease: titleEase[api.style] || 'power3.out' });
-      };
-      if (!document.fonts || document.fonts.status === 'loaded') split(); else document.fonts.ready.then(split);
-      const p = painters[api.style] || painters.rice;
-      api.raf((t) => { p.frame(api.s, api, 4 + t / 1000); });
+      const s = api.s;
+      api.raf((t) => { s.painter.frame(s, api, 4 + t / 1000); });
     },
-    stop(api) { if (window.gsap && api.el._split) { gsap.killTweensOf(api.el._split.chars); api.el._split.revert(); api.el._split = null; } },
   });
+
+  /* =================================================================
+     ENTRADA DE TÍTULOS
+     Preset por estilo y opt-in por diapositiva con data-title-fx="auto|none|<preset>"
+     (o en <html> para todo el deck). Sin atributo, solo se anima en diapositivas con
+     data-fx="backdrop" (portada, separadores y cierre).
+     ================================================================= */
+  // Curva por estilo; null: el estilo no parte el título (lo anima en CSS con background-clip:text).
+  const titleEase = (Motor.titleEase = { rice: 'back.out(1.7)', noche: 'steps(4)', suizo: 'power3.out', aurora: 'expo.out' });
+  // Preset por estilo (por defecto «rise»). Los estilos con titleEase null nunca se animan.
+  Motor.titleStyle = Motor.titleStyle || {};
+  const titlePresets = (Motor.titlePresets = {});
+  // Registra un preset: fn(title, ctx) con ctx = { api, ease, style, dur }. Devuelve algo con revert() o nada.
+  Motor.titleFx = (name, fn) => { titlePresets[name] = fn; };
+  Motor.titleFx('rise', (title, { api, ease }) => {
+    const split = SplitText.create(title, { type: 'words,chars' });
+    gsap.fromTo(split.chars, { yPercent: 38, opacity: 0.12 }, { yPercent: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: api.style === 'aurora' ? 0.04 : 0.022, ease });
+    return { revert() { gsap.killTweensOf(split.chars); split.revert(); } };
+  });
+
+  function titlePreset(slide, style) {
+    const own = slide.dataset.titleFx || document.documentElement.dataset.titleFx || (slide.dataset.fx === 'backdrop' ? 'auto' : 'none');
+    if (own === 'none' || titleEase[style] === null) return null;
+    const name = own === 'auto' ? Motor.titleStyle[style] || 'rise' : own;
+    if (!titlePresets[name]) { console.warn('[motor] preset de título desconocido: ' + name); return null; }
+    return titlePresets[name];
+  }
+  function titleOut(slide) { if (slide._title) { try { slide._title.revert(); } catch (e) { /* ya revertido */ } slide._title = null; } }
+  document.addEventListener('motor:enter', (e) => {
+    const { slide, api, animate } = e.detail;
+    titleOut(slide);
+    if (!animate || !window.gsap || !window.SplitText) return;
+    const title = slide.querySelector('.s-title'), fn = title && titlePreset(slide, api.style);
+    if (!fn) return;
+    const run = () => {
+      if (!slide.classList.contains('is-active')) return;
+      titleOut(slide);
+      try { slide._title = fn(title, { api, style: api.style, dur: api.dur, ease: titleEase[api.style] || 'power3.out' }) || null; } catch (err) { console.error('[motor] título', slide.id, err); }
+    };
+    if (!document.fonts || document.fonts.status === 'loaded') run(); else document.fonts.ready.then(run);
+  });
+  document.addEventListener('motor:leave', (e) => titleOut(e.detail.slide));
 
   /* =================================================================
      SEIS DIRECCIONES DE ARTE

@@ -96,6 +96,8 @@ Piezas disponibles:
 - Composiciones: `.cols` (cuerpo + lateral de 500 px), `.cols.wide-side`, `.cols.even`, `.cols.three`, `.stack`, `.row`.
 - Bloques: `.panel`, `.label`, `.value`, `.readout`, `.legend`, `.note`, `.chip`, `.keycap`, `.win` (con `.win-bar` y `.win-body`), `.term`.
 - Revelar por pasos con →: añade `data-step` a un elemento.
+- Fondo de portada distinto: `data-painter="nombre"` (todos los estilos) o `data-painter="noche:nombre"` (solo ese estilo); `"none"` lo deja liso.
+- Entrada animada del título: `data-title-fx="auto"` en cualquier diapositiva; `"none"` la quita de una portada.
 - Sin `data-fx`, la diapositiva es HTML estático. Es la opción más segura.
 
 Efectos ya hechos para `data-fx` (búscalos con `grep -n "Motor.fx('" fx/*.js`): `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, `refs`, `compare`, `rosgraph`, `lidar`, `astar`, `tftree`, `blueprint`, `scope`, `training`, `confusion`, `latent`, `nnet`, `clouds`, `ridge`, `calendar`, `sankey`, `kpis`, `desktop`, `fetch`. Reutilízalos antes de crear uno nuevo.
@@ -123,13 +125,17 @@ Crea `fx/<nombre>.js` y cárgalo al final del deck.
     stop(api) {
       // Opcional: limpia lo que play() dejó a medias.
     },
+    step(api, n, info) {
+      // Opcional: se ha mostrado u ocultado un [data-step]. n = pasos visibles; info.dir = 'next' | 'prev'.
+      // render() también debe dibujar el estado de api.step (pasos visibles) sobre api.steps (total).
+    },
   });
 })();
 ```
 
 En el HTML: `<section class="slide" data-fx="mi-efecto" …>` y dentro un `<div class="fx" data-role="chart"></div>`.
 
-Utilidades de `api`: `q(sel)`, `qa(sel)`, `tok('nombre')`, `cats(n)`, `seq(t)`, `div(t)`, `font('mono', 22, 500)`, `dark`, `style`, `meta`, `dur`, `ease(t)`, `raf(fn)`, `after(ms, fn)`, `tween(ms, fn)`, `canvas(host)`, `rng(seed)`, `noise2(seed)`, `reduced`. El motor vuelve a llamar a `render()` al cambiar de estilo o de modo, así que `render()` debe vaciar y redibujar.
+Utilidades de `api`: `q(sel)`, `qa(sel)`, `tok('nombre')`, `cats(n)`, `seq(t)`, `div(t)`, `font('mono', 22, 500)`, `dark`, `style`, `meta`, `dur`, `ease(t)`, `step`, `steps`, `raf(fn)`, `after(ms, fn)`, `tween(ms, fn)`, `canvas(host)`, `rng(seed)`, `noise2(seed)`, `reduced`. El motor vuelve a llamar a `render()` al cambiar de estilo o de modo, así que `render()` debe vaciar y redibujar.
 
 ## Reglas de composición
 

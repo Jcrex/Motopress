@@ -74,6 +74,8 @@ motor/
 - Composiciones listas: `.cols` (cuerpo + lateral de 500 px), `.cols.wide-side`, `.cols.even`, `.cols.three`, `.stack`, `.row`.
 - Piezas: `.panel`, `.label`, `.value`, `.readout`, `.legend`, `.note`, `.chip`, `.keycap`, `.win` (ventana con `.win-bar` y `.win-body`), `.term`.
 - Portadas y separadores: `class="slide is-plain divider"` con `data-fx="backdrop"` y un `<div class="fx-bg">`.
+  - `data-painter` cambia el fondo: `"hilos"` para todos los estilos, `"noche:escaner aurora:hilos"` solo para esos estilos (el resto usa el suyo) y `"none"` lo deja liso. En `<html>` vale para todo el deck; la diapositiva manda.
+- Entrada del título: `data-title-fx="auto"` (preset del estilo), `"none"` o el nombre de un preset (`rise`). Sin atributo, solo se anima en las diapositivas con `backdrop`. En `<html>` vale para todo el deck. Cromo y Térmica nunca parten el título (lo animan en CSS).
 - Pasos: añade `data-step` a cualquier elemento para revelarlo con →.
 
 ## Efectos
@@ -83,8 +85,13 @@ Motor.fx('mi-efecto', {
   render(api) { /* deja la diapositiva completa y en reposo, leyendo los tokens */ },
   play(api)   { /* anima; se llama al entrar si no hay movimiento reducido */ },
   stop(api)   { /* opcional: limpia lo que play() dejó a medias */ },
+  step(api, n, { dir, el, total, animate }) { /* opcional: se muestra u oculta un [data-step]; n = pasos visibles */ },
 });
 ```
+
+`render()` debe dibujar el estado de `api.step` (pasos visibles; en la vista general cuentan todos) sobre `api.steps` (total). Al volver desde la diapositiva siguiente, el motor enciende todos los pasos y vuelve a llamar a `render()`.
+
+Eventos DOM en la diapositiva, que burbujean hasta `document`: `motor:enter` (`detail.animate` indica si se puede animar), `motor:leave` y `motor:step` (`detail.step`, `detail.dir`). Presets de título nuevos: `Motor.titleFx('nombre', (title, { api, ease }) => ({ revert() {…} }))`; el preset por estilo va en `Motor.titleStyle[estilo]`.
 
 `api` ofrece: `q()` y `qa()` dentro de la diapositiva, `tok('accent')`, `cats(6)`, `seq(t)`, `div(t)`, `font('mono', 22, 500)`, `dark`, `style`, `meta`, `dur`, `ease(t)`, `raf(fn)`, `after(ms, fn)`, `tween(ms, fn)`, `canvas(host)`, `rng(seed)`, `noise2(seed)` y `color` (OKLCH, contraste WCAG, simulación de daltonismo). Al cambiar de estilo o modo, el motor vuelve a llamar a `render()`.
 
@@ -107,7 +114,7 @@ Efectos incluidos: `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, 
 
 Elige el estilo por defecto con `<html data-style="nube">` o con `"default"` en `themes/source.json`. Cada deck puede limitar y ordenar sus estilos con `<script>window.MOTOR_PICK = ['rice', 'nube', …]</script>` antes de cargar `themes/meta.js`; sin esa línea aparecen todos en el orden de `source.json`.
 
-Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto WebGL, dibujan una versión plana en canvas 2D. Arcilla es el más costoso: se dibuja a menos resolución y a 20 imágenes por segundo. Con movimiento reducido, todos los fondos se quedan quietos.
+Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto WebGL, dibujan una versión plana en canvas 2D. La capa pide WebGL2 y, si no lo hay, WebGL1: los sombreadores GLSL 1.00 van en las dos, y los que empiezan por `#version 300 es` solo en WebGL2 (sin él, el pintor usa su respaldo 2D). Las utilidades están en `Motor.gl` (`layer`, `program`, `drawFull`, `uniforms`, `scale`, `throttle`, `VS_FULL`); `program()` cambia a `VS_FULL2` si el fragmento es 3.00. Arcilla es el más costoso: se dibuja a menos resolución y a 20 imágenes por segundo. Con movimiento reducido, todos los fondos se quedan quietos.
 
 ### Añadir o cambiar un estilo
 

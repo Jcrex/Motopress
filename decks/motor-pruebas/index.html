@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es" data-style="suizo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pruebas del motor</title>
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=Unbounded:wght@400..800&family=Manrope:wght@400..700&family=Martian+Mono:wght@400..600&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Public+Sans:wght@400..700&family=Sometype+Mono:wght@400..600&family=Doto:wght,ROND@400..900,0..100&family=Host+Grotesk:wght@400..700&family=Fragment+Mono&display=swap">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<style>
+  [data-role="bar"] { display: flex; gap: 16px; margin-top: 40px; }
+  [data-role="bar"] i { width: 120px; height: 24px; background: var(--bg-3); border: 2px solid var(--line-2); }
+  [data-role="bar"] i.hit { background: var(--accent); }
+  [data-role="n"] { font: 600 160px/1 var(--font-mono); color: var(--fg); }
+</style>
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<section class="slide is-plain cover" id="portada" data-fx="backdrop" data-seed="3" data-section="Fondos" data-title="Portada">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">fase 0 · pintor propio del estilo</p>
+    <h1 class="s-title xl">Pruebas del motor</h1>
+    <p class="lead">Portada sin data-painter: usa el fondo del estilo y la entrada de título «auto».</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="gl2" data-fx="backdrop" data-painter="prueba-gl2" data-seed="5" data-section="Fondos" data-title="Pintor WebGL2">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="prueba-gl2"</p>
+    <h2 class="s-title xl">Pintor WebGL2</h2>
+    <p class="lead">Sombreador #version 300 es para todos los estilos.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="por-estilo" data-fx="backdrop" data-painter="noche:prueba-gl2 suizo:none" data-title-fx="none" data-seed="7" data-section="Fondos" data-title="Pintor por estilo">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">noche:prueba-gl2 suizo:none · título sin animar</p>
+    <h2 class="s-title xl">Pintor por estilo</h2>
+    <p class="lead">En suizo, fondo liso; en noche, el pintor WebGL2; en el resto, el propio.</p>
+  </div>
+</section>
+
+<section class="slide" id="pasos" data-fx="pasos-prueba" data-title-fx="auto" data-section="Pasos" data-title="Aviso de paso">
+  <header class="s-head"><p class="kicker">step(api, n) · data-title-fx="auto"</p><h2 class="s-title">Aviso de paso</h2></header>
+  <div class="s-body">
+    <div data-role="n">0 / 0</div>
+    <div data-role="bar"></div>
+    <p class="note" style="margin-top:40px">Pulsa → para mostrar cada paso: <span data-step>uno</span> · <span data-step>dos</span> · <span data-step>tres</span></p>
+  </div>
+</section>
+
+<section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="9" data-section="Pasos" data-title="Cierre">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">vuelve con ← a la anterior</p>
+    <h2 class="s-title xl">Cierre</h2>
+  </div>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['suizo', 'noche', 'rice', 'aurora', 'cromo', 'arcilla', 'nube', 'termica', 'celula', 'matriz'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="fx.js"></script>
+</body>
+</html>

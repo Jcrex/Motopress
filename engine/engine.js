@@ -2,8 +2,10 @@
    - Escala un lienzo de 1920×1080 al visor.
    - Navegación: teclado, gestos, HUD, ancla #id-de-diapositiva.
    - Estilos (data-style) y modo claro/oscuro (data-theme) en <html>.
-   - Ciclo de vida de efectos: Motor.fx(nombre, { render(api), play(api), stop(api) }).
-     render() deja la diapositiva completa y en reposo; play() anima. */
+   - Ciclo de vida de efectos: Motor.fx(nombre, { render(api), play(api), stop(api), step(api, n, info) }).
+     render() deja la diapositiva completa y en reposo (con api.step pasos visibles); play() anima;
+     step() se llama al mostrar u ocultar un [data-step] de la diapositiva activa.
+   - Eventos en la diapositiva (burbujean hasta document): motor:enter, motor:leave y motor:step. */
 (() => {
   'use strict';
   const W = 1920, H = 1080;
@@ -136,6 +138,9 @@
       get meta() { return currentStyle(); },
       get reduced() { return reduced.matches; },
       get dur() { return parseFloat(api.tok('dur')) || 600; },
+      // pasos [data-step] visibles y totales; en la vista general cuentan todos como visibles
+      get steps() { return slide.querySelectorAll('[data-step]').length; },
+      get step() { return overview ? api.steps : slide.querySelectorAll('[data-step].on').length; },
       ease(t) { return bezier(api.tok('ease'))(t); },
       cats(n = 6) { return Array.from({ length: n }, (_, i) => api.tok('cat-' + (i + 1))); },
       ramp(prefix, t) {
@@ -188,13 +193,17 @@
     try { def.render && def.render(api); } catch (e) { console.error('[motor] render', slide.id, e); }
     slide._rendered = true; slide._dirty = false;
   }
+  const emit = (slide, type, detail) => slide.dispatchEvent(new CustomEvent('motor:' + type, { bubbles: true, detail: { slide, index: slides.indexOf(slide), ...detail } }));
   function activate(slide) {
     updateDeco(slide);
-    const def = fxOf(slide); if (!def) return;
-    const api = apiOf(slide);
+    const def = fxOf(slide), api = apiOf(slide);
     api.stopAll();
-    if (!slide._rendered || slide._dirty) renderSlide(slide);
-    if (!reduced.matches && !overview && def.play) { try { def.play(api); } catch (e) { console.error('[motor] play', slide.id, e); } }
+    const animate = !reduced.matches && !overview;
+    if (def) {
+      if (!slide._rendered || slide._dirty) renderSlide(slide);
+      if (animate && def.play) { try { def.play(api); } catch (e) { console.error('[motor] play', slide.id, e); } }
+    }
+    if (!overview) emit(slide, 'enter', { api, animate });
   }
   function deactivate(slide) {
     if (!slide._api) return;
@@ -202,6 +211,15 @@
     const def = fxOf(slide);
     if (def && def.stop) def.stop(slide._api);
     if (def && def.play) slide._dirty = true; // al volver, se reconstruye y se vuelve a reproducir
+    emit(slide, 'leave', { api: slide._api });
+  }
+  // Aviso de paso: el efecto de la diapositiva (si define step) y el evento motor:step.
+  function stepped(el, dir) {
+    const slide = slides[idx], api = apiOf(slide), def = fxOf(slide);
+    const info = { dir, el, total: api.steps, animate: !reduced.matches };
+    const n = api.step;
+    if (def && def.step) { try { def.step(api, n, info); } catch (e) { console.error('[motor] step', slide.id, e); } }
+    emit(slide, 'step', { api, step: n, ...info });
   }
 
   function refreshAll() {
@@ -263,24 +281,27 @@
     const swap = () => {
       if (prev && prev !== next) { prev.classList.remove('is-active'); prev.setAttribute('aria-hidden', 'true'); deactivate(prev); }
       next.classList.add('is-active'); next.removeAttribute('aria-hidden');
-      if (i < idx) next.querySelectorAll('[data-step]').forEach((s) => s.classList.add('on'));
+      if (i < idx) {
+        const pend = next.querySelectorAll('[data-step]:not(.on)');
+        if (pend.length) { pend.forEach((s) => s.classList.add('on')); next._dirty = true; } // render() con todos los pasos
+      }
       idx = i;
       activate(next);
       updateHud();
     };
     if (!instant && !overview && document.startViewTransition && !reduced.matches) {
-      try { document.startViewTransition(swap); } catch (e) { swap(); }
+      try { document.startViewTransition(swap).ready.catch(() => {}); } catch (e) { swap(); } // al encadenar teclas, la anterior se salta
     } else swap();
     try { history.replaceState(null, '', '#' + next.id); } catch (e) { /* sin historial */ }
   }
   function next() {
     const pending = slides[idx].querySelector('[data-step]:not(.on)');
-    if (pending && !overview) { pending.classList.add('on'); return; }
+    if (pending && !overview) { pending.classList.add('on'); stepped(pending, 'next'); return; }
     go(idx + 1);
   }
   function prev() {
     const shown = [...slides[idx].querySelectorAll('[data-step].on')];
-    if (shown.length && !overview) { shown[shown.length - 1].classList.remove('on'); return; }
+    if (shown.length && !overview) { const el = shown[shown.length - 1]; el.classList.remove('on'); stepped(el, 'prev'); return; }
     go(idx - 1);
   }
 
@@ -297,12 +318,14 @@
 
   function toggleOverview(on = !overview) {
     if (on === overview) return;
+    // api.step cambia (en la vista general cuentan todos los pasos): hay que volver a dibujar
+    slides.forEach((s) => { if (s._rendered && s.querySelector('[data-step]')) s._dirty = true; });
+    overview = on;
     if (on) {
       // Renderiza en tamaño real lo que aún no tiene contenido, antes de reducir.
       slides.forEach((s) => { if (fxOf(s) && (!s._rendered || s._dirty)) { s._api && s._api.stopAll(); renderSlide(s); } });
       slides[idx]._api && slides[idx]._api.stopAll();
     }
-    overview = on;
     viewport.classList.toggle('is-overview', on);
     if (on) { stage.style.transform = ''; layoutOverview(); requestAnimationFrame(() => slides[idx].scrollIntoView({ block: 'center' })); }
     else { fit(); activate(slides[idx]); }

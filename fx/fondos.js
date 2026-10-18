@@ -12,27 +12,36 @@
   // limita a ~30 fps los fondos caros; los estados quietos (render) siempre se dibujan
   const throttle = (s, t, still, fps = 30) => { if (still) return false; if (s.last && t - s.last < 1 / fps && t >= s.last) return true; s.last = t; return false; };
 
-  /* ------------------------------------------------------------------ WebGL */
+  /* ------------------------------------------------------------------ WebGL
+     Una capa por fondo: pide WebGL2 y, si no lo hay, WebGL1. Los sombreadores GLSL 1.00
+     funcionan en las dos; los que empiezan por «#version 300 es» solo con WebGL2
+     (sin él, program() devuelve null y el pintor usa su respaldo 2D). */
   const VS_FULL = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const VS_FULL2 = '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const isES3 = (src) => /^\s*#version\s+300\s+es/.test(src);
   function glLayer(s, scale) {
     let cv = s.host.querySelector(':scope > canvas.gl');
     if (!cv) { cv = document.createElement('canvas'); cv.className = 'gl'; cv.setAttribute('aria-hidden', 'true'); s.host.insertBefore(cv, s.host.firstChild); }
     const W = Math.max(2, Math.round(s.w * scale)), H = Math.max(2, Math.round(s.h * scale));
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     if (!('_gl' in cv)) {
-      let gl = null;
-      try { gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false }); } catch (e) { gl = null; }
-      cv._gl = gl; cv._progs = {};
+      const opts = { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false };
+      let gl = null, gl2 = false;
+      try { gl = cv.getContext('webgl2', opts); gl2 = !!gl; } catch (e) { gl = null; }
+      if (!gl) try { gl = cv.getContext('webgl', opts); } catch (e) { gl = null; }
+      cv._gl = gl; cv._gl2 = gl2; cv._progs = {};
     }
     const gl = cv._gl;
     if (!gl || gl.isContextLost()) { cv.style.display = 'none'; return null; }
     cv.style.display = '';
     gl.viewport(0, 0, W, H);
-    return { gl, cv, W, H };
+    return { gl, cv, W, H, gl2: cv._gl2 };
   }
   function program(L, key, vs, fs) {
     const { gl, cv } = L;
     if (key in cv._progs) return cv._progs[key];
+    if (isES3(fs) && vs === VS_FULL) vs = VS_FULL2; // las dos etapas deben tener la misma versión
+    if ((isES3(vs) || isES3(fs)) && !cv._gl2) { cv._progs[key] = null; return null; }
     const mk = (type, src) => {
       const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o);
       if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn('[motor] shader ' + key + ': ' + gl.getShaderInfoLog(o)); return null; }
@@ -58,6 +67,7 @@
       if (typeof v === 'number') gl.uniform1f(loc, v);
       else if (v.length === 2) gl.uniform2fv(loc, v);
       else if (v.length === 3) gl.uniform3fv(loc, v);
+      else if (v.length === 4) gl.uniform4fv(loc, v);
       else if (v.length === 16 && k.startsWith('uM')) gl.uniformMatrix4fv(loc, false, v);
       else gl.uniform3fv(loc, v);
     }
@@ -76,6 +86,8 @@
   }
   // resolución del lienzo WebGL: proporcional a la pantalla, con techo por coste del sombreador
   const glScale = (s, k, max = 1.5) => Math.min(max, Math.max(0.35, (s.ratio || 1) * k));
+  // Para pintores y efectos de otros archivos: Motor.gl.layer(s, Motor.gl.scale(s, .7)) → program → drawFull.
+  Motor.gl = { layer: glLayer, program, uniforms, drawFull, scale: glScale, throttle, VS_FULL, VS_FULL2 };
 
   /* ============================================================ CROMO */
   const FS_CROMO = `precision highp float;
