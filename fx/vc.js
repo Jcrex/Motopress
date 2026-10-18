@@ -12,7 +12,8 @@
          <div class="fx" data-role="plot" data-x="0,255" data-y="0,255"
               data-fns='[{"f":"x=>255*Math.pow(x/255,0.5)","label":"γ = 0,5"}]'
               data-xl="r (entrada)" data-yl="s (salida)"></div>
-         Leyenda: data-legend="tl|tr|bl|br" (esquina; por defecto arriba a la izquierda).
+         Ejes: decimales automáticos según el paso (data-xdec / data-ydec para forzarlos).
+         Leyenda: data-legend="tl|tr|bl|br|top" (esquina, o "top": fila encima del gráfico; por defecto arriba a la izquierda).
          Opcional: data-bars='[...]' (histograma de barras, se dibuja detrás) y data-pts='[[x,y],…]' (puntos marcados).
      - vc-heat: matriz numérica coloreada (núcleos, espectros pequeños, histogramas de tabla).
          <div class="fx vc-heat" data-m='[[...]]' data-signed="1" data-dec="2"></div>
@@ -84,7 +85,8 @@
     const cols = W + kw + W + 4, cell = Math.min(Math.floor(Wpx / cols), Math.floor((Hpx - 60) / Math.max(H, kh)));
     const svg = el('svg', { width: Wpx, height: Hpx, viewBox: `0 0 ${Wpx} ${Hpx}` }, host);
     const fg = api.tok('fg'), fg2 = api.tok('fg-2'), fg3 = api.tok('fg-3'), line = api.tok('line-2'), acc = api.tok('accent'), acc2 = api.tok('accent-2') || acc;
-    const fsz = Math.max(18, Math.min(30, cell * 0.36));
+    const longest = Math.max(...[...img.flat(), ...k.flat()].map((v) => fmt(v, dec).length), ...convOut(img, k, mode, pad).res.flat().map((r) => fmt(r.v, dec).length));
+    const fsz = Math.max(16, Math.min(30, cell * 0.36, (cell - 8) / (0.62 * longest)));
     const vals = res.flat().map((r) => r.v), vmax = Math.max(1e-9, ...vals.map(Math.abs));
     const imax = Math.max(1e-9, ...img.flat().map(Math.abs));
     const ox1 = 0, ox2 = (W + 1) * cell, ox3 = (W + kw + 3) * cell, oy = 48;
@@ -136,17 +138,23 @@
     const Wpx = host.clientWidth || 900, Hpx = host.clientHeight || 520;
     const [x0, x1] = (host.dataset.x || '0,1').split(',').map(Number), [y0, y1] = (host.dataset.y || '0,1').split(',').map(Number);
     const fns = J(host.dataset.fns, []), bars = J(host.dataset.bars, null), pts = J(host.dataset.pts, []);
-    const m = { l: 120, r: 30, t: 24, b: 70 };
+    const m = { l: 120, r: 30, t: host.dataset.legend === 'top' ? 64 : 24, b: 70 };
     const X = (x) => m.l + (x - x0) / (x1 - x0) * (Wpx - m.l - m.r), Y = (y) => Hpx - m.b - (y - y0) / (y1 - y0) * (Hpx - m.t - m.b);
     const svg = el('svg', { width: Wpx, height: Hpx, viewBox: `0 0 ${Wpx} ${Hpx}` }, host);
     const fg2 = api.tok('fg-2'), fg3 = api.tok('fg-3'), line = api.tok('line'), cats = api.cats(6);
     const txt = (x, y, s, anchor = 'middle', size = 22, color = fg2) => { const t = el('text', { x, y, 'text-anchor': anchor, fill: color }, svg); t.style.font = api.font('mono', size, 400); t.textContent = s; return t; };
-    for (let i = 0; i <= 4; i++) {
-      const xv = x0 + (x1 - x0) * i / 4, yv = y0 + (y1 - y0) * i / 4;
-      el('line', { x1: X(xv), x2: X(xv), y1: Y(y0), y2: Y(y1), stroke: line, 'stroke-dasharray': '2 6' }, svg);
-      el('line', { x1: X(x0), x2: X(x1), y1: Y(yv), y2: Y(yv), stroke: line, 'stroke-dasharray': '2 6' }, svg);
-      txt(X(xv), Hpx - m.b + 30, fmt(xv, 2)); txt(m.l - 12, Y(yv) + 7, fmt(yv, 2), 'end');
-    }
+    const nice = (a, b) => {   // marcas redondas: paso 1, 2, 2,5 o 5 × 10^k, unas 4–6 marcas
+      const span = Math.abs(b - a) || 1, raw = span / 5, p10 = 10 ** Math.floor(Math.log10(raw));
+      const q = span / 4; if (q >= 15 && Number.isInteger(q) && q % 15 === 0 && a % q === 0) return { t: [0, 1, 2, 3, 4].map((i) => Math.min(a, b) + i * q), dec: 0 };   // ángulos: pasos de 15°, 45°, 90°…
+      const st = [1, 2, 2.5, 5, 10].map((m) => m * p10).find((v) => span / v <= 6) || 10 * p10;
+      const t = []; for (let v = Math.ceil(Math.min(a, b) / st - 1e-9) * st; v <= Math.max(a, b) + 1e-9; v += st) t.push(+v.toFixed(10));
+      const dec = Math.max(0, -Math.floor(Math.log10(st) + 1e-9) + (st / p10 === 2.5 ? 1 : 0));
+      return { t, dec: Math.min(3, dec) };
+    };
+    const tx = nice(x0, x1), ty = nice(y0, y1);
+    const dx = host.dataset.xdec !== undefined ? +host.dataset.xdec : tx.dec, dy = host.dataset.ydec !== undefined ? +host.dataset.ydec : ty.dec;
+    tx.t.forEach((xv) => { el('line', { x1: X(xv), x2: X(xv), y1: Y(y0), y2: Y(y1), stroke: line, 'stroke-dasharray': '2 6' }, svg); txt(X(xv), Hpx - m.b + 30, fmt(xv, dx)); });
+    ty.t.forEach((yv) => { el('line', { x1: X(x0), x2: X(x1), y1: Y(yv), y2: Y(yv), stroke: line, 'stroke-dasharray': '2 6' }, svg); txt(m.l - 12, Y(yv) + 7, fmt(yv, dy), 'end'); });
     if (host.dataset.xl) txt((Wpx + m.l) / 2, Hpx - 12, host.dataset.xl, 'middle', 22, fg3);
     if (host.dataset.yl) { const t = txt(18, (Hpx - m.b) / 2, host.dataset.yl, 'middle', 22, fg3); t.setAttribute('transform', `rotate(-90 18 ${(Hpx - m.b) / 2})`); }
     if (bars) {
@@ -162,7 +170,13 @@
       paths.push(el('path', { d: p, fill: 'none', stroke: c, 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-dasharray': d.dash || '' }, svg));
       if (d.label) legend.push([d.label, c]);
     });
-    if (legend.length) {
+    if (legend.length && host.dataset.legend === 'top') {   // fila de leyenda encima del área del gráfico
+      let lx = Math.max(8, Wpx - m.r - legend.reduce((a, [l]) => a + 46 + 13.6 * String(l).length + 26, -26));
+      legend.forEach(([lab, c]) => {
+        el('line', { x1: lx, x2: lx + 36, y1: 22, y2: 22, stroke: c, 'stroke-width': 4 }, svg);
+        txt(lx + 46, 30, lab, 'start', 22, api.tok('fg')); lx += 46 + 13.6 * String(lab).length + 26;
+      });
+    } else if (legend.length) {
       const lw = Math.max(262, 72 + 13.6 * Math.max(...legend.map(([l]) => String(l).length))), pos = host.dataset.legend || 'tl', lh = legend.length * 34 + 10;
       const x0l = pos[1] === 'r' ? Wpx - m.r - lw - 8 : m.l + 12, y0l = pos[0] === 'b' ? Hpx - m.b - lh - 12 : m.t + 4;
       el('rect', { x: x0l, y: y0l, width: lw, height: lh, fill: api.tok('bg-2'), stroke: api.tok('line'), opacity: 0.92 }, svg);

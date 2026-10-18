@@ -53,4 +53,6 @@ svg.dia .frame { fill: none; stroke: var(--fg-3); stroke-width: 2; }
 svg.dia .cell { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 2; }
 svg.dia .cell.hi { fill: var(--accent); opacity: .6; }
 table.t.vf { font-size: 28px; }
-table.t.vf td { padding: 16px 16px; }
+table.t.vf td { padding: 11px 16px; }
+#f-chuleta table.t.big { font-size: 25px; } #f-chuleta table.t.big td { padding: 8px 16px; }
+svg.dia .lb.w { font-size: 25px; font-weight: 600; } svg.dia .lb.end { text-anchor: end; }

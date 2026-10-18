@@ -257,7 +257,7 @@ np.random.randint(0, 2, 6)
     <div class="vc-conv" data-img='[[0,0,0,0,0],[0,0,0,0,0],[0,0,255,0,0],[0,0,0,0,0],[0,0,0,0,0]]' data-k='[[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111]]' data-mode="conv" data-pad="zero" data-dec="1" style="min-height:0;height:390px"></div>
     <div class="vstack">
      <p class="cap" data-seq="2">y un borde ideal (discontinua) se convierte en una rampa de ancho n</p>
-     <div class="fx" data-role="plot" data-seq="2" data-x="-12,12" data-y="0,256" data-xl="posición (píxeles)" data-yl="nivel" data-legend="tl"
+     <div class="fx" data-role="plot" data-seq="2" data-x="-12,12" data-y="0,256" data-xl="posición (píxeles)" data-yl="nivel" data-legend="top"
        data-fns='[{"f":"x=>x<0?0:255","c":"fg-3","dash":"6 8"},{"f":"x=>255*Math.min(1,Math.max(0,(x+1.5)/3))","label":"media 3"},{"f":"x=>255*Math.min(1,Math.max(0,(x+3.5)/7))","label":"media 7"},{"f":"x=>255*Math.min(1,Math.max(0,(x+7.5)/15))","label":"media 15"}]' style="min-height:0;height:340px"></div>
     </div>
    </div>
@@ -595,12 +595,12 @@ region=(60, 140, 90, 170)</pre>
 
 <section class="slide" id="bordes" data-fx="vc" data-section="D · Ejercicios" data-title="Efecto de los bordes">
   <header class="s-head"><p class="kicker">filtro grande · sigma = 8</p><h2 class="s-title">Efecto de los bordes</h2></header>
-  <div class="s-body" style="display:grid;grid-template-columns:1080px 1fr;gap:36px;align-items:start">
-    <div class="vstack" style="gap:14px">
-    <img class="shot" src="assets/bordes.png" alt="original, mode constant y mode reflect con gaussiano grande" style="width:1080px" data-seq="1">
-      <p class="cap" data-seq="3">perfil junto al borde izquierdo (media de cada columna): <span style="color:var(--cat-1)">reflect</span> frente a <span style="color:var(--err)">constant</span></p>
-      <div class="fx" data-role="plot" data-seq="3" data-x="0,40" data-y="40,120" data-xl="columna" data-yl="nivel medio" 
-        data-fns='[{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[110.3, 110.2, 110.1, 110.0, 109.8, 109.6, 109.4, 109.1, 108.8, 108.5, 108.1, 107.8, 107.4, 107.1, 106.8, 106.5, 106.2, 106.0, 105.8, 105.6, 105.5, 105.3, 105.2, 105.0, 104.8, 104.5, 104.2, 103.8, 103.4, 102.9, 102.3, 101.7, 101.0, 100.3, 99.6, 98.9, 98.1, 97.4, 96.7, 96.0];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"cat-1"},{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[56.3, 61.6, 66.6, 71.5, 76.0, 80.2, 84.0, 87.4, 90.3, 92.9, 95.0, 96.7, 98.1, 99.2, 100.0, 100.6, 101.1, 101.4, 101.6, 101.7, 101.7, 101.7, 101.6, 101.5, 101.3, 101.1, 100.7, 100.3, 99.8, 99.3, 98.7, 98.0, 97.3, 96.5, 95.7, 94.9, 94.1, 93.4, 92.6, 91.9];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"err"}]' style="min-height:0;height:250px"></div>
+  <div class="s-body" style="display:grid;grid-template-columns:940px 1fr;gap:36px;align-items:start">
+    <div class="vstack" style="gap:12px">
+    <img class="shot" src="assets/bordes.png" alt="original, mode constant y mode reflect con gaussiano grande" style="width:940px;height:auto" data-seq="1">
+      <p class="cap" data-seq="3">perfil junto al borde: <span style="color:var(--cat-1)">reflect</span> frente a <span style="color:var(--err)">constant</span></p>
+      <div class="fx" data-role="plot" data-seq="3" data-x="0,40" data-y="40,120" data-legend="tr" data-xl="columna" data-yl="nivel" 
+        data-fns='[{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[110.3, 110.2, 110.1, 110.0, 109.8, 109.6, 109.4, 109.1, 108.8, 108.5, 108.1, 107.8, 107.4, 107.1, 106.8, 106.5, 106.2, 106.0, 105.8, 105.6, 105.5, 105.3, 105.2, 105.0, 104.8, 104.5, 104.2, 103.8, 103.4, 102.9, 102.3, 101.7, 101.0, 100.3, 99.6, 98.9, 98.1, 97.4, 96.7, 96.0];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"cat-1"},{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[56.3, 61.6, 66.6, 71.5, 76.0, 80.2, 84.0, 87.4, 90.3, 92.9, 95.0, 96.7, 98.1, 99.2, 100.0, 100.6, 101.1, 101.4, 101.6, 101.7, 101.7, 101.7, 101.6, 101.5, 101.3, 101.1, 100.7, 100.3, 99.8, 99.3, 98.7, 98.0, 97.3, 96.5, 95.7, 94.9, 94.1, 93.4, 92.6, 91.9];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"err"}]' style="min-height:0;height:200px"></div>
     </div>
     <div class="vstack">
       <table class="t" data-seq="2">
