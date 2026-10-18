@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · T4 Detección de bordes</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ============ BLOQUE A · DERIVADAS DE IMAGEN ============ -->
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="4" data-section="Inicio" data-title="Detección de bordes">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lección 004</p>
+    <h1 class="s-title xl">Detección de bordes</h1>
+    <p class="lead">Derivadas, gradiente, Laplaciano, Marr–Hildreth y Canny.</p>
+  </div>
+  <aside class="notes">Esta lección explica cómo encontrar los cambios bruscos de intensidad. Todo se reduce a derivar la imagen, pero derivar amplifica el ruido, así que casi todas las técnicas son una forma de derivar y suavizar a la vez.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-a" data-fx="backdrop" data-seed="11" data-section="Derivadas" data-title="Derivadas de imagen">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque A</p>
+    <h1 class="s-title xl">Derivadas de imagen</h1>
+    <p class="lead">Derivar es convolucionar, y derivar amplifica el ruido.</p>
+  </div>
+</section>
+
+<section class="slide" id="que-es" data-fx="vc" data-section="Derivadas" data-title="Qué es un borde">
+  <header class="s-head"><p class="kicker">definición y usos</p><h2 class="s-title">Qué es un borde</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1">Un <b>borde</b> es un cambio brusco de intensidad entre regiones vecinas: la frontera de un objeto, una sombra o un cambio de textura.</p>
+      <p class="txt" data-seq="2">Matemáticamente: un punto donde la <b>derivada</b> de la imagen tiene módulo grande.</p>
+      <div class="exam" data-seq="3"><b>idea clave</b>Los bordes son contenido de <b>altas frecuencias</b>: un escalón necesita todas las frecuencias para representarse.</div>
+    </div>
+    <table class="t" data-seq="2">
+      <tr><th>Aplicación</th><th>Para qué sirven los bordes</th></tr>
+      <tr><td>Reconocimiento</td><td>forma del objeto, independiente del color</td></tr>
+      <tr><td>Navegación</td><td>carriles, obstáculos, horizonte</td></tr>
+      <tr><td>Medicina</td><td>contornos de órganos y lesiones</td></tr>
+      <tr><td>Registro</td><td>alinear imágenes por su estructura</td></tr>
+      <tr><td>Compresión y SIFT</td><td>los bordes concentran la información</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Un borde es un cambio de intensidad, y esto enlaza con la teoría de la información: las zonas planas son predecibles y casi no aportan información; los bordes son donde está la información de la imagen. Recuerda la errata de los apuntes: los bordes viven en las altas frecuencias, no en las bajas.</aside>
+</section>
+
+<section class="slide" id="lti" data-fx="vc" data-section="Derivadas" data-title="La derivada es LTI">
+  <header class="s-head"><p class="kicker">derivar = convolucionar</p><h2 class="s-title">Derivar es convolucionar</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1">La derivada parcial \(f_x=\partial f/\partial x\) es un operador:</p>
+      <ul class="pts" data-seq="2">
+        <li><b>Lineal</b>: \(\partial(af+bg)=a\,\partial f+b\,\partial g\).</li>
+        <li><b>Invariante al desplazamiento</b>: derivar la imagen desplazada = desplazar la derivada.</li>
+      </ul>
+      <p class="txt" data-seq="3">Todo sistema LTI es una convolución con su respuesta al impulso, así que existe un núcleo \(h\) con</p>
+      <div class="eq big" data-seq="3">$$f_x = f * h_x$$</div>
+    </div>
+    <div class="vstack">
+      <div class="eq" data-seq="4">$$\mathcal F\{f_x\}(u)=j2\pi u\,F(u)$$</div>
+      <p class="txt" data-seq="4">En frecuencia, derivar multiplica por \(j2\pi u\): el módulo crece con \(|u|\), así que las altas frecuencias (y el ruido) se amplifican.</p>
+      <div class="tip" data-seq="5"><b>discreto</b>Sin el límite \(h\to0\), la derivada se aproxima con <i>diferencias finitas</i>, que son núcleos pequeños como [1, −1].</div>
+    </div>
+  </div>
+  <aside class="notes">Que la derivada sea LTI es justo lo que nos permite construir detectores de bordes con las herramientas de los laboratorios anteriores: basta con elegir un núcleo y aplicar correlación o convolución. Falta decidir cuál es ese núcleo, y eso lo da el desarrollo de Taylor.</aside>
+</section>
+
+<section class="slide" id="taylor1" data-fx="vc" data-section="Derivadas" data-title="Diferencias finitas: 1.ª derivada">
+  <header class="s-head"><p class="kicker">desarrollo de Taylor · diapositiva 30</p><h2 class="s-title">Primera derivada discreta</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:31px">
+      <div data-seq="1"><span>$$f(x\pm1)=f(x)\pm f'(x)+\tfrac{f''(x)}{2}\pm\tfrac{f'''(x)}{6}+\dots$$</span><span class="why">Taylor con paso h = 1</span></div>
+      <div data-seq="2"><span>$$f(x+1)-f(x)=f'(x)+\tfrac{f''(x)}{2}+\dots=f'(x)+O(h)$$</span><span class="why">hacia delante: núcleo [1, −1]</span></div>
+      <div data-seq="3"><span>$$f(x)-f(x-1)=f'(x)-\tfrac{f''(x)}{2}+\dots=f'(x)+O(h)$$</span><span class="why">hacia atrás: mismo orden de error</span></div>
+      <div data-seq="4"><span>$$f(x+1)-f(x-1)=2f'(x)+\tfrac{f'''(x)}{3}+\dots$$</span><span class="why">restamos los dos Taylor: los términos pares se cancelan</span></div>
+      <div data-seq="5"><span>$$\frac{f(x+1)-f(x-1)}{2}=f'(x)+\tfrac{f'''(x)}{6}=f'(x)+O(h^2)$$</span><span class="why">central: núcleo ½[1, 0, −1], error O(h²)</span></div>
+    </div>
+  </div>
+  <aside class="notes">Partimos de Taylor hacia delante y hacia atrás. Restar el desarrollo de x menos uno al de x más uno elimina los términos de orden par, incluida la segunda derivada, que era la que daba el error de primer orden. Por eso la diferencia central es más precisa: su error es de orden dos.</aside>
+</section>
+
+<section class="slide" id="taylor2" data-fx="vc" data-section="Derivadas" data-title="Diferencias finitas: 2.ª derivada">
+  <header class="s-head"><p class="kicker">desarrollo de Taylor · segunda derivada</p><h2 class="s-title">Segunda derivada discreta</h2></header>
+  <div class="s-body g21">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 300px"><span>$$f(x+1)=f+f'+\tfrac{f''}{2}+\tfrac{f'''}{6}+\tfrac{f^{(4)}}{24}+\dots$$</span><span class="why">Taylor hacia delante</span></div>
+      <div data-seq="1" style="grid-template-columns:1fr 300px"><span>$$f(x-1)=f-f'+\tfrac{f''}{2}-\tfrac{f'''}{6}+\tfrac{f^{(4)}}{24}-\dots$$</span><span class="why">Taylor hacia atrás</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 300px"><span>$$f(x+1)+f(x-1)=2f+f''+\tfrac{f^{(4)}}{12}+\dots$$</span><span class="why">sumamos: se cancelan los impares</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 300px"><span>$$f(x+1)-2f(x)+f(x-1)=f''(x)+O(h^2)$$</span><span class="why">despejamos f''</span></div>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[1,-2,1]]' data-signed="1" data-dec="0" style="height:150px"></div>
+      <p class="txt" data-seq="3">Núcleo <b>[1, −2, 1]</b>. Suma 0: en zonas constantes y en rampas la respuesta es 0.</p>
+      <div class="exam" data-seq="4"><b>comprobación</b>Aplícalo a \(f=x^2\): \((x+1)^2-2x^2+(x-1)^2=2\), que es \(f''\). Exacto.</div>
+    </div>
+  </div>
+  <aside class="notes">Aquí sumamos en lugar de restar: ahora desaparecen los términos impares y queda la segunda derivada. El núcleo [1, -2, 1] es el que da lugar al Laplaciano. Comprueba con x al cuadrado: el resultado es exactamente 2.</aside>
+</section>
+
+<section class="slide" id="desfase" data-fx="vc" data-section="Derivadas" data-title="Núcleo [1,−1] y desfase">
+  <header class="s-head"><p class="kicker">ejemplo numérico · escalón [0,0,0,10,10,10]</p><h2 class="s-title">Desfase de media muestra</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[0,0,0,10,10,10]]' data-k='[[1,-1]]' data-mode="conv" data-pad="none" data-dec="0" style="height:230px;min-height:0"></div>
+    <div class="vc-conv" data-img='[[0,0,0,10,10,10]]' data-k='[[1,0,-1]]' data-mode="conv" data-pad="none" data-dec="0" style="height:230px;min-height:0"></div>
+    <p class="txt" data-seq="1">[1, −1] marca el borde en el píxel 3 (<code>f(3)−f(2)</code>): el escalón está <b>entre</b> 2 y 3, media muestra de desfase. [1, 0, −1] es simétrico y centra el borde (sale de valor doble: dividir entre 2).</p>
+  </div>
+  <aside class="notes">El escalón real está entre las muestras dos y tres. El núcleo de dos elementos asigna la respuesta a una de ellas, con media muestra de desfase. El núcleo de tres elementos mira a ambos lados del píxel y produce una respuesta simétrica, pero de ancho dos y con el doble de amplitud, de ahí el factor un medio. El borde se pinta en pad=none, así que no hay artefactos en los extremos.</aside>
+</section>
+
+<section class="slide" id="roberts" data-fx="vc" data-section="Derivadas" data-title="Roberts cross">
+  <header class="s-head"><p class="kicker">derivadas 2D · diagonales</p><h2 class="s-title">Roberts cross</h2></header>
+  <div class="s-body g3">
+    <div class="vstack"><div class="vc-heat" data-m='[[1,0],[0,-1]]' data-signed="1" data-dec="0" style="height:300px"></div><div class="cap">R₁: \(f(x,y)-f(x+1,y+1)\)</div></div>
+    <div class="vstack"><div class="vc-heat" data-m='[[0,1],[-1,0]]' data-signed="1" data-dec="0" style="height:300px"></div><div class="cap">R₂: \(f(x+1,y)-f(x,y+1)\)</div></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Primer detector 2D (1963): derivadas en las <b>dos diagonales</b> con núcleos 2×2.</p>
+      <p class="txt" data-seq="2">Magnitud \(\sqrt{R_1^2+R_2^2}\) o \(|R_1|+|R_2|\).</p>
+      <div class="trap" data-seq="3"><b>pega</b>Es muy sensible al ruido y no está centrado en un píxel (núcleo par). Hoy se usa poco.</div>
+    </div>
+  </div>
+  <aside class="notes">Roberts calcula la diferencia entre píxeles en diagonal. Es el detector más barato posible, pero como solo usa cuatro píxeles es muy ruidoso y su salida queda desplazada media muestra en ambas direcciones.</aside>
+</section>
+
+<section class="slide" id="ruido-dem" data-fx="vc" data-section="Derivadas" data-title="Derivada y ruido">
+  <header class="s-head"><p class="kicker">demostración · diapositiva 13</p><h2 class="s-title">Derivar duplica el ruido</h2></header>
+  <div class="s-body g21">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 330px"><span>$$g=f(x)-f(x-1)\ \Rightarrow\ \text{ruido: }n_1-n_2$$</span><span class="why">n₁, n₂ independientes, varianza σ²</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 330px"><span>$$\mathrm{Var}(n_1-n_2)=\sigma^2+\sigma^2-2\,\mathrm{Cov}(n_1,n_2)$$</span><span class="why">varianza de una diferencia</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 330px"><span>$$=2\sigma^2$$</span><span class="why">Cov = 0 por independencia</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 330px"><span>$$\mathrm{Var}\!\left(\tfrac{n_1-n_2}{2}\right)=\tfrac{2\sigma^2}{4}=\tfrac{\sigma^2}{2}$$</span><span class="why">con el factor ½ de [1,0,−1]/2</span></div>
+    </div>
+    <div class="vstack">
+      <div class="trap" data-seq="3"><b>consecuencia</b>El borde no cambia, pero el ruido crece: <b>empeora la relación señal/ruido</b>. Remedio: suavizar antes (bloque B).</div>
+      <p class="txt" data-seq="5">En frecuencia \(|H(u)|=2\pi|u|\): se amplifican las altas frecuencias, donde domina el ruido.</p>
+      <div class="fx" data-role="plot" data-seq="5" data-x="0,0.5" data-y="0,3.2" data-xl="u (ciclos/muestra)" data-yl="|H(u)|" data-legend="tl" data-fns='[{"f":"x=>2*Math.PI*x","label":"ideal 2π|u|"},{"f":"x=>2*Math.abs(Math.sin(Math.PI*x))","label":"[1, −1]"},{"f":"x=>Math.abs(Math.sin(2*Math.PI*x))","label":"½[1, 0, −1]"}]' style="height:280px;min-height:0"></div>
+    </div>
+  </div>
+  <aside class="notes">Si el ruido de cada píxel es independiente con varianza sigma cuadrado, la diferencia de dos píxeles tiene varianza dos sigma cuadrado: el ruido se duplica. Eso lo comprobé numéricamente con un millón de muestras en la generación de las imágenes: la varianza de la diferencia sale 1,998 frente a 1. Con el factor un medio de la diferencia central la varianza sería sigma cuadrado entre dos, pero entonces el borde también se reduce a la mitad.</aside>
+</section>
+
+<section class="slide" id="ruido-img" data-fx="vc" data-section="Derivadas" data-title="Ruido: demostración">
+  <header class="s-head"><p class="kicker">imagen real · derivada en x con [1, −1]</p><h2 class="s-title">Derivar amplifica el ruido</h2></header>
+  <div class="s-body">
+    <div class="row-img" style="grid-template-columns:repeat(3,1fr)">
+      <figure class="fig big"><img src="assets/ein_noisy.png" alt="Einstein con ruido"><figcaption>entrada con ruido gaussiano σ = 0,04</figcaption></figure>
+      <figure class="fig big"><img src="assets/ein_clean_d.png" alt="derivada sin ruido"><figcaption>|[1, −1]| sobre la imagen limpia</figcaption></figure>
+      <figure class="fig big"><img src="assets/ein_noisy_d.png" alt="derivada con ruido"><figcaption>|[1, −1]| sobre la ruidosa</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">A simple vista la imagen ruidosa parece casi igual que la limpia. Al derivar, el ruido pasa a dominar la respuesta y los bordes reales quedan enterrados. Esto motiva la derivada de gaussiana.</aside>
+</section>
+
+<!-- ============ BLOQUE B · DERIVADA DE GAUSSIANA Y ESCALA ============ -->
+
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="12" data-section="Derivada de gaussiana" data-title="Derivada de gaussiana">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque B</p>
+    <h1 class="s-title xl">Derivada de gaussiana</h1>
+    <p class="lead">Suavizar y derivar en una sola convolución; la escala σ.</p>
+  </div>
+</section>
+
+<section class="slide" id="truco" data-fx="vc" data-section="Derivada de gaussiana" data-title="Suavizar y derivar a la vez">
+  <header class="s-head"><p class="kicker">el truco clave</p><h2 class="s-title">Derivar la gaussiana</h2></header>
+  <div class="s-body vstack">
+  <div class="g21">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 330px"><span>$$\frac{\partial}{\partial x}(f*g)(x)=\frac{\partial}{\partial x}\int f(\tau)\,g(x-\tau)\,d\tau$$</span><span class="why">definición de convolución</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 330px"><span>$$=\int f(\tau)\,g_x(x-\tau)\,d\tau=f*g_x$$</span><span class="why">la derivada entra en la integral y solo actúa sobre g</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 330px"><span>$$\mathcal F:\ j2\pi u\,\big(F\,G\big)=F\,\big(j2\pi u\,G\big)$$</span><span class="why">en frecuencia: asociatividad del producto</span></div>
+    </div>
+    <div class="vstack">
+      <div class="eq sm" data-seq="4">$$\partial_x(f*g)=f*\partial_x g=(\partial_x f)*g$$</div>
+      <p class="txt" data-seq="4">Suavizar y luego derivar equivale a convolucionar <b>una sola vez</b> con la derivada de la gaussiana.</p>
+      <div class="tip" data-seq="5"><b>ventaja</b>El núcleo \(g_x\) se calcula una vez, se reutiliza y no tocamos los píxeles con diferencias ruidosas.</div>
+    </div>
+  </div>
+    <div class="flow" data-seq="6">
+      <div class="box"><b>f</b>imagen</div><div class="arr">→</div>
+      <div class="box"><b>∗ g</b>suavizar</div><div class="arr">→</div>
+      <div class="box"><b>∂/∂x</b>derivar</div><div class="arr">=</div>
+      <div class="box"><b>f ∗ g<sub>x</sub></b>una convolución</div>
+    </div>
+  </div>
+  <aside class="notes">La convolución es conmutativa y asociativa, y la derivada es un operador de convolución, así que da igual el orden. Es mejor derivar la gaussiana, que es analítica y se calcula de forma exacta, y después convolucionar una sola vez con la imagen.</aside>
+</section>
+
+<section class="slide" id="dog" data-fx="vc" data-section="Derivada de gaussiana" data-title="Derivada de gaussiana">
+  <header class="s-head"><p class="kicker">derivación y núcleo 7×7 con sigma = 1</p><h2 class="s-title">Derivada de la gaussiana</h2></header>
+  <div class="s-body g2">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 250px"><span>$$g(x,y)=\tfrac{1}{2\pi\sigma^2}\,e^{-\frac{x^2+y^2}{2\sigma^2}}$$</span><span class="why">gaussiana 2D</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 250px"><span>$$g_x=g\cdot\partial_x\!\Big(-\tfrac{x^2+y^2}{2\sigma^2}\Big)$$</span><span class="why">regla de la cadena en la exponencial</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 250px"><span>$$g_x(x,y)=-\frac{x}{\sigma^2}\,g(x,y)$$</span><span class="why">\(\partial_x(-x^2/2\sigma^2)=-x/\sigma^2\)</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 250px"><span>$$g_x=\Big(-\tfrac{x}{\sigma^2}g_1(x)\Big)\,g_1(y)$$</span><span class="why">separable: derivada 1D en x × suavizado en y</span></div>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[0,0,1,0,-1,0,0],[0,4,8,0,-8,-4,0],[2,16,37,0,-37,-16,-2],[3,27,61,0,-61,-27,-3],[2,16,37,0,-37,-16,-2],[0,4,8,0,-8,-4,0],[0,0,1,0,-1,0,0]]' data-signed="1" data-dec="0" style="height:540px"></div>
+      <div class="cap">valores × 100 de −x·exp(−(x²+y²)/2), sin normalizar (σ = 1)</div>
+    </div>
+  </div>
+  <aside class="notes">Derivar la gaussiana respecto a x multiplica por menos x entre sigma cuadrado. El núcleo es antisimétrico en x y simétrico en y: derivada en una dirección y suavizado en la otra. Como es separable, se implementa con dos convoluciones 1D. Los valores del mapa están sin normalizar; en el código se suele normalizar para que la suma de los positivos valga uno.</aside>
+</section>
+
+<section class="slide" id="escala" data-fx="vc" data-section="Derivada de gaussiana" data-title="Efecto de la escala σ">
+  <header class="s-head"><p class="kicker">imágenes reales · |gx| con sigma = 1, 2 y 4</p><h2 class="s-title">Efecto de la escala</h2></header>
+  <div class="s-body vstack">
+    <div class="row-img" style="grid-template-columns:repeat(3,1fr)">
+      <figure class="fig big"><img src="assets/ein_dog_s1.png" alt="sigma 1"><figcaption>σ = 1: detalle fino y ruido</figcaption></figure>
+      <figure class="fig big"><img src="assets/ein_dog_s2.png" alt="sigma 2"><figcaption>σ = 2: compromiso</figcaption></figure>
+      <figure class="fig big"><img src="assets/ein_dog_s4.png" alt="sigma 4"><figcaption>σ = 4: bordes gruesos, mal localizados</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Entrada: Einstein con ruido gaussiano de 0,04. Con sigma pequeño detectamos mucho detalle pero también ruido. Con sigma grande solo sobreviven los bordes de gran escala, pero se ensanchan y pierden localización. Elegir sigma es elegir la escala a la que nos interesan los bordes.</aside>
+</section>
+
+<section class="slide" id="paso-banda" data-fx="vc" data-section="Derivada de gaussiana" data-title="Paso banda en frecuencia">
+  <header class="s-head"><p class="kicker">transformada de Fourier de gx</p><h2 class="s-title">Paso banda en frecuencia</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$\mathcal F\{g_x\}(u)=j2\pi u\,G(u)$$</div>
+      <p class="txt" data-seq="2">con \(G(u)=e^{-2\pi^2\sigma^2u^2}\) y \(\omega=2\pi u\): módulo \(\omega\,e^{-\omega^2\sigma^2/2}\).</p>
+      <ul class="pts" data-seq="3">
+        <li>\(\omega\) anula las bajas frecuencias (la derivada ignora lo constante).</li>
+        <li>La gaussiana atenúa las altas (suaviza el ruido).</li>
+        <li>Pico en \(\omega=1/\sigma\): σ grande ⇒ banda más baja.</li>
+      </ul>
+      <div class="tip" data-seq="4"><b>orden superior</b>La derivada de orden n multiplica por \((j\omega)^n\): bandas cada vez más altas y estrechas.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,5" data-y="0,1.6" data-xl="ω" data-yl="|F{g_x}|" data-fns='[{"f":"x=>x*Math.exp(-x*x*0.25/2)","label":"σ = 0,5"},{"f":"x=>x*Math.exp(-x*x/2)","label":"σ = 1"},{"f":"x=>x*Math.exp(-x*x*4/2)","label":"σ = 2"}]' style="height:560px"></div>
+  </div>
+  <aside class="notes">La derivada de gaussiana es un filtro paso banda. Las bajas frecuencias quedan eliminadas por la derivada, y las altas por la gaussiana. Aumentar sigma desplaza la banda hacia frecuencias menores, lo que explica el efecto de escala que acabamos de ver.</aside>
+</section>
+
+<section class="slide" id="gradiente" data-fx="vc" data-section="Derivada de gaussiana" data-title="Gradiente">
+  <header class="s-head"><p class="kicker">magnitud, orientación y derivada direccional</p><h2 class="s-title">Gradiente</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$\nabla f=\begin{pmatrix}f_x\\ f_y\end{pmatrix},\quad M=\sqrt{f_x^2+f_y^2}$$</div>
+      <div class="eq" data-seq="2">$$\alpha=\operatorname{atan2}(f_y,f_x)$$</div>
+      <div class="eq" data-seq="3">$$D_{\vec u}f=\nabla f\cdot\vec u=f_x\cos\theta+f_y\sin\theta$$</div>
+      <svg class="dia" data-seq="4" viewBox="0 0 640 270" width="640" height="270" style="align-self:center">
+        <defs><marker id="ar-g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+        <polygon points="0,0 380,0 200,270 0,270" fill="var(--bg-3)"/>
+        <polygon points="380,0 640,0 640,270 200,270" fill="var(--fg-3)" opacity="0.55"/>
+        <line x1="380" y1="0" x2="200" y2="270" stroke="var(--fg)" stroke-width="3" stroke-dasharray="10 8"/>
+        <line x1="290" y1="135" x2="430" y2="228" stroke="var(--accent)" stroke-width="6" marker-end="url(#ar-g)"/>
+        <text x="455" y="215" fill="var(--fg)">∇f</text>
+        <text x="20" y="40" fill="var(--fg-2)">oscuro</text>
+        <text x="520" y="40" fill="var(--fg)">claro</text>
+        <text x="205" y="225" fill="var(--fg)" transform="rotate(-56 205 225)">borde</text>
+      </svg>
+    </div>
+    <div class="vstack">
+      <pre class="code" data-seq="2">gx = ndi.sobel(im, 1)   # eje 1: columnas (x)
+gy = ndi.sobel(im, 0)   # eje 0: filas (y)
+mag = np.hypot(gx, gy)
+ang = np.arctan2(gy, gx)</pre>
+      <p class="txt" data-seq="3">El gradiente apunta hacia donde la intensidad <b>crece más rápido</b>; el borde es perpendicular a él. La derivada direccional es máxima (\(=M\)) cuando \(\vec u\) sigue al gradiente.</p>
+      <div class="trap" data-seq="4"><b>trampa</b>Orden de argumentos: <code>np.arctan2(gy, gx)</code>, primero y, luego x.</div>
+    </div>
+  </div>
+  <aside class="notes">El gradiente es el vector de derivadas parciales. Su módulo mide la fuerza del borde y su dirección es perpendicular al borde. La derivada direccional es el producto escalar del gradiente con el vector unitario, de modo que basta con calcular fx y fy para conocer la derivada en cualquier dirección.</aside>
+</section>
+
+<section class="slide" id="isotropia" data-fx="vc" data-section="Derivada de gaussiana" data-title="Isotropía de |fx|+|fy|">
+  <header class="s-head"><p class="kicker">demostración con |gradiente| = 1</p><h2 class="s-title">Aproximación no isótropa</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="deriv" style="grid-template-columns:1fr">
+        <div data-seq="1" style="grid-template-columns:1fr"><span>$$\nabla f=|\nabla f|(\cos\varphi,\sin\varphi)$$</span></div>
+        <div data-seq="2" style="grid-template-columns:1fr"><span>$$|f_x|+|f_y|=|\nabla f|\,(|\cos\varphi|+|\sin\varphi|)$$</span></div>
+      </div>
+      <table class="t" data-seq="3">
+        <tr><th>ángulo</th><th>suma abs.</th><th>módulo</th></tr>
+        <tr><td>0°</td><td class="ok">1</td><td>1</td></tr>
+        <tr><td>22,5°</td><td class="warn">1,31</td><td>1</td></tr>
+        <tr><td>45°</td><td class="err">√2 ≈ 1,41</td><td>1</td></tr>
+      </table>
+      <p class="txt" data-seq="4">Ahorra raíces cuadradas, pero un borde diagonal sale hasta un 41 % más fuerte: <b>pierde la isotropía</b>.</p>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,90" data-y="0.8,1.6" data-xl="φ (grados)" data-yl="respuesta" data-fns='[{"f":"x=>Math.abs(Math.cos(x*Math.PI/180))+Math.abs(Math.sin(x*Math.PI/180))","label":"|fx|+|fy|"},{"f":"x=>1","label":"M = √(fx²+fy²)"}]' style="height:540px"></div>
+  </div>
+  <aside class="notes">Con módulo del gradiente uno, la magnitud euclídea vale uno en todas las direcciones: es isótropa. La aproximación con valores absolutos vale uno a cero grados y raíz de dos a cuarenta y cinco: depende de la dirección. Es verdadero que ahorra cálculo, pero es falso que sea isótropa.</aside>
+</section>
+
+<!-- ============ BLOQUE C · LAPLACIANO Y LoG ============ -->
+
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="13" data-section="Laplaciano y LoG" data-title="Laplaciano y LoG">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque C</p>
+    <h1 class="s-title xl">Laplaciano y LoG</h1>
+    <p class="lead">Segunda derivada isótropa, cruces por cero y realce.</p>
+  </div>
+</section>
+
+<section class="slide" id="laplaciano" data-fx="vc" data-section="Laplaciano y LoG" data-title="Laplaciano">
+  <header class="s-head"><p class="kicker">segunda derivada isótropa</p><h2 class="s-title">Laplaciano</h2></header>
+  <div class="s-body vstack">
+    <div class="kgrid2">
+      <div class="kc" data-seq="1"><div class="vc-heat" data-m='[[1,-2,1]]' data-signed="1" data-dec="0" style="height:90px"></div><span>[1, −2, 1]  (x)</span></div>
+      <div class="kc" data-seq="1"><div class="vc-heat" data-m='[[0,1,0],[0,-2,0],[0,1,0]]' data-signed="1" data-dec="0"></div><span>[1, −2, 1]ᵀ  (y)</span></div>
+      <div class="kc" data-seq="2"><div class="vc-heat" data-m='[[0,1,0],[1,-4,1],[0,1,0]]' data-signed="1" data-dec="0"></div><span>suma = Laplaciano 4</span></div>
+      <div class="kc" data-seq="4"><div class="vc-heat" data-m='[[1,1,1],[1,-8,1],[1,1,1]]' data-signed="1" data-dec="0"></div><span>variante de 8 vecinos</span></div>
+    </div>
+    <div class="g2">
+      <div class="eq sm" data-seq="2">$$\nabla^2f=f_{xx}+f_{yy}\ \Rightarrow\ h=h_x\otimes\delta+\delta\otimes h_y$$</div>
+      <p class="txt" data-seq="3">Es <b>separable en suma</b>, no en producto: \(g=f*h_x+f*h_y\) (dos pasadas 1D que se suman). Un núcleo separable en producto, \(h=a\otimes b\), tiene rango 1; el Laplaciano tiene rango 2.</p>
+    </div>
+  </div>
+  <aside class="notes">El Laplaciano es la suma de las segundas derivadas en x y en y. Su núcleo se obtiene sumando [1, -2, 1] y su traspuesta. Cuidado con la diferencia: Sobel es separable en producto, un suavizado por una derivada. El Laplaciano es separable en suma. Por eso no se puede escribir como producto exterior de dos vectores. Todos los pesos suman cero.</aside>
+</section>
+
+<section class="slide" id="perfil" data-fx="vc" data-section="Laplaciano y LoG" data-title="1.ª frente a 2.ª derivada">
+  <header class="s-head"><p class="kicker">perfil de un borde suave</p><h2 class="s-title">Máx. de f′ = cruce de f″</h2></header>
+  <div class="s-body g21">
+    <div class="fx" data-role="plot" data-x="-4,4" data-y="-0.5,1.5" data-xl="x" data-yl="valor" data-pts='[[0,0,"cruce por cero"],[0,0.5,"máx. de f′"]]' data-fns='[{"f":"x=>1/(1+Math.exp(-2*x))","label":"f (borde)"},{"f":"x=>2/(1+Math.exp(-2*x))/(1+Math.exp(2*x))","label":"f′"},{"f":"x=>4/(1+Math.exp(-2*x))/(1+Math.exp(2*x))*(1-2/(1+Math.exp(-2*x)))","label":"f″"}]' style="height:560px"></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Para \(f(x)=1/(1+e^{-2x})\):</p>
+      <div class="eq sm" data-seq="1">$$f'=2f(1-f),\quad f''=4f(1-f)(1-2f)$$</div>
+      <p class="txt" data-seq="2">\(f''=0\) cuando \(f=\tfrac12\), justo donde \(f'\) es máxima: <b>el borde está en el cruce por cero</b> de la segunda derivada.</p>
+      <div class="tip" data-seq="3"><b>signo</b>La segunda derivada es + a un lado del borde y − al otro: el signo dice si pasa de claro a oscuro o al revés.</div>
+    </div>
+  </div>
+  <aside class="notes">Esta es la lectura geométrica: el punto de máxima pendiente es el punto de inflexión, y en él la segunda derivada cambia de signo. Por eso Marr–Hildreth busca cruces por cero del Laplaciano.</aside>
+</section>
+
+<section class="slide" id="perfiles-graf" data-fx="vc" data-section="Laplaciano y LoG" data-title="Perfiles: f, f′ y f″">
+  <header class="s-head"><p class="kicker">diapositivas 26 y 34–35 · los mismos números de la tabla siguiente</p><h2 class="s-title">Perfiles: f, f′ y f″</h2></header>
+  <div class="s-body vstack" style="gap:8px">
+    <p class="legend-line"><span><i style="background:var(--cat-1)"></i>señal f</span><span><i style="background:var(--cat-2)"></i>f′ con [1, 0, −1]</span><span><i style="background:var(--cat-3)"></i>f″ con [1, −2, 1]</span></p>
+    <div class="pgrid">
+      <div><p class="ttl">rampa</p><div class="fx" data-role="plot" data-x="0,10" data-y="-2,6" data-fns='[{"f": "x=>{const a=[1, 1, 1, 2, 3, 4, 5, 6, 6, 6],i=Math.round(x)-0;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 1, 2, 2, 2, 2, 1, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 1, 0, 0, 0, 0, -1, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}]'></div></div>
+      <div><p class="ttl">escalón</p><div class="fx" data-role="plot" data-x="0,10" data-y="-8,8" data-fns='[{"f": "x=>{const a=[1, 1, 1, 1, 1, 6, 6, 6, 6, 6],i=Math.round(x)-0;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 0, 0, 5, 5, 0, 0, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 0, 0, 5, -5, 0, 0, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}]'></div></div>
+      <div><p class="ttl">tejado</p><div class="fx" data-role="plot" data-x="0,10" data-y="-2,6" data-fns='[{"f": "x=>{const a=[1, 1, 2, 3, 4, 5, 4, 3, 2, 1],i=Math.round(x)-0;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[1, 2, 2, 2, 0, -2, -2, -2],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[1, 0, 0, 0, -2, 0, 0, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}]'></div></div>
+      <div><p class="ttl">punto</p><div class="fx" data-role="plot" data-x="0,10" data-y="-10,10" data-fns='[{"f": "x=>{const a=[1, 1, 1, 1, 1, 6, 1, 1, 1, 1],i=Math.round(x)-0;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 0, 0, 5, 0, -5, 0, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}, {"f": "x=>{const a=[0, 0, 0, 5, -10, 5, 0, 0],i=Math.round(x)-1;return i>=0&&i<a.length?a[i]:NaN}"}]'></div></div>
+    </div>
+  </div>
+  <aside class="notes">Las cuatro señales de la diapositiva 26 con sus dos derivadas discretas, dibujadas como escalones. Fíjate en tres cosas: en la rampa la primera derivada es una meseta ancha, que es un borde grueso, mientras que la segunda solo marca el principio y el final; en el escalón la segunda derivada da un par positivo y negativo con el cruce por cero en medio; y en el punto aislado la segunda derivada llega a menos diez, el doble de la primera.</aside>
+</section>
+
+<section class="slide" id="perfiles" data-fx="vc" data-section="Laplaciano y LoG" data-title="Cuatro perfiles discretos">
+  <header class="s-head"><p class="kicker">diapositivas 26 y 34–35 · calculado a mano</p><h2 class="s-title">Cuatro perfiles discretos</h2></header>
+  <div class="s-body vstack">
+    <table class="t">
+      <tr><th>perfil</th><th class="mono">señal</th><th class="mono">1.ª deriv.</th><th class="mono">2.ª deriv.</th></tr>
+      <tr data-seq="1"><td>rampa</td><td class="mono">1 1 1 2 3 4 5 6 6 6</td><td class="mono">0 1 2 2 2 2 1 0</td><td class="mono">0 1 0 0 0 0 −1 0</td></tr>
+      <tr data-seq="2"><td>escalón</td><td class="mono">1 1 1 1 1 6 6 6 6 6</td><td class="mono">0 0 0 5 5 0 0 0</td><td class="mono">0 0 0 5 −5 0 0 0</td></tr>
+      <tr data-seq="3"><td>tejado</td><td class="mono">1 1 2 3 4 5 4 3 2 1</td><td class="mono">1 2 2 2 0 −2 −2 −2</td><td class="mono">1 0 0 0 −2 0 0 0</td></tr>
+      <tr data-seq="4"><td>punto</td><td class="mono">1 1 1 1 1 6 1 1 1 1</td><td class="mono">0 0 0 5 0 −5 0 0</td><td class="mono">0 0 0 5 −10 5 0 0</td></tr>
+    </table>
+    <ul class="pts" data-seq="5">
+      <li>Rampa: f′ es constante en <b>toda</b> la rampa (borde grueso); f″ solo marca el principio (+1) y el final (−1).</li>
+      <li>Escalón: f″ da el par (+5, −5): <b>doble respuesta</b>, con el cruce por cero entre ambos.</li>
+      <li>Punto: f″ responde con (5, −10, 5), mucho más fuerte que f′ (5, 0, −5).</li>
+    </ul>
+  </div>
+  <aside class="notes">Los valores se calculan con las diferencias centrales y con [1, -2, 1], descartando los dos extremos. Compruébalos a mano: por ejemplo, el escalón en la posición cuatro vale seis menos uno igual a cinco para la primera derivada y para el Laplaciano, uno menos dos por uno más seis igual a cinco.</aside>
+</section>
+
+<section class="slide" id="huecos" data-fx="vc" data-section="Laplaciano y LoG" data-title="Rellenar los huecos">
+  <header class="s-head"><p class="kicker">diapositiva 36 · ejercicio</p><h2 class="s-title">1.ª frente a 2.ª derivada</h2></header>
+  <div class="s-body vstack">
+    <table class="t">
+      <tr><th style="width:80px">n.º</th><th>palabra</th><th>por qué (con los perfiles de la tabla anterior)</th></tr>
+      <tr data-seq="1"><td class="mono">(1)</td><td><b>thicker</b> (más gruesos)</td><td>en una rampa f′ es constante a lo largo de toda ella</td></tr>
+      <tr data-seq="2"><td class="mono">(2)</td><td><b>stronger</b> (más fuerte)</td><td>punto aislado: f″ = (5, −10, 5) frente a f′ = (5, 0, −5)</td></tr>
+      <tr data-seq="3"><td class="mono">(3)</td><td><b>noise</b> (ruido)</td><td>el ruido es un punto aislado: f″ lo amplifica más</td></tr>
+      <tr data-seq="4"><td class="mono">(4)</td><td><b>step</b> (escalón)</td><td>f″ da (+5, −5): doble borde en rampa y escalón</td></tr>
+      <tr data-seq="5"><td class="mono">(5)</td><td><b>sign</b> (signo)</td><td>el cruce + → − o − → + indica claro→oscuro u oscuro→claro</td></tr>
+    </table>
+    <div class="exam" data-seq="6"><b>cómo cae</b>Texto completo: «Las derivadas de primer orden producen bordes más gruesos. Las de segundo orden responden con más fuerza al detalle fino (líneas, puntos) y al ruido, y producen respuesta de doble borde en rampas y escalones. El signo de la segunda derivada indica la dirección de la transición.»</div>
+  </div>
+  <aside class="notes">Este párrafo es casi una pregunta de verdadero o falso en sí mismo. Memoriza el contraste: primera derivada, bordes gruesos; segunda derivada, respuesta más fuerte al detalle fino y al ruido, doble borde, y el signo informa de la dirección.</aside>
+</section>
+
+<section class="slide" id="ventajas-lap" data-fx="vc" data-section="Laplaciano y LoG" data-title="Ventajas del Laplaciano">
+  <header class="s-head"><p class="kicker">por qué sigue usándose</p><h2 class="s-title">Ventajas y desventajas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="card" data-seq="1"><b>isótropo</b>Responde igual en todas las direcciones: un solo núcleo, sin elegir ejes.</div>
+      <div class="card" data-seq="2"><b>curvatura</b>Mide cuánto se aparta f de su media local: detecta puntos, esquinas y líneas finas.</div>
+      <div class="card" data-seq="3"><b>contornos cerrados</b>Sus cruces por cero forman curvas cerradas de un píxel de ancho.</div>
+    </div>
+    <div class="vstack">
+      <div class="trap" data-seq="4"><b>desventajas</b>Muy sensible al ruido (segunda derivada); doble borde; no da la dirección del borde.</div>
+      <div class="tip" data-seq="5"><b>usos actuales</b>Pirámides de imágenes y detección de puntos de interés en escala (SIFT usa diferencias de gaussianas, una aproximación del LoG).</div>
+    </div>
+  </div>
+  <aside class="notes">Aunque como detector de bordes puro el Laplaciano es ruidoso, es la base del LoG, de las pirámides laplacianas y de SIFT.</aside>
+</section>
+
+<section class="slide" id="log-deriv" data-fx="vc" data-section="Laplaciano y LoG" data-title="LoG: derivación">
+  <header class="s-head"><p class="kicker">Laplaciano de la gaussiana (sin normalizar)</p><h2 class="s-title">Derivación del LoG</h2></header>
+  <div class="s-body g21">
+    <div class="deriv" style="grid-template-columns:1fr;font-size:31px">
+      <div data-seq="1" style="grid-template-columns:1fr 300px"><span>$$G=e^{-\frac{x^2+y^2}{2\sigma^2}},\quad G_x=-\tfrac{x}{\sigma^2}G$$</span><span class="why">primera derivada</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 300px"><span>$$G_{xx}=-\tfrac1{\sigma^2}G+\tfrac{x^2}{\sigma^4}G=\tfrac{x^2-\sigma^2}{\sigma^4}G$$</span><span class="why">regla del producto</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 300px"><span>$$G_{yy}=\tfrac{y^2-\sigma^2}{\sigma^4}\,G$$</span><span class="why">simetría</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 300px"><span>$$\nabla^2G=\frac{x^2+y^2-2\sigma^2}{\sigma^4}\,e^{-\frac{x^2+y^2}{2\sigma^2}}$$</span><span class="why">suma</span></div>
+      <div data-seq="5" style="grid-template-columns:1fr 300px"><span>$$x^2+y^2=2\sigma^2\Rightarrow r=\sqrt2\,\sigma$$</span><span class="why">cruce por cero</span></div>
+    </div>
+    <div class="fx" data-role="plot" data-x="-5,5" data-y="-2,2" data-xl="x  (σ = 1, y = 0)" data-yl="∇²G" data-pts='[[1.414,0,"r = √2σ"],[-1.414,0]]' data-fns='[{"f":"x=>(x*x-2)*Math.exp(-x*x/2)","label":"∇²G"}]' style="height:560px"></div>
+  </div>
+  <aside class="notes">Calculamos G_xx con la regla del producto, por simetría G_yy es igual cambiando x por y, y sumamos. El resultado es el sombrero mexicano invertido: mínimo negativo en el centro y anillo positivo alrededor. Se anula cuando el numerador es cero: r igual a raíz de dos sigma.</aside>
+</section>
+
+<section class="slide" id="log-kernel" data-fx="vc" data-section="Laplaciano y LoG" data-title="LoG: núcleo 5×5">
+  <header class="s-head"><p class="kicker">aproximación de la diapositiva 54</p><h2 class="s-title">Núcleo LoG de 5×5</h2></header>
+  <div class="s-body g2">
+    <div class="vc-heat" data-m='[[0,0,-1,0,0],[0,-1,-2,-1,0],[-1,-2,16,-2,-1],[0,-1,-2,-1,0],[0,0,-1,0,0]]' data-signed="1" data-dec="0" style="height:560px"></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Es el <b>negativo</b> del LoG (centro positivo, solo para mostrarlo: el signo no cambia dónde cruza por cero).</p>
+      <ul class="pts" data-seq="2">
+        <li>Suma de pesos = 0: respuesta nula en zonas constantes.</li>
+        <li>Tamaño ≈ 6σ (impar) para recoger la cola del sombrero.</li>
+        <li>Cruce por cero a distancia \(\sqrt2\,\sigma\) del centro.</li>
+      </ul>
+      <div class="tip" data-seq="3"><b>aplicación</b>Se convoluciona con la imagen y se buscan los cruces por cero de la respuesta (Marr–Hildreth).</div>
+    </div>
+  </div>
+  <aside class="notes">Fíjate en que la suma de los 25 pesos vale cero: filas de menos uno, menos cuatro, diez, menos cuatro y menos uno. Un núcleo de suma nula no responde a zonas planas, igual que el Laplaciano.</aside>
+</section>
+
+<section class="slide" id="sharpen" data-fx="vc" data-section="Laplaciano y LoG" data-title="Realce de nitidez">
+  <header class="s-head"><p class="kicker">sharpening con el Laplaciano</p><h2 class="s-title">Realce con el Laplaciano</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$g=f-c\,\nabla^2f,\quad c=1$$</div>
+      <div class="eq sm" data-seq="2">$$\delta-\nabla^2=\begin{bmatrix}0&-1&0\\-1&5&-1\\0&-1&0\end{bmatrix}$$</div>
+      <p class="txt" data-seq="3">Por <b>linealidad</b>: \(f-\nabla^2f=f*(\delta-\nabla^2)\), un solo núcleo. Se resta (no se suma) porque el centro del Laplaciano es negativo (−4).</p>
+      <div class="vc-heat" data-seq="2" data-m='[[0,-1,0],[-1,5,-1],[0,-1,0]]' data-signed="1" data-dec="0" style="height:200px"></div>
+    </div>
+    <div class="row-img" style="grid-template-columns:1fr 1fr">
+      <figure class="fig sm"><img src="assets/bike_orig.png" alt="original"><figcaption>original</figcaption></figure>
+      <figure class="fig sm"><img src="assets/bike_sharp.png" alt="realzada"><figcaption>δ − ∇² (resultado real)</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Sumar la imagen original menos el Laplaciano exagera el contraste alrededor de los bordes. Gracias a la linealidad podemos juntar identidad y Laplaciano en un único núcleo con suma uno, con lo que el brillo medio no cambia. En color se aplica canal a canal.</aside>
+</section>
+
+<section class="slide" id="unsharp" data-fx="vc" data-section="Laplaciano y LoG" data-title="Unsharp masking">
+  <header class="s-head"><p class="kicker">máscara de enfoque</p><h2 class="s-title">Unsharp masking</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="deriv" style="grid-template-columns:1fr">
+        <div data-seq="1" style="grid-template-columns:1fr"><span>$$g=f+k\,(f-f*G)$$</span></div>
+        <div data-seq="2" style="grid-template-columns:1fr"><span>$$=f*\big((1+k)\,\delta-k\,G\big)$$</span></div>
+      </div>
+      <p class="txt" data-seq="3">\(f-f*G\) es la <b>máscara</b> (detalle de alta frecuencia: paso alto). Se suma, ponderada por \(k\), a la original.</p>
+      <div class="tip" data-seq="4"><b>relación</b>\(f-f*G\approx-c\nabla^2f\): ambos amplían las altas frecuencias. Con imágenes en color se hace canal a canal.</div>
+    </div>
+    <div class="row-img" style="grid-template-columns:1fr 1fr">
+      <figure class="fig sm"><img src="assets/bike_lap.png" alt="laplaciano"><figcaption>∇²f (gris = 0)</figcaption></figure>
+      <figure class="fig sm"><img src="assets/bike_usm.png" alt="unsharp"><figcaption>unsharp, k = 1,5, σ = 2</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Unsharp masking es una vieja técnica fotográfica: se resta a la imagen una versión suavizada para quedarse con el detalle y se suma de vuelta amplificado. Es lo mismo que sumar un Laplaciano, pero con un paso alto de ancho ajustable por sigma.</aside>
+</section>
+
+<section class="slide" id="sharpen-mas" data-fx="vc" data-section="Laplaciano y LoG" data-title="Realce sucesivo y en color">
+  <header class="s-head"><p class="kicker">resultados reales · núcleo <span class="nc">δ − ∇²</span> aplicado n veces</p><h2 class="s-title">Realce sucesivo y en color</h2></header>
+  <div class="s-body vstack">
+    <div class="row-img" style="grid-template-columns:repeat(5,1fr)">
+      <figure class="fig h290" data-seq="1"><img src="assets/bike_sharp1.png" alt="1 vez"><figcaption>1 vez</figcaption></figure>
+      <figure class="fig h290" data-seq="2"><img src="assets/bike_sharp2.png" alt="2 veces"><figcaption>2 veces</figcaption></figure>
+      <figure class="fig h290" data-seq="3"><img src="assets/bike_sharp3.png" alt="3 veces"><figcaption>3 veces</figcaption></figure>
+      <figure class="fig h290" data-seq="4"><img src="assets/pep_orig.png" alt="peppers"><figcaption>peppers (color)</figcaption></figure>
+      <figure class="fig h290" data-seq="4"><img src="assets/pep_sharp.png" alt="peppers realzada"><figcaption>canal a canal</figcaption></figure>
+    </div>
+    <div class="g2">
+      <div class="trap" data-seq="3"><b>aplicación sucesiva</b>Aplicar el núcleo n veces equivale a un solo núcleo \((\delta-\nabla^2)^{*n}\), cada vez más paso alto: a la tercera pasada el ruido y las texturas dominan.</div>
+      <div class="tip" data-seq="4"><b>color</b>Se filtra cada canal R, G y B por separado con el mismo núcleo y se vuelven a apilar. El núcleo suma 1, así que el color medio no cambia.</div>
+    </div>
+  </div>
+  <aside class="notes">Arriba, la misma imagen tras una, dos y tres pasadas del núcleo de realce. Como la convolución es asociativa, varias pasadas son una sola convolución con el núcleo convolucionado consigo mismo, que amplifica cada vez más las altas frecuencias. En color, el realce se aplica canal a canal; aquí con la imagen peppers del laboratorio 1. Solo se recorta a [0, 1] al final.</aside>
+</section>
+
+<!-- ============ BLOQUE D · PUNTOS Y LÍNEAS ============ -->
+
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="14" data-section="Puntos y líneas" data-title="Puntos y líneas">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque D</p>
+    <h1 class="s-title xl">Puntos y líneas</h1>
+    <p class="lead">Núcleos de suma cero con un umbral sobre la respuesta.</p>
+  </div>
+</section>
+
+<section class="slide" id="puntos" data-fx="vc" data-section="Puntos y líneas" data-title="Detectar puntos aislados">
+  <header class="s-head"><p class="kicker">Laplaciano + umbral</p><h2 class="s-title">Detectar puntos aislados</h2></header>
+  <div class="s-body vstack">
+    <div class="g21" style="align-items:center">
+      <div class="vstack">
+        <div class="eq" data-seq="1">$$R=\sum_{i=1}^{9}w_iz_i,\qquad |R|&gt;T\ \Rightarrow\ \text{punto}$$</div>
+        <p class="txt" data-seq="2">Pesos suman 0. Si el centro difiere mucho de sus 8 vecinos, \(|R|\) es grande. Imagen de ejemplo con 4 puntos añadidos y ruido σ = 0,01.</p>
+      </div>
+      <div class="vc-heat" data-m='[[1,1,1],[1,-8,1],[1,1,1]]' data-signed="1" data-dec="0" style="height:200px;min-height:0"></div>
+    </div>
+    <div class="row-img" style="grid-template-columns:repeat(3,1fr)">
+      <figure class="fig h320" data-seq="3"><img src="assets/pts_in.png" alt="entrada"><figcaption>entrada (sintética)</figcaption></figure>
+      <figure class="fig h320" data-seq="3"><img src="assets/pts_R.png" alt="R"><figcaption>R (gris = 0)</figcaption></figure>
+      <figure class="fig h320" data-seq="4"><img src="assets/pts_det.png" alt="detección"><figcaption>|R| &gt; T: 4 puntos</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">El detector de puntos es simplemente el Laplaciano de ocho vecinos con un umbral sobre el valor absoluto. Un punto aislado produce una respuesta de módulo grande porque difiere de todos sus vecinos a la vez. La imagen es sintética: la he construido yo para la demostración. El umbral es el 60 % del máximo de |R|.</aside>
+</section>
+
+<section class="slide" id="lineas" data-fx="vc" data-section="Puntos y líneas" data-title="Detectar líneas">
+  <header class="s-head"><p class="kicker">núcleos direccionales · examen, ejercicio 1</p><h2 class="s-title">Detectar líneas</h2></header>
+  <div class="s-body vstack">
+    <div class="kgrid2">
+      <div class="kc"><div class="vc-heat" data-m='[[-1,-1,-1],[2,2,2],[-1,-1,-1]]' data-signed="1" data-dec="0"></div><span>horizontal (0°)</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0"></div><span>+45°  ("/")</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,2,-1],[-1,2,-1],[-1,2,-1]]' data-signed="1" data-dec="0"></div><span>vertical (90°)</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[2,-1,-1],[-1,2,-1],[-1,-1,2]]' data-signed="1" data-dec="0"></div><span>−45°  ("\")</span></div>
+    </div>
+    <div class="g2">
+      <div class="exam" data-seq="1"><b>enlace con el examen</b><code>[[-1,-1,2],[-1,2,-1],[2,-1,-1]]</code> es el detector de líneas a <b>+45°</b>: los 2 están en la diagonal que sube de izquierda a derecha.</div>
+      <p class="txt" data-seq="2">Los pesos suman 0, así que la respuesta es 0 en zonas constantes. La respuesta es máxima cuando una línea de 1 píxel coincide con la fila de 2. Se toma la máxima de los 4 núcleos y se umbraliza.</p>
+    </div>
+  </div>
+  <aside class="notes">Cada núcleo tiene tres dos en la dirección que detecta y seis menos unos alrededor. Si la imagen es constante, dos por tres menos uno por seis da cero. Si hay una línea clara de un píxel de ancho sobre fondo oscuro justo en esa dirección, la respuesta es muy alta. Los núcleos diagonales son simétricos respecto a un giro de 180 grados, así que correlación y convolución dan lo mismo.</aside>
+</section>
+
+<section class="slide" id="visualizar" data-fx="vc" data-section="Puntos y líneas" data-title="Visualizar la respuesta">
+  <header class="s-head"><p class="kicker">cuadros.png · núcleo a +45°</p><h2 class="s-title">Visualización y doble borde</h2></header>
+  <div class="s-body vstack">
+    <div class="row-img" style="grid-template-columns:repeat(4,1fr)">
+      <figure class="fig sm"><img src="assets/cua.png" alt="cuadros"><figcaption>entrada</figcaption></figure>
+      <figure class="fig sm"><img src="assets/cua_p45_val.png" alt="respuesta con signo"><figcaption>R (+45°), gris = 0</figcaption></figure>
+      <figure class="fig sm"><img src="assets/cua_line_p45.png" alt="umbral +45"><figcaption>R &gt; T (+45°)</figcaption></figure>
+      <figure class="fig sm"><img src="assets/cua_line_h.png" alt="umbral h"><figcaption>R &gt; T (horizontal)</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="1">La salida toma valores &lt; 0, 0 y &gt; 0. Se visualiza con \(|R|\) o con \(R&gt;T\). Un borde ancho produce un <b>doble borde</b> (+ y −); una línea de 1 píxel, un solo pico: las líneas salen «finas» respecto al detector.</p>
+  </div>
+  <aside class="notes">Ojo con la visualización: con signo, el gris medio es cero. Si solo nos interesa la línea clara, umbralizamos R mayor que T. Si queremos ambas polaridades, usamos el valor absoluto.</aside>
+</section>
+
+<!-- ============ BLOQUE E · DETECCIÓN BASADA EN GRADIENTE ============ -->
+
+<section class="slide is-plain divider" id="div-e" data-fx="backdrop" data-seed="15" data-section="Gradiente y Sobel" data-title="Gradiente y Sobel">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque E</p>
+    <h1 class="s-title xl">Gradiente y Sobel</h1>
+    <p class="lead">Modelos de borde, esquema general y Sobel paso a paso.</p>
+  </div>
+</section>
+
+<section class="slide" id="modelos" data-fx="vc" data-section="Gradiente y Sobel" data-title="Modelos de borde y ruido">
+  <header class="s-head"><p class="kicker">rampa de 0 a 100 · derivadas con ruido de sigma = 0,1 · 1 · 10 (sintético)</p><h2 class="s-title">Rampa y ruido</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <div><p class="ttl">σ = 0,1</p><div class="fx sm-plot" data-role="plot" data-x="0,60" data-y="-30,30" data-fns='[{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+0.1*g(j);return (r(i+1)-r(i-1))/2}","label":"f′"},{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+0.1*g(j);return r(i+1)-2*r(i)+r(i-1)}","label":"f″"}]'></div></div>
+      <div><p class="ttl">σ = 1</p><div class="fx sm-plot" data-role="plot" data-x="0,60" data-y="-30,30" data-fns='[{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+1*g(j);return (r(i+1)-r(i-1))/2}"},{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+1*g(j);return r(i+1)-2*r(i)+r(i-1)}"}]'></div></div>
+      <div><p class="ttl">σ = 10</p><div class="fx sm-plot" data-role="plot" data-x="0,60" data-y="-30,30" data-fns='[{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+10*g(j);return (r(i+1)-r(i-1))/2}"},{"f":"x=>{const i=Math.round(x),h=k=>{const s=Math.sin(k*127.1+311.7)*43758.5453;return s-Math.floor(s)},g=k=>Math.sqrt(-2*Math.log(h(2*k)+1e-9))*Math.cos(6.2832*h(2*k+1)),r=j=>Math.max(0,Math.min(100,(j-20)*5))+10*g(j);return r(i+1)-2*r(i)+r(i-1)}"}]'></div></div>
+    </div>
+    <p class="txt" data-seq="1">Rampa de pendiente 5 entre x = 20 y 40. Con σ pequeña se ve la meseta de f′ (= 5). Con σ = 10, f′ queda ahogada y f″ (ruido ≈ σ√6) es inservible: <b>la segunda derivada es mucho más sensible al ruido</b>.</p>
+  </div>
+  <aside class="notes">Son perfiles sintéticos: una rampa de cero a cien en veinte muestras más ruido gaussiano pseudoaleatorio. La varianza del ruido en f prima es sigma cuadrado medio, y en f segunda, seis sigma cuadrado: la desviación crece de sigma a sigma por raíz de seis. Los tres modelos clásicos de borde son escalón, rampa y tejado.</aside>
+</section>
+
+<section class="slide" id="esquema" data-fx="vc" data-section="Gradiente y Sobel" data-title="Esquema general">
+  <header class="s-head"><p class="kicker">detección de bordes basada en gradiente</p><h2 class="s-title">Esquema general</h2></header>
+  <div class="s-body vstack">
+    <div class="flow pipe">
+      <div class="box" data-seq="1"><b><span class="step-n">1</span>Suavizar</b>reducir ruido (gaussiana)<img src="assets/sob_smooth_in.png" alt="suavizada"></div><div class="arr">→</div>
+      <div class="box" data-seq="2"><b><span class="step-n">2</span>Realzar</b>gradiente: magnitud y orientación<img src="assets/sob_smooth_m.png" alt="gradiente"></div><div class="arr">→</div>
+      <div class="box" data-seq="3"><b><span class="step-n">3</span>Detectar</b>máximos locales o umbral<img src="assets/sob_smooth_t.png" alt="umbral"></div><div class="arr">→</div>
+      <div class="box" data-seq="4"><b><span class="step-n">4</span>Localizar</b>precisión subpíxel (opcional): interpolar el máximo entre píxeles</div>
+    </div>
+    <table class="t" data-seq="5">
+      <tr><th>problema</th><th>causa</th><th>solución</th></tr>
+      <tr><td>bordes gruesos</td><td>el gradiente es alto en varios píxeles</td><td>supresión de no máximos</td></tr>
+      <tr><td>falsos positivos</td><td>ruido que supera el umbral</td><td>suavizar, subir el umbral</td></tr>
+      <tr><td>falsos negativos</td><td>bordes débiles bajo el umbral</td><td>histéresis (dos umbrales)</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Casi todos los detectores siguen este esquema de cuatro pasos. Los tres problemas clásicos orientan el diseño del detector de Canny: bordes gruesos se resuelven con supresión de no máximos, falsos positivos con suavizado y falsos negativos con histéresis.</aside>
+</section>
+
+<section class="slide" id="sobel" data-fx="vc" data-section="Gradiente y Sobel" data-title="Prewitt y Sobel">
+  <header class="s-head"><p class="kicker">gradiente 3×3 con suavizado integrado</p><h2 class="s-title">Prewitt y Sobel</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <div class="vstack" data-seq="1"><div class="vc-heat" data-m='[[-1,0,1],[-1,0,1],[-1,0,1]]' data-signed="1" data-dec="0" style="height:230px"></div><div class="cap">Prewitt (x)</div></div>
+      <div class="vstack" data-seq="2"><div class="vc-heat" data-m='[[-1,0,1],[-2,0,2],[-1,0,1]]' data-signed="1" data-dec="0" style="height:230px"></div><div class="cap">Sobel (x)</div></div>
+      <div class="vstack" data-seq="5"><div class="vc-heat" data-m='[[-1,-2,-1],[0,0,0],[1,2,1]]' data-signed="1" data-dec="0" style="height:230px"></div><div class="cap">Sobel (y) = traspuesta</div></div>
+    </div>
+    <div class="g2">
+      <div class="eq sm" data-seq="3">$$\begin{bmatrix}1\\2\\1\end{bmatrix}\!\otimes\!\begin{bmatrix}-1&0&1\end{bmatrix}=\begin{bmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{bmatrix}$$</div>
+      <div class="vstack">
+        <p class="txt" data-seq="3"><b>Sobel = suavizado [1,2,1]ᵀ ⊗ derivada [−1,0,1]</b> (separable: producto exterior). Prewitt usa [1,1,1]ᵀ. Pesos suman 0.</p>
+        <div class="trap" data-seq="4"><b>scipy</b><code>ndi.sobel(im, axis)</code> es una <b>correlación</b>: <code>axis=1</code> deriva a lo largo de columnas (x), <code>axis=0</code> a lo largo de filas (y). Sin normalizar (÷8 para pendiente real).</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Sobel y Prewitt promedian tres filas antes de derivar, así que son menos sensibles al ruido que la diferencia simple. La separabilidad se ve con el producto exterior: columna uno, dos, uno por fila menos uno, cero, uno. Para el examen: ndimage.sobel con axis uno detecta bordes verticales, es decir, deriva en x.</aside>
+</section>
+
+<section class="slide" id="sobel-raw" data-fx="vc" data-section="Gradiente y Sobel" data-title="Sobel con y sin suavizado">
+  <header class="s-head"><p class="kicker">bike256 + ruido sigma = 8/255 · diapositivas 49–51 · umbral al 33 % del máx.</p><h2 class="s-title">Sobel: suavizar o no</h2></header>
+  <div class="s-body vstack" style="gap:14px">
+    <div class="mgrid">
+      <div></div><div class="ch">imagen</div><div class="ch">|gx|</div><div class="ch">|gy|</div><div class="ch">|gx|+|gy|</div><div class="ch">&gt; 33 % máx.</div>
+      <div class="rl">sin suavizar</div>
+      <img src="assets/sob_raw_in.png" alt="entrada">
+      <img src="assets/sob_raw_gx.png" alt="|gx|">
+      <img src="assets/sob_raw_gy.png" alt="|gy|">
+      <img src="assets/sob_raw_m.png" alt="|gx|+|gy|">
+      <img src="assets/sob_raw_t.png" alt="umbral">
+      <div class="rl" data-seq="2">gaussiana σ = 1,5</div>
+      <img data-seq="2" src="assets/sob_smooth_in.png" alt="suavizada">
+      <img data-seq="2" src="assets/sob_smooth_gx.png" alt="|gx|">
+      <img data-seq="2" src="assets/sob_smooth_gy.png" alt="|gy|">
+      <img data-seq="2" src="assets/sob_smooth_m.png" alt="|gx|+|gy|">
+      <img data-seq="2" src="assets/sob_smooth_t.png" alt="umbral">
+    </div>
+    <p class="txt" data-seq="3">|gx| marca los bordes verticales y |gy| los horizontales. Sin suavizar, el umbral deja salpicaduras de ruido; con suavizado los bordes salen limpios pero <b>más gruesos</b> y se pierden los radios finos.</p>
+  </div>
+  <aside class="notes">Arriba, Sobel directamente sobre la imagen con ruido: el ruido apenas se ve en la entrada, pero tras derivar contamina la respuesta y el umbral deja puntos sueltos y bordes rotos. Abajo, el mismo detector con un suavizado gaussiano de sigma 1,5 antes: menos falsos positivos, bordes más gruesos y menos detalle. Es el compromiso de siempre entre ruido y localización.</aside>
+</section>
+
+
+<section class="slide" id="sobel-num" data-fx="vc" data-section="Gradiente y Sobel" data-title="Sobel paso a paso">
+  <header class="s-head"><p class="kicker">ejemplo numérico · escalón vertical · correlación</p><h2 class="s-title">Sobel sobre un escalón</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[0,0,0,9,9,9],[0,0,0,9,9,9],[0,0,0,9,9,9],[0,0,0,9,9,9],[0,0,0,9,9,9]]' data-k='[[-1,0,1],[-2,0,2],[-1,0,1]]' data-mode="corr" data-pad="none" data-dec="0" style="height:500px"></div>
+    <p class="txt" data-seq="1">En cada interior: \(g=\sum_{\text{col. der.}}-\sum_{\text{col. izq.}}\). Donde las dos columnas laterales valen 0 y 9: \((1+2+1)\cdot 9-0=36\). El borde sale con <b>2 píxeles de ancho</b> (0, 36, 36, 0).</p>
+  </div>
+  <aside class="notes">Calcula una posición a mano: columnas laterales de ceros y nueves; la columna derecha pondera uno, dos, uno por nueve, cada uno: treinta y seis; la izquierda aporta cero. Con pad igual a none la salida es 3 por 4 y no hay artefactos de borde.</aside>
+</section>
+
+<!-- ============ BLOQUE F · MARR–HILDRETH Y CANNY ============ -->
+
+<section class="slide is-plain divider" id="div-f" data-fx="backdrop" data-seed="16" data-section="Marr–Hildreth y Canny" data-title="Marr–Hildreth y Canny">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque F</p>
+    <h1 class="s-title xl">Marr–Hildreth y Canny</h1>
+    <p class="lead">Cruces por cero del LoG frente a gradiente con NMS e histéresis.</p>
+  </div>
+</section>
+
+<section class="slide" id="mh" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Marr–Hildreth: algoritmo">
+  <header class="s-head"><p class="kicker">LoG + cruces por cero · diapositivas 55–56</p><h2 class="s-title">Marr–Hildreth</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <ol class="pts" data-seq="1" style="padding-left:40px">
+        <li>Filtrar con LoG: σ ≈ 0,5 % de min(H, W), tamaño ≈ 6σ (impar).</li>
+        <li>Buscar cruces por cero en cada 3×3: basta <b>un</b> par de vecinos <b>opuestos</b> (izq.-der., arriba-abajo o diagonales).</li>
+        <li>Descartar los débiles con un umbral T.</li>
+      </ol>
+      <div class="eq sm" data-seq="2">$$\operatorname{sgn}g(z_1)\neq\operatorname{sgn}g(z_2)\ \wedge\ |g(z_1)-g(z_2)|&gt;T$$</div>
+      <div class="exam" data-seq="5"><b>valor de la lección</b>\(T = 4\,\%\) de \(\max|\mathrm{LoG}|\) (diapositiva 56). Con \(T=0\) sale el efecto espagueti.</div>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-seq="4" data-x="-4,4" data-y="-0.8,0.8" data-xl="x (σ = 1, de ejemplo)" data-yl="g = LoG ∗ escalón" data-legend="tr" data-pts='[[-1,0.607,"z₁"],[1,-0.607,"z₂"],[0,0,"cruce"]]' data-fns='[{"f":"x=>-x*Math.exp(-x*x/2)","label":"g(x)"}]' style="height:330px;min-height:0"></div>
+      <p class="txt" data-seq="4">Para un escalón, \(g\) pasa de + a −: \(|g(z_1)-g(z_2)|=2e^{-1/2}\approx1{,}21\), muy por encima de T. Un cruce por ruido tiene un salto pequeño y se descarta.</p>
+      <div class="tip" data-seq="6"><b>ventaja</b>Contornos cerrados de 1 píxel. <b>Pega</b>: esquinas redondeadas y no da orientación.</div>
+    </div>
+  </div>
+  <aside class="notes">Marr y Hildreth proponen filtrar con el Laplaciano de la gaussiana y buscar los cruces por cero. En 1D, el LoG aplicado a un escalón es la derivada de la gaussiana cambiada de signo: positiva a un lado, negativa al otro, y cero justo en el borde. Los dos vecinos opuestos del cruce tienen signos distintos y una diferencia grande, así que superan el umbral. Sin umbral aparecen cruces espurios en zonas casi planas donde el ruido cambia el signo: el famoso efecto espagueti. En la lección el umbral es el 4 % del máximo del LoG.</aside>
+</section>
+
+<section class="slide" id="mh-img" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Marr–Hildreth: resultados">
+  <header class="s-head"><p class="kicker">einstein.pgm · sigma = 2,0 (0,5 % de 407) · umbral relativo a máx. |LoG|</p><h2 class="s-title">Marr–Hildreth en acción</h2></header>
+  <div class="s-body vstack">
+    <div class="row-img" style="grid-template-columns:repeat(4,1fr)">
+      <figure class="fig b4" data-seq="1"><img src="assets/mh_log.png" alt="LoG"><figcaption>respuesta LoG (gris = 0)</figcaption></figure>
+      <figure class="fig b4" data-seq="2"><img src="assets/mh_zc0.png" alt="T=0"><figcaption>T = 0: espagueti</figcaption></figure>
+      <figure class="fig b4" data-seq="3"><img src="assets/mh_zc04.png" alt="T 4 %"><figcaption><b style="color:var(--accent)">T = 4 % (lección)</b></figcaption></figure>
+      <figure class="fig b4" data-seq="4"><img src="assets/mh_zc15.png" alt="T 15 %"><figcaption>T = 15 % (solo aquí)</figcaption></figure>
+    </div>
+    <div class="exam" data-seq="4"><b>para el examen: 4 %</b>El valor de la lección es \(T=4\,\%\) de \(\max|\mathrm{LoG}|\). Einstein tiene mucho grano y con el 4 % aún quedan cruces en el pelo; el 15 % se usa <b>solo en esta demo</b> para que se vean los bordes principales.</div>
+  </div>
+  <aside class="notes">Con T igual a cero obtenemos contornos por todas partes. Con el 4 % del máximo, que es el valor que da la lección para la imagen del edificio, desaparece casi todo el fondo, pero en el pelo de Einstein siguen quedando muchos cruces porque la imagen tiene mucho grano. Subiendo al 15 % quedan solo los bordes principales. Para el examen, el número que hay que recordar es el 4 %.</aside>
+</section>
+
+<section class="slide" id="canny-crit" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Canny: tres criterios">
+  <header class="s-head"><p class="kicker">Canny, 1986 · detector óptimo para un escalón con ruido</p><h2 class="s-title">Canny: tres criterios</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <div class="card" data-seq="1"><b>1 · buena detección</b>Pocos falsos positivos y negativos: máxima relación señal/ruido.</div>
+      <div class="card" data-seq="2"><b>2 · buena localización</b>El borde detectado, lo más cerca posible del real.</div>
+      <div class="card" data-seq="3"><b>3 · respuesta única</b>Un solo píxel (máximo) por borde: nada de bordes gruesos.</div>
+    </div>
+    <div class="flow pipe tall">
+      <div class="box" data-seq="4"><b>gaussiana</b>suaviza (σ = 2)<img src="assets/cp_1.png" alt="suavizada"></div><div class="arr">→</div>
+      <div class="box" data-seq="5"><b>derivada de gaussiana</b>magnitud M<img src="assets/cp_2.png" alt="magnitud"></div><div class="arr">→</div>
+      <div class="box" data-seq="6"><b>no máximos</b>adelgaza a 1 px<img src="assets/cp_3.png" alt="NMS"></div><div class="arr">→</div>
+      <div class="box" data-seq="7"><b>histéresis</b>0,05 / 0,15<img src="assets/cp_4.png" alt="Canny"></div>
+    </div>
+  </div>
+  <aside class="notes">Canny planteó tres criterios matemáticos. La solución óptima para un escalón con ruido es muy parecida a la derivada de una gaussiana, que es lo que usa el primer paso del esquema. La supresión de no máximos cumple el criterio de respuesta única y la histéresis mejora la detección de bordes débiles pero conectados. Las cuatro imágenes son reales: Einstein con sigma 2, la magnitud del gradiente, el resultado de la supresión de no máximos con el código de la diapositiva siguiente y la salida final de skimage.feature.canny.</aside>
+</section>
+
+<section class="slide" id="nms" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Supresión de no máximos">
+  <header class="s-head"><p class="kicker">pseudocódigo de la diapositiva 61</p><h2 class="s-title">Supresión de no máximos</h2></header>
+  <div class="s-body g21">
+<div class="vstack">
+<pre class="code sm" data-seq="1">def nms(mag, ang):        # ang en grados
+    d = np.round(ang / 45).astype(int) % 4
+    step = [(0, 1), (1, 1), (1, 0), (1, -1)]
+    out = np.zeros_like(mag)
+    for y in range(1, mag.shape[0] - 1):
+        for x in range(1, mag.shape[1] - 1):
+            dy, dx = step[d[y, x]]
+            if (mag[y, x] &gt;= mag[y + dy, x + dx] and
+                    mag[y, x] &gt;= mag[y - dy, x - dx]):
+                out[y, x] = mag[y, x]
+    return out</pre>
+      <div class="tip" data-seq="4"><b>dirección</b>Se compara con los 2 vecinos <b>en la dirección del gradiente</b>, cuantizada en 0°, 45°, 90° y 135°.</div>
+    </div>
+    <div class="vstack">
+      <table class="t" data-seq="2">
+        <tr><th>x</th><th class="mono">0</th><th class="mono">1</th><th class="mono">2</th><th class="mono">3</th><th class="mono">4</th><th class="mono">5</th></tr>
+        <tr><td>M</td><td class="mono">1</td><td class="mono">3</td><td class="mono">7</td><td class="mono">9</td><td class="mono">8</td><td class="mono">2</td></tr>
+        <tr><td>¿máx.?</td><td class="mono">—</td><td class="mono">no</td><td class="warn mono">no</td><td class="ok mono">sí</td><td class="warn mono">no</td><td class="mono">—</td></tr>
+        <tr><td>salida</td><td class="mono">0</td><td class="mono">0</td><td class="mono">0</td><td class="mono">9</td><td class="mono">0</td><td class="mono">0</td></tr>
+      </table>
+      <div class="fx" data-role="plot" data-seq="3" data-x="0,6" data-y="0,10" data-xl="posición a lo largo del gradiente" data-yl="M" data-bars='[1,3,7,9,8,2]' data-pts='[[3.5,9,"sobrevive"]]' style="height:260px;min-height:0"></div>
+      <p class="txt" data-seq="3">Perfil de ejemplo: 7 y 8 superan a sus vecinos de fuera, pero no al 9. Solo sobrevive el 9.</p>
+    </div>
+  </div>
+  <aside class="notes">Para cada píxel, miramos el valor de la magnitud en los dos vecinos situados sobre la línea del gradiente. Si alguno es mayor, ponemos cero. Cuantizamos el ángulo dividiendo entre cuarenta y cinco y redondeando: así hay cuatro direcciones, porque la dirección opuesta es la misma línea. En coordenadas de imagen la y crece hacia abajo, así que 45 grados corresponde a (dy, dx) igual a (1, 1).</aside>
+</section>
+
+<section class="slide" id="hist" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Histéresis: algoritmo">
+  <header class="s-head"><p class="kicker">umbral con histéresis</p><h2 class="s-title">Umbral con histéresis</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <ul class="pts" data-seq="1">
+        <li>\(T_{high}\): bordes <b>fuertes</b> (seguros).</li>
+        <li>\(T_{low}\): bordes <b>débiles</b> (candidatos).</li>
+        <li>Un débil se acepta <b>solo si está conectado</b> a un fuerte.</li>
+        <li>Razón \(T_{high}:T_{low}\) de 2 a 3.</li>
+        <li>En la gráfica: el valle entre umbrales se acepta (sigue conectado); donde baja de \(T_{low}\), el contorno se corta.</li>
+      </ul>
+      <div class="fx" data-role="plot" data-seq="3" data-x="0,10" data-y="0,0.4" data-xl="recorrido por un contorno (de ejemplo)" data-yl="M" data-legend="tr" data-fns='[{"f":"x=>0.125+0.065*Math.sin(1.3*x)-0.09*Math.exp(-(x-8.4)*(x-8.4)*3)","label":"M"},{"f":"x=>0.15","label":"T_high","c":"cat-4","dash":"10 8"},{"f":"x=>0.05","label":"T_low","c":"cat-5","dash":"10 8"}]' style="height:330px;min-height:0"></div>
+    </div>
+<div class="vstack">
+<pre class="code sm" data-seq="2">strong = mag &gt;= T_high
+weak = (mag &gt;= T_low) &amp; ~strong
+# componentes conexas (8-vecindad)
+lab, n = ndi.label(strong | weak,
+                   structure=np.ones((3, 3)))
+# etiquetas de las regiones que tocan un fuerte
+keep = np.unique(lab[strong])
+edges = np.isin(lab, keep[keep &gt; 0])</pre>
+<div class="trap" data-seq="4"><b>V/F</b>«La histéresis usa un único umbral»: <b>falso</b>, usa dos.</div>
+    </div>
+
+  </div>
+  <aside class="notes">Un solo umbral alto deja huecos en bordes reales débiles, y uno bajo mete ruido. Con dos umbrales aceptamos lo débil solo cuando está pegado a algo seguro. Esta versión con ndi.label es equivalente a seguir los bordes píxel a píxel desde los fuertes.</aside>
+</section>
+
+<section class="slide" id="hist-img" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Histéresis: demo real">
+  <header class="s-head"><p class="kicker">einstein.pgm · sigma = 1,5 · Tlow = 0,05, Thigh = 0,15</p><h2 class="s-title">Histéresis en acción</h2></header>
+  <div class="s-body vstack">
+    <div class="row-img" style="grid-template-columns:repeat(3,1fr)">
+      <figure class="fig big"><img src="assets/can_hi.png" alt="solo alto"><figcaption>solo T = 0,15: huecos</figcaption></figure>
+      <figure class="fig big"><img src="assets/can_lo.png" alt="solo bajo"><figcaption>solo T = 0,05: ruido</figcaption></figure>
+      <figure class="fig big"><img src="assets/can_hys.png" alt="histéresis"><figcaption>histéresis (0,05 ; 0,15)</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Imagen en escala de cero a uno. Con el umbral alto sale un contorno limpio pero incompleto; con el bajo, completo pero con ruido; con histéresis conservamos lo bueno de ambos.</aside>
+</section>
+
+<section class="slide" id="api-canny" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="skimage.feature.canny">
+  <header class="s-head"><p class="kicker">ficha de función · laboratorio 4</p><h2 class="s-title">canny en scikit-image</h2></header>
+  <div class="s-body g21">
+    <div class="api">
+      <div class="sig">canny(image, sigma=1.0, low_threshold=None, high_threshold=None, mask=None, use_quantiles=False, mode='constant', cval=0.0)</div>
+      <table>
+        <tr><td>image</td><td>matriz 2D en gris</td></tr>
+        <tr><td>sigma</td><td>σ de la gaussiana (1,0 por defecto)</td></tr>
+        <tr><td>low/high_threshold</td><td>umbrales de histéresis, en las <b>mismas unidades</b> que la magnitud del gradiente</td></tr>
+        <tr><td>use_quantiles</td><td>si True, los umbrales son cuantiles en [0, 1]</td></tr>
+        <tr><td>mask</td><td>solo calcula dentro de la máscara</td></tr>
+        <tr><td>devuelve</td><td>matriz <b>booleana</b> (True = borde)</td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+<pre class="code sm">edges = feature.canny(im, sigma=2,
+                      low_threshold=0.05,
+                      high_threshold=0.15)
+out = edges.astype(np.uint8) * 255</pre>
+      <div class="trap"><b>trampa</b>Imagen en 0–255 con umbrales 0,05 y 0,15: todo sale borde. El lab usa <code>0.2*255</code> y <code>0.25*255</code> porque su imagen es float en 0–255.</div>
+    </div>
+  </div>
+  <aside class="notes">Los umbrales están en las unidades de la imagen: si la imagen va de cero a uno, los umbrales deben ir de cero a uno; si va de cero a doscientos cincuenta y cinco, hay que escalarlos. Con use_quantiles igual a True se interpretan como cuantiles de la magnitud del gradiente. La salida es booleana, de modo que para guardarla hay que convertirla.</aside>
+</section>
+
+<section class="slide" id="canny-grid" data-fx="vc" data-section="Marr–Hildreth y Canny" data-title="Efecto de σ y umbrales">
+  <header class="s-head"><p class="kicker">bike256 · prepara el ejercicio 2 del lab 4</p><h2 class="s-title">Sigma y umbrales en Canny</h2></header>
+  <div class="s-body g2" style="grid-template-columns:auto 1fr;gap:48px">
+    <div class="cgrid">
+      <div></div><div class="ch">bajos 0,02/0,06</div><div class="ch">altos 0,08/0,20</div>
+      <div class="rl" data-seq="1">σ = 1</div><img data-seq="1" src="assets/can_s1_baj.png" alt="s1 bajos"><img data-seq="2" src="assets/can_s1_alt.png" alt="s1 altos">
+      <div class="rl" data-seq="3">σ = 3</div><img data-seq="3" src="assets/can_s3_baj.png" alt="s3 bajos"><img data-seq="4" src="assets/can_s3_alt.png" alt="s3 altos">
+    </div>
+    <div class="vstack">
+      <div class="card" data-seq="2"><b>umbrales ↑ (en una fila)</b>Menos bordes: se pierden los débiles, como las texturas del fondo.</div>
+      <div class="card" data-seq="3"><b><span class="nc">σ</span> ↑ (en una columna)</b>Menos ruido y menos detalle: los radios finos desaparecen y las curvas se suavizan.</div>
+      <div class="tip" data-seq="4"><b>extremos</b>σ pequeña con umbrales bajos da <b>más</b> bordes y más ruido; σ grande con umbrales altos, solo el contorno grueso.</div>
+    </div>
+  </div>
+  <aside class="notes">Los dos parámetros actúan de forma distinta: sigma controla la escala y el ruido; los umbrales controlan la sensibilidad. Es la cuadrícula que conviene reproducir en el laboratorio para decidir los valores con una imagen concreta. La imagen está en el rango cero a uno, así que los umbrales también.</aside>
+</section>
+
+<!-- ============ BLOQUE G · CIERRE ============ -->
+
+<section class="slide is-plain divider" id="div-g" data-fx="backdrop" data-seed="17" data-section="Cierre" data-title="Cierre">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque G</p>
+    <h1 class="s-title xl">Cierre</h1>
+    <p class="lead">Código de memoria, chuleta de núcleos y V/F.</p>
+  </div>
+</section>
+
+<section class="slide" id="codigo-examen" data-fx="vc" data-section="Cierre" data-title="Código para el examen">
+  <header class="s-head"><p class="kicker">escribir de memoria</p><h2 class="s-title">Sobel y cruces por cero</h2></header>
+  <div class="s-body g2">
+<pre class="code sm" data-seq="1">def sobelEdges(im, frac=0.33):
+    kx = np.array([[-1, 0, 1],
+                   [-2, 0, 2],
+                   [-1, 0, 1]])
+    gx = ndi.correlate(im, kx)  # x
+    gy = ndi.correlate(im, kx.T)  # y
+    mag = np.hypot(gx, gy)
+    return mag &gt; frac * mag.max()
+
+# uso
+E = sobelEdges(im)          # booleana</pre>
+<pre class="code sm" data-seq="2">def zeroCross(g, T):
+    out = np.zeros(g.shape, bool)
+    for dy, dx in [(0,1), (1,0), (1,1), (1,-1)]:
+        a = np.roll(g, (dy, dx), (0, 1))
+        b = np.roll(g, (-dy, -dx), (0, 1))
+        out |= (a * b &lt; 0) &amp; (np.abs(a - b) &gt; T)
+    return out
+
+# Marr–Hildreth con los valores de la lección
+s = 0.005 * min(im.shape)
+L = ndi.gaussian_laplace(im, s)
+E = zeroCross(L, 0.04 * np.abs(L).max())</pre>
+  </div>
+  <aside class="notes">Ambas funciones se probaron con bike256. sobelEdges es equivalente a ndimage.sobel porque sobel es una correlación con ese núcleo. zeroCross recorre los cuatro pares de vecinos opuestos con np.roll; los bordes de la imagen se envuelven, un detalle aceptable para el examen. Para LoG basta con ndi.gaussian_laplace(im, sigma).</aside>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="Cierre" data-title="Chuleta de núcleos">
+  <header class="s-head"><p class="kicker">todo en una diapositiva</p><h2 class="s-title">Chuleta de núcleos</h2></header>
+  <div class="s-body vstack">
+    <div class="kgrid">
+      <div class="kc"><div class="vc-heat" data-m='[[1,0,-1]]' data-signed="1" data-dec="0"></div><span>central ½[1,0,−1]</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[1,0],[0,-1]]' data-signed="1" data-dec="0"></div><span>Roberts R₁</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,0,1],[-1,0,1],[-1,0,1]]' data-signed="1" data-dec="0"></div><span>Prewitt x</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,0,1],[-2,0,2],[-1,0,1]]' data-signed="1" data-dec="0"></div><span>Sobel x</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[0,1,0],[1,-4,1],[0,1,0]]' data-signed="1" data-dec="0"></div><span>Laplaciano 4</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[1,1,1],[1,-8,1],[1,1,1]]' data-signed="1" data-dec="0"></div><span>Laplaciano 8</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[0,0,-1,0,0],[0,-1,-2,-1,0],[-1,-2,16,-2,-1],[0,-1,-2,-1,0],[0,0,-1,0,0]]' data-signed="1" data-dec="0" data-nums="0"></div><span>LoG 5×5 (centro 16)</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,-1,-1],[2,2,2],[-1,-1,-1]]' data-signed="1" data-dec="0"></div><span>línea 0°</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0"></div><span>línea +45°</span></div>
+      <div class="kc"><div class="vc-heat" data-m='[[2,-1,-1],[-1,2,-1],[-1,-1,2]]' data-signed="1" data-dec="0"></div><span>línea −45°</span></div>
+    </div>
+  </div>
+  <aside class="notes">Resumen visual. Todos los núcleos de derivada suman cero; solo los de suavizado suman uno. El Laplaciano y el LoG son simétricos; Sobel y Prewitt, antisimétricos.</aside>
+</section>
+
+<section class="slide" id="vf" data-fx="vc" data-section="Cierre" data-title="V/F de práctica">
+  <header class="s-head"><p class="kicker">verdadero o falso</p><h2 class="s-title">V/F de práctica</h2></header>
+  <div class="s-body vstack">
+    <table class="t">
+      <tr><th>afirmación</th><th style="width:140px">V/F</th><th>por qué</th></tr>
+      <tr data-seq="1"><td>La derivada amplifica el ruido</td><td class="ok">verdadero</td><td>Var(n₁−n₂) = 2σ²; \(|H|\propto|u|\)</td></tr>
+      <tr data-seq="2"><td>El Laplaciano es isótropo</td><td class="ok">verdadero</td><td>mismo valor al girar la imagen</td></tr>
+      <tr data-seq="3"><td>|gx| + |gy| es isótropo</td><td class="err">falso</td><td>vale √2 a 45° frente a 1 a 0°</td></tr>
+      <tr data-seq="4"><td>Sobel incluye suavizado</td><td class="ok">verdadero</td><td>[1,2,1]ᵀ ⊗ [−1,0,1]</td></tr>
+      <tr data-seq="5"><td>La histéresis usa un único umbral</td><td class="err">falso</td><td>usa T_low y T_high</td></tr>
+      <tr data-seq="6"><td>El cruce por cero del LoG marca el borde</td><td class="ok">verdadero</td><td>máximo de f′ ⇔ cruce por cero de f″</td></tr>
+      <tr data-seq="7"><td>La derivada de gaussiana es un paso banda</td><td class="ok">verdadero</td><td>\(j2\pi u\) quita las bajas; G, las altas</td></tr>
+      <tr data-seq="8"><td>Marr–Hildreth da la orientación del borde</td><td class="err">falso</td><td>solo cruces por cero; Canny sí usa α</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Repasa cada afirmación y justifica en una frase. En el examen suelen dar medio punto de matiz: por ejemplo, el Laplaciano es isótropo pero sensible al ruido, y la aproximación de valores absolutos pierde la isotropía a cambio de ahorrar cálculo.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

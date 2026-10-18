@@ -1,0 +1,729 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · Lab 2 · Ruido y filtrado</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ============ A · HERRAMIENTAS ============ -->
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="7" data-section="Inicio" data-title="Lab 2">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lab 2</p>
+    <h1 class="s-title xl">Ruido y filtrado espacial</h1>
+    <p class="lead">Generar ruido, quitarlo con media, gaussiano y mediana, y saber escribir cada función a mano.</p>
+  </div>
+  <aside class="notes">Este deck recorre el laboratorio 2 función a función. Para cada una verás el código, una ficha con sus parámetros y los resultados reales sobre arch256. En el examen escrito no hay ordenador: lo importante es recordar de qué módulo viene cada función, qué argumentos lleva y qué trampas tiene.</aside>
+</section>
+
+<section class="slide" id="imports" data-fx="vc" data-section="A · Herramientas" data-title="Imports del lab">
+  <header class="s-head"><p class="kicker">de dónde viene cada función</p><h2 class="s-title">Imports del lab</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:900px 1fr;gap:40px;align-items:start">
+    <div class="vstack" style="gap:24px">
+<pre class="code" data-seq="1">import numpy as np
+from PIL import Image
+from scipy.ndimage import gaussian_filter, convolve
+from scipy.signal import medfilt2d
+import matplotlib.pyplot as plt</pre>
+      <div class="trap" data-seq="3"><b>SciPy ≥ 1.13</b><code>scipy.signal.gaussian</code> ya no existe: usa <code>from scipy.signal.windows import gaussian</code>.</div>
+    </div>
+    <table class="t lg" data-seq="2">
+      <tr><th>función</th><th>módulo exacto</th></tr>
+      <tr><td><code>convolve</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>gaussian_filter</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>median_filter</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>medfilt2d</code></td><td>scipy.signal</td></tr>
+      <tr><td><code>gaussian</code> (ventana)</td><td>scipy.signal.windows</td></tr>
+      <tr><td><code>randint, normal, rand</code></td><td>numpy.random</td></tr>
+      <tr><td><code>outer, clip, ones</code></td><td>numpy</td></tr>
+      <tr><td><code>Image.open</code></td><td>PIL</td></tr>
+    </table>
+  </div>
+  <aside class="notes">ndimage trabaja con arrays de cualquier dimensión; signal.medfilt2d solo con 2D. La mediana existe en dos sitios: medfilt2d en signal (rellena con ceros) y median_filter en ndimage (modo reflect por defecto, admite size=(n,n,1) para color). PIL abre la imagen y numpy la convierte en array. Matplotlib solo sirve para mostrar.</aside>
+</section>
+
+<section class="slide" id="psnr" data-fx="vc" data-section="A · Herramientas" data-title="Calidad: PSNR">
+  <header class="s-head"><p class="kicker">comparar filtros con un número</p><h2 class="s-title">Calidad: PSNR</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$\mathrm{MSE}=\frac1{MN}\sum_{x,y}\bigl(f(x,y)-\hat f(x,y)\bigr)^2$$</div>
+      <div class="eq" data-seq="2">$$\mathrm{PSNR}=10\log_{10}\frac{255^2}{\mathrm{MSE}}\ \text{dB}$$</div>
+<pre class="code sm" data-seq="3">def psnr(ref, im):
+    mse = np.mean((np.asarray(ref, float) - im) ** 2)
+    return 10 * np.log10(255 ** 2 / mse)</pre>
+    </div>
+    <div class="vstack">
+      <p class="cap" data-seq="4">PSNR del ruido gaussiano sobre arch256 (puntos reales, tras np.clip)</p>
+      <div class="fx" data-role="plot" data-seq="4" data-x="0,24" data-y="16,40" data-xl="σ del ruido" data-yl="PSNR (dB)" data-legend="tr"
+        data-fns='[{"f":"x=>{var y=20*Math.log10(255/x);return y>40?NaN:y;}","label":"20·log₁₀(255/σ)"}]'
+        data-pts='[[3,38.64,"38,6"],[5,34.20,"34,2"],[10,28.23,"28,2"],[20,22.31,"22,3"]]' style="height:400px"></div>
+      <div class="tip" data-seq="5"><b>cómo leerlo</b>Más dB = más parecida. Ruido gaussiano: MSE ≈ σ², así que PSNR ≈ 20·log₁₀(255/σ); doblar σ resta 6 dB. El S&amp;P al 3 % ya baja a 20,4 dB.</div>
+    </div>
+  </div>
+  <aside class="notes">El PSNR no es perfecto (no mide cómo ve el ojo), pero es un número objetivo para comparar filtros. 255 es el valor máximo de un píxel de 8 bits. Fíjate en que el S&amp;P al 3 % da un PSNR bajo aunque se vea poco ruido: pocos píxeles cambian, pero cambian muchísimo y el error es cuadrático.</aside>
+</section>
+
+<!-- ============ B · RUIDO ============ -->
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="11" data-section="B · Ruido" data-title="Generar ruido">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b · addSPNoise y addGaussianNoise</p>
+    <h1 class="s-title xl">Generar ruido</h1>
+    <p class="lead">Sal y pimienta con randint o con máscaras, ruido gaussiano con normal y por qué hace falta clip.</p>
+  </div>
+</section>
+
+<section class="slide" id="addsp" data-fx="vc" data-section="B · Ruido" data-title="addSPNoise">
+  <header class="s-head"><p class="kicker">sal y pimienta · línea a línea</p><h2 class="s-title">addSPNoise</h2></header>
+  <div class="s-body vstack" style="gap:22px">
+   <div class="g21">
+<pre class="code sm" data-seq="1">def addSPNoise(im, percent):
+    im_np = np.array(im)               # copia como array
+    shape = im_np.shape                # guardar la forma
+    im_vec = im_np.flatten()           # 1D (copia)
+    N = im_vec.shape[0]                # nº de píxeles
+    m = int(math.floor(percent * N / 100.0))  # nº afect.
+    locs = np.random.randint(0, N, m)  # posic. (repite)
+    s_or_p = np.random.randint(0, 2, m)  # 1 sal, 0 pimienta
+    im_vec[locs] = 255 * s_or_p        # 0 o 255
+    return im_vec.reshape(shape)       # volver a 2D</pre>
+    <div class="vstack">
+      <div class="trap" data-seq="2"><b>porcentaje real</b>Las posiciones pueden repetirse: el porcentaje real es algo menor. Con 3 % sobre arch256 cambió el 2,96 % de los píxeles (en esperanza ≈ p − p²/2).</div>
+      <div class="tip" data-seq="3"><b>mitad y mitad</b><code>randint(0, 2, m)</code> da 0 o 1 con igual probabilidad, y <code>255 *</code> lo convierte en pimienta o sal.</div>
+    </div>
+   </div>
+   <svg class="dg" viewBox="0 0 1640 200" data-seq="4" role="img" aria-label="flatten, sorteo de posiciones con repetición y reshape"><text x="76" y="34" text-anchor="middle" class="t-fg">im</text><rect class="cell " x="10" y="50" width="44" height="44"/><rect class="cell " x="54" y="50" width="44" height="44"/><rect class="cell " x="98" y="50" width="44" height="44"/><rect class="cell " x="10" y="94" width="44" height="44"/><rect class="cell " x="54" y="94" width="44" height="44"/><rect class="cell " x="98" y="94" width="44" height="44"/><rect class="cell " x="10" y="138" width="44" height="44"/><rect class="cell " x="54" y="138" width="44" height="44"/><rect class="cell " x="98" y="138" width="44" height="44"/><line class="ar" x1="160" y1="116" x2="243" y2="116"/><polygon class="ah" points="255,116 241,108 241,124"/><text x="207.5" y="100" text-anchor="middle" class="t-ac">flatten</text><text x="468" y="80" text-anchor="middle" class="t-fg">im_vec (N = 9)</text><rect class="cell " x="270" y="94" width="44" height="44"/><rect class="cell " x="314" y="94" width="44" height="44"/><rect class="cell " x="358" y="94" width="44" height="44"/><rect class="cell " x="402" y="94" width="44" height="44"/><rect class="cell " x="446" y="94" width="44" height="44"/><rect class="cell " x="490" y="94" width="44" height="44"/><rect class="cell " x="534" y="94" width="44" height="44"/><rect class="cell " x="578" y="94" width="44" height="44"/><rect class="cell " x="622" y="94" width="44" height="44"/><text x="292" y="164" text-anchor="middle" class="t-m">0</text><text x="336" y="164" text-anchor="middle" class="t-m">1</text><text x="380" y="164" text-anchor="middle" class="t-m">2</text><text x="424" y="164" text-anchor="middle" class="t-m">3</text><text x="468" y="164" text-anchor="middle" class="t-m">4</text><text x="512" y="164" text-anchor="middle" class="t-m">5</text><text x="556" y="164" text-anchor="middle" class="t-m">6</text><text x="600" y="164" text-anchor="middle" class="t-m">7</text><text x="644" y="164" text-anchor="middle" class="t-m">8</text><line class="ar" x1="680" y1="116" x2="783" y2="116"/><polygon class="ah" points="795,116 781,108 781,124"/><text x="737.5" y="100" text-anchor="middle" class="t-ac">sorteo</text><text x="1008" y="80" text-anchor="middle" class="t-fg">im_vec[locs] = 255*s_or_p</text><rect class="cell " x="810" y="94" width="44" height="44"/><rect class="cell bk" x="854" y="94" width="44" height="44"/><rect class="cell " x="898" y="94" width="44" height="44"/><rect class="cell " x="942" y="94" width="44" height="44"/><rect class="cell " x="986" y="94" width="44" height="44"/><rect class="cell " x="1030" y="94" width="44" height="44"/><rect class="cell wh" x="1074" y="94" width="44" height="44"/><rect class="cell " x="1118" y="94" width="44" height="44"/><rect class="cell " x="1162" y="94" width="44" height="44"/><text x="1008" y="168" text-anchor="middle" class="t-m">locs=[6,1,6] · s_or_p=[1,0,1]</text><line class="ar" x1="1222" y1="116" x2="1323" y2="116"/><polygon class="ah" points="1335,116 1321,108 1321,124"/><text x="1278.5" y="100" text-anchor="middle" class="t-ac">reshape</text><text x="1416" y="34" text-anchor="middle" class="t-fg">3×3</text><rect class="cell " x="1350" y="50" width="44" height="44"/><rect class="cell bk" x="1394" y="50" width="44" height="44"/><rect class="cell " x="1438" y="50" width="44" height="44"/><rect class="cell " x="1350" y="94" width="44" height="44"/><rect class="cell " x="1394" y="94" width="44" height="44"/><rect class="cell " x="1438" y="94" width="44" height="44"/><rect class="cell wh" x="1350" y="138" width="44" height="44"/><rect class="cell " x="1394" y="138" width="44" height="44"/><rect class="cell " x="1438" y="138" width="44" height="44"/><text x="1500" y="104" class="t-ac">m = 3,</text><text x="1500" y="134" class="t-ac">cambian 2</text></svg>
+  </div>
+  <aside class="notes">El lab original recibe una imagen PIL y devuelve otra PIL; aquí se resume con arrays. El truco es trabajar en 1D: elegir m índices al azar y asignarles 0 o 255. Como los índices se sortean con reemplazo, algunos se repiten y el porcentaje efectivo es 1 − e^(−p) en lugar de p. Además, un píxel que ya era 0 o 255 no cambia.</aside>
+</section>
+
+<section class="slide" id="fichas-rand" data-fx="vc" data-section="B · Ruido" data-title="Fichas: randint y flatten">
+  <header class="s-head"><p class="kicker">funciones nuevas</p><h2 class="s-title">randint y flatten</h2></header>
+  <div class="s-body vstack">
+   <div class="g2">
+    <div class="api" data-seq="1"><div class="sig">np.random.randint(low, high, size)</div>
+      <table>
+        <tr><td>low</td><td>mínimo, <b>incluido</b></td></tr>
+        <tr><td>high</td><td>máximo, <b>excluido</b>: <code>randint(0, 2)</code> da 0 o 1</td></tr>
+        <tr><td>size</td><td>entero o tupla: forma del array devuelto</td></tr>
+        <tr><td>retorno</td><td>enteros uniformes, <b>con repetición</b></td></tr>
+      </table>
+    </div>
+    <div class="api" data-seq="2"><div class="sig">im.flatten()  frente a  im.ravel()</div>
+      <table>
+        <tr><td>flatten</td><td><b>copia</b>: modificarla no toca la imagen original</td></tr>
+        <tr><td>ravel</td><td><b>vista</b> si es posible: escribir en ella cambia la original</td></tr>
+        <tr><td>reshape</td><td>recupera la forma: <code>v.reshape(im.shape)</code></td></tr>
+      </table>
+    </div>
+   </div>
+   <div class="g2" style="margin-top:8px;align-items:start">
+<pre class="code sm" data-seq="3">a = np.zeros((2, 2))
+a.flatten()[0] = 9    # a sigue a 0
+a.ravel()[0] = 9      # ahora a[0, 0] == 9
+np.random.randint(0, 2, 6)
+# p. ej. [1 0 0 1 1 0]: nunca 2</pre>
+    <div class="exam" data-seq="4"><b>en el examen</b>Pedir «sin flatten ni ravel» es habitual (ejercicio 5a): la alternativa es una máscara booleana del tamaño de la imagen (siguiente diapositiva).</div>
+   </div>
+  </div>
+  <aside class="notes">Un error clásico es poner randint(0, 255) y olvidar que el 255 queda fuera, o randint(0, 1) y obtener siempre ceros. flatten devuelve una copia, de modo que el original queda intacto; ravel puede devolver una vista y entonces escribir en ella modifica la imagen original.</aside>
+</section>
+
+<section class="slide" id="sp-mask" data-fx="vc" data-section="B · Ruido" data-title="Sal y pimienta sin flatten">
+  <header class="s-head"><p class="kicker">ejercicio 5a del examen · versión limpia</p><h2 class="s-title">S&amp;P con máscaras</h2></header>
+  <div class="s-body vstack" style="gap:26px">
+   <div class="g21">
+<pre class="code" data-seq="1">def addSPNoise2(im, percent):
+    p = percent / 100
+    out = np.array(im)                  # copia
+    u = np.random.rand(*im.shape)       # U[0,1) por píxel
+    out[u &lt; p / 2] = 0                  # pimienta (prob. p/2)
+    out[(u &gt;= p / 2) &amp; (u &lt; p)] = 255   # sal (prob. p/2)
+    return out</pre>
+    <div class="vstack">
+      <div class="tip" data-seq="2"><b>ventajas</b>Cada píxel se sortea una vez: no hay repeticiones y la probabilidad es exactamente <i>p</i>. Funciona igual con <code>(H, W, 3)</code>: cada canal se sortea por separado.</div>
+      <div class="trap" data-seq="3"><b>paréntesis</b>Con máscaras se combina con <code>&amp;</code>, no con <code>and</code>, y cada comparación va entre paréntesis.</div>
+      <p class="cap" data-seq="4">comprobado: 5 % ⇒ ≈ 5 % de píxeles a 0 o 255 (los que ya valían 0/255 no cambian).</p>
+    </div>
+   </div>
+   <svg class="dg" viewBox="0 0 1640 150" data-seq="5" role="img" aria-label="reparto del intervalo [0,1) entre pimienta, sal y sin cambio">
+<text x="0" y="22" class="t-m">u ~ U[0, 1) de cada píxel (dibujado con p = 0,2):</text>
+<rect class="seg-p" x="70" y="50" width="150" height="50"/><rect class="seg-s" x="220" y="50" width="150" height="50"/><rect class="seg-n" x="370" y="50" width="1200" height="50"/>
+<text x="145" y="84" text-anchor="middle" class="t-fg">→ 0</text><text x="295" y="84" text-anchor="middle" class="t-fg">→ 255</text><text x="970" y="84" text-anchor="middle">sin cambio (prob. 1 − p)</text>
+<text x="70" y="134" text-anchor="middle" class="t-m">0</text><text x="220" y="134" text-anchor="middle" class="t-ac">p/2</text><text x="370" y="134" text-anchor="middle" class="t-ac">p</text><text x="1570" y="134" text-anchor="middle" class="t-m">1</text>
+</svg>
+  </div>
+  <aside class="notes">Una alternativa equivalente: mask = np.random.rand(*im.shape) &lt; p y después im[mask &amp; (np.random.rand(*im.shape) &lt; .5)] = 255 para la sal y la otra mitad a 0. Mi versión usa un único sorteo u y reparte el intervalo [0, p) mitad pimienta y mitad sal. Es la misma idea que el add_TLA_noise del examen: rand(m, n) &lt; p dice dónde y randint dice qué tipo.</aside>
+</section>
+
+<section class="slide" id="addgauss" data-fx="vc" data-section="B · Ruido" data-title="addGaussianNoise">
+  <header class="s-head"><p class="kicker">ruido gaussiano aditivo</p><h2 class="s-title">addGaussianNoise</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def addGaussianNoise(im, sd=5):
+    noisy = im + np.random.normal(
+        loc=0, scale=sd, size=im.shape)
+    return np.clip(noisy, 0, 255)</pre>
+      <div class="trap" data-seq="3"><b>¿quedan en [0, L−1]?</b>No. Con σ = 20 el rango real fue de -63 a 314: hace falta <code>np.clip</code>. Con uint8 la suma pasa a float64: no desborda, pero se sale de rango.</div>
+    </div>
+    <div class="vstack"><div class="api" data-seq="2"><div class="sig">np.random.normal(loc, scale, size)</div>
+      <table>
+        <tr><td>loc</td><td>media μ; en ruido aditivo es 0</td></tr>
+        <tr><td>scale</td><td>desviación típica σ (<b>no</b> la varianza)</td></tr>
+        <tr><td>size</td><td><code>im.shape</code>: un valor por píxel (y canal)</td></tr>
+      </table>
+     </div>
+     <p class="cap" data-seq="4">píxel de valor 240 + ruido con σ = 20: valor resultante</p>
+     <div class="fx" data-role="plot" data-seq="4" data-x="160,320" data-y="0,2.4" data-xl="valor tras sumar el ruido" data-yl="% de las veces" data-legend="tl"
+       data-fns='[{"f":"x=>100*Math.exp(-(x-240)*(x-240)/800)/(20*Math.sqrt(2*Math.PI))","label":"N(240, 20²)"},{"f":"x=>x<255?NaN:100*Math.exp(-(x-240)*(x-240)/800)/(20*Math.sqrt(2*Math.PI))","label":"> 255: 22,7 %","c":"err"}]'
+       data-pts='[[255,0,"255"]]' style="min-height:0;height:290px"></div>
+    </div>
+  </div>
+  <aside class="notes">El ruido gaussiano es aditivo: g = f + n con n ~ N(0, σ²). Como la normal no está acotada, el resultado puede salir de [0, 255]; para mostrarlo o guardarlo como imagen hay que recortar. Ojo: scale es la desviación típica, así que σ = 20 significa varianza 400.</aside>
+</section>
+
+<section class="slide" id="ruido-real" data-fx="vc" data-section="B · Ruido" data-title="Ruido real en arch256">
+  <header class="s-head"><p class="kicker">resultados reales</p><h2 class="s-title">Ruido sobre arch256</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:790px 1fr;gap:36px;align-items:start">
+    <img class="shot" src="assets/ruidos.png" alt="arch256 con S&P 3 % y ruido gaussiano σ = 3, 5, 10, 20" style="height:620px;width:auto">
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="-60,60" data-y="0,32" data-xl="valor del ruido n" data-yl="% de píxeles"
+        data-bars='[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.06, 0.72, 4.58, 15.35, 28.94, 28.87, 15.84, 4.79, 0.78, 0.07, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]'
+        data-fns='[{"f":"x=>400*Math.exp(-x*x/50)/(5*Math.sqrt(2*Math.PI))","label":"σ = 5"},{"f":"x=>400*Math.exp(-x*x/800)/(20*Math.sqrt(2*Math.PI))","label":"σ = 20"}]' style="height:400px"></div>
+      <p class="txt" data-seq="1">Barras: histograma real del ruido con σ = 5. Curvas: la teoría. σ = 20 es <b>el doble del máximo</b> que propone el lab.</p>
+      <p class="txt" data-seq="2">S&amp;P: pocos píxeles, error enorme. Gaussiano: todos los píxeles, error pequeño.</p>
+    </div>
+  </div>
+  <aside class="notes">Arriba izquierda la original y el S&amp;P al 3 %; después gaussiano con σ = 3, 5, 10 y 20. A σ = 3 casi no se ve; a σ = 20 la imagen está claramente degradada. El histograma del ruido es una campana centrada en cero cuyo ancho es σ.</aside>
+</section>
+
+<!-- ============ C · FILTROS ============ -->
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="13" data-section="C · Filtros" data-title="Filtros">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque c · media, gaussiano y mediana</p>
+    <h1 class="s-title xl">Filtros</h1>
+    <p class="lead">Dos filtros lineales (convoluciones) y uno no lineal, con su ficha y su PSNR real.</p>
+  </div>
+</section>
+
+<section class="slide" id="average" data-fx="vc" data-section="C · Filtros" data-title="averageFilter">
+  <header class="s-head"><p class="kicker">filtro de media</p><h2 class="s-title">averageFilter</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def averageFilter(im, filterSize):
+    mask = np.ones((filterSize, filterSize))
+    mask = mask / np.sum(mask)   # suma 1
+    return convolve(im, mask)</pre>
+      <div class="tip" data-seq="3"><b>alternativas a np.sum(mask)</b><code>n * n</code>, <code>mask.size</code> o directamente <code>np.ones((n, n)) / n**2</code>.</div>
+      <div class="trap" data-seq="4"><b>dtype</b>Con entrada uint8 la salida también es uint8 y se <b>trunca</b>: media 3 de <code>[100, 101, 104]</code> da 101,67 en el centro y se guarda 101. Convierte antes a float.</div>
+    </div>
+    <div class="vstack"><div class="api" data-seq="2"><div class="sig">convolve(input, weights, mode='reflect')</div>
+      <table>
+        <tr><td>input</td><td>array n-dimensional (imagen)</td></tr>
+        <tr><td>weights</td><td>núcleo, con las mismas dimensiones</td></tr>
+        <tr><td>mode</td><td><b>'reflect'</b> por defecto; también 'constant', 'nearest', 'mirror', 'wrap'</td></tr>
+        <tr><td>cval</td><td>0.0, valor si mode='constant'</td></tr>
+        <tr><td>retorno</td><td>mismo tamaño y mismo dtype que la entrada</td></tr>
+      </table>
+     </div>
+     <div style="display:grid;grid-template-columns:270px 1fr;gap:28px;align-items:center" data-seq="5">
+       <div class="vc-heat" data-m='[[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111]]' data-dec="2" style="min-height:0;width:270px;height:270px"></div>
+       <p class="txt"><code>np.ones((3, 3)) / 9</code>: nueve pesos iguales que suman 1, así que una zona plana no cambia de nivel.</p>
+     </div>
+    </div>
+  </div>
+  <aside class="notes">El núcleo debe sumar 1 para conservar el brillo medio. ndimage.convolve es una convolución de verdad (gira el núcleo 180°), pero la máscara de la media es simétrica y da igual. Los bordes se rellenan reflejando la imagen; así no aparece el oscurecimiento que provocaría rellenar con ceros.</aside>
+</section>
+
+<section class="slide" id="avg-impulso" data-fx="vc" data-section="C · Filtros" data-title="Media 3×3 sobre un impulso">
+  <header class="s-head"><p class="kicker">ejemplo numérico</p><h2 class="s-title">Media: impulso y borde</h2></header>
+  <div class="s-body vstack">
+   <div style="display:grid;grid-template-columns:1040px 1fr;gap:30px;align-items:start">
+    <div class="vc-conv" data-img='[[0,0,0,0,0],[0,0,0,0,0],[0,0,255,0,0],[0,0,0,0,0],[0,0,0,0,0]]' data-k='[[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111]]' data-mode="conv" data-pad="zero" data-dec="1" style="min-height:0;height:390px"></div>
+    <div class="vstack">
+     <p class="cap" data-seq="2">y un borde ideal (discontinua) se convierte en una rampa de ancho n</p>
+     <div class="fx" data-role="plot" data-seq="2" data-x="-12,12" data-y="0,256" data-xl="posición (píxeles)" data-yl="nivel" data-legend="tl"
+       data-fns='[{"f":"x=>x<0?0:255","c":"fg-3","dash":"6 8"},{"f":"x=>255*Math.min(1,Math.max(0,(x+1.5)/3))","label":"media 3"},{"f":"x=>255*Math.min(1,Math.max(0,(x+3.5)/7))","label":"media 7"},{"f":"x=>255*Math.min(1,Math.max(0,(x+7.5)/15))","label":"media 15"}]' style="min-height:0;height:340px"></div>
+    </div>
+   </div>
+    <div class="exam" data-seq="1"><b>cuenta a mano</b>Núcleo 1/9 (se ve redondeado a 0,1). Toda ventana 3×3 que contiene el impulso suma 255 · 1/9 = <b>28,3</b>; las demás dan 0. El píxel de sal pasa de 255 a 28,3 y contamina sus 8 vecinos.</div>
+    <p class="txt" data-seq="3">Un único píxel de sal se <b>reparte</b> en una mancha gris: no desaparece. Por eso la media es mala contra sal y pimienta.</p>
+  </div>
+  <aside class="notes">Esta es la demostración numérica de por qué la media no sirve contra impulsos: la media es lineal, así que un valor extremo contamina a todos los vecinos con una novena parte de su valor. La mediana, en cambio, descarta los extremos.</aside>
+</section>
+
+<section class="slide" id="gaussfilt" data-fx="vc" data-section="C · Filtros" data-title="gaussianFilter">
+  <header class="s-head"><p class="kicker">gaussiano de scipy</p><h2 class="s-title">gaussianFilter</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def gaussianFilter(im, sigma=5):
+    return gaussian_filter(im, sigma)
+
+# imagen en color: no mezclar canales
+gaussian_filter(im_rgb, sigma=(s, s, 0))</pre>
+      <div class="eq sm" data-seq="3">$$r=\lfloor 4\sigma+0{,}5\rfloor,\quad \text{máscara } (2r+1)\times(2r+1)$$</div>
+      <div class="exam" data-seq="4"><b>en el examen</b>Ejercicio 3 (<code>blurFgBk</code>) y color: el 0 en la tupla significa «no suavizar el eje de canales».</div>
+    </div>
+    <div class="vstack"><div class="api" data-seq="2"><div class="sig">gaussian_filter(input, sigma, mode='reflect', truncate=4.0)</div>
+      <table>
+        <tr><td>sigma</td><td>escalar o tupla, uno por eje</td></tr>
+        <tr><td>mode</td><td>'reflect' por defecto</td></tr>
+        <tr><td>truncate</td><td>4.0: se corta la gaussiana a ±4σ</td></tr>
+        <tr><td>retorno</td><td>mismo dtype que la entrada</td></tr>
+      </table>
+     </div>
+     <p class="cap" data-seq="5">lado de la máscara que usa scipy según σ</p>
+     <div class="fx" data-role="plot" data-seq="5" data-x="0,4" data-y="0,36" data-xl="σ (píxeles)" data-yl="lado 2r+1" data-legend="tl"
+       data-fns='[{"f":"x=>2*Math.floor(4*x+0.5)+1","label":"2·⌊4σ+0,5⌋+1"}]' data-pts='[[1,9,"9"],[2,17,"17"],[3,25,"25"]]' style="min-height:0;height:215px"></div>
+    </div>
+  </div>
+  <aside class="notes">sigma es la desviación típica de la gaussiana, medida en píxeles. Cuanto mayor, más emborrona. Con sigma escalar sobre una imagen RGB se filtra también a lo largo del eje de canales, mezclando rojo, verde y azul; por eso se usa (s, s, 0). El filtro es separable: scipy aplica una gaussiana 1D por cada eje.</aside>
+</section>
+
+<section class="slide" id="dos-gauss" data-fx="vc" data-section="C · Filtros" data-title="Dos gaussianas distintas">
+  <header class="s-head"><p class="kicker">no confundir</p><h2 class="s-title">Dos gaussianas distintas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt"><b>La del ruido</b>: distribución del valor que se <b>suma</b> a cada píxel. σ = cuánto ensucia.</p>
+      <div class="fx" data-role="plot" data-x="-60,60" data-y="0,8" data-xl="valor del ruido n" data-yl="% por nivel de gris"
+        data-fns='[{"f":"x=>100*Math.exp(-x*x/50)/(5*Math.sqrt(2*Math.PI))","label":"σ = 5"},{"f":"x=>100*Math.exp(-x*x/800)/(20*Math.sqrt(2*Math.PI))","label":"σ = 20"}]' style="height:430px"></div>
+    </div>
+    <div class="vstack" data-seq="1">
+      <p class="txt"><b>La del filtro</b>: pesos del núcleo según la distancia en píxeles. σ = cuánto emborrona.</p>
+      <div class="fx" data-role="plot" data-x="-12,12" data-y="0,0.4" data-xl="distancia al centro (píxeles)" data-yl="peso g(x)"
+        data-fns='[{"f":"x=>Math.exp(-x*x/2)/Math.sqrt(2*Math.PI)","label":"σ = 1"},{"f":"x=>Math.exp(-x*x/8)/(2*Math.sqrt(2*Math.PI))","label":"σ = 2"},{"f":"x=>Math.exp(-x*x/32)/(4*Math.sqrt(2*Math.PI))","label":"σ = 4"}]' style="height:430px"></div>
+    </div>
+  </div>
+  <div class="s-body" style="margin-top:14px"><p class="txt" data-seq="2">Mismo nombre, papeles opuestos: σ grande en el <b>ruido</b> empeora la imagen; σ grande en el <b>filtro</b> la desenfoca más.</p></div>
+  <aside class="notes">En el lab aparecen las dos: addGaussianNoise(im, sd) usa sd para el ruido y gaussianFilter(im, sigma) usa sigma para el filtro. La curva de la derecha es continua; el núcleo real toma solo los valores en enteros y se normaliza para que sume 1.</aside>
+</section>
+
+<section class="slide" id="median" data-fx="vc" data-section="C · Filtros" data-title="medianFilter">
+  <header class="s-head"><p class="kicker">mediana</p><h2 class="s-title">medianFilter</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def medianFilter(im, filterSize):
+    return medfilt2d(im, filterSize)
+
+# alternativa de ndimage (reflect; sirve en color)
+median_filter(im, size=n)
+median_filter(im_rgb, size=(n, n, 1))</pre>
+      <div class="trap" data-seq="3"><b>bordes</b><code>medfilt2d</code> rellena con ceros: las esquinas se oscurecen. <code>median_filter</code> usa 'reflect'.</div>
+    </div>
+    <div class="vstack"><div class="api" data-seq="2"><div class="sig">medfilt2d(input, kernel_size=3)</div>
+      <table>
+        <tr><td>input</td><td>array <b>2D</b> (en versiones antiguas, solo uint8, float32 o float64)</td></tr>
+        <tr><td>kernel_size</td><td>entero <b>impar</b> o (m, n); por defecto 3</td></tr>
+        <tr><td>no lineal</td><td>no es una convolución: ordena la ventana y toma el valor central</td></tr>
+      </table>
+     </div>
+     <p class="cap" data-seq="4">ventana 3×3 con un píxel de sal (de ejemplo)</p>
+     <div style="display:grid;grid-template-columns:210px 1fr;gap:24px;align-items:center">
+      <div class="vc-heat" data-seq="4" data-m='[[12,15,14],[13,255,16],[14,13,15]]' data-dec="0" style="min-height:0;height:210px"></div>
+      <div class="vstack">
+       <div class="sortrow" data-seq="5"><span>12</span><span>13</span><span>13</span><span>14</span><span class="mid">14</span><span>15</span><span>15</span><span>16</span><span class="out">255</span></div>
+       <p class="txt" data-seq="6">Ordenada, el 5.º valor es la <b>mediana = 14</b>: el 255 queda en un extremo y se ignora. La media daría <b>40,8</b>.</p>
+      </div>
+     </div>
+    </div>
+  </div>
+  <aside class="notes">La mediana no es lineal, así que no existe un núcleo que la represente. Con tamaño par la ventana no tiene centro, por eso debe ser impar. Para color con medfilt2d hay que ir canal a canal (como en remove_TLA_noise); con ndimage.median_filter el tamaño (n, n, 1) evita mezclar canales. La esquina de una ventana 3×3 tiene 4 píxeles reales y 5 ceros, y la mediana de esos nueve valores es cero.</aside>
+</section>
+
+<section class="slide" id="res-sp" data-fx="vc" data-section="C · Filtros" data-title="Media frente a mediana">
+  <header class="s-head"><p class="kicker">sal y pimienta al 5 % · resultados reales</p><h2 class="s-title">Media frente a mediana</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1002px 1fr;gap:30px;align-items:start">
+    <div class="vstack">
+      <img class="shot" src="assets/f_media_sp.png" alt="S&P 5 % filtrado con media 3, 7 y 15" style="width:1002px;height:auto">
+      <img class="shot" src="assets/f_mediana_sp.png" alt="S&P 5 % filtrado con mediana 3, 7 y 15" style="width:1002px;height:auto" data-seq="1">
+    </div>
+    <div class="vstack">
+      <div class="tip" data-seq="2"><b>¿mediana mejor?</b>Sí contra S&amp;P: descarta el impulso. Con 3×3, 27,2 dB frente a 23,9 dB.</div>
+      <div class="fx" data-role="plot" data-seq="2" data-x="3,15" data-y="16,28" data-xl="tamaño n" data-yl="PSNR (dB)" data-legend="tr"
+        data-fns='[{"f":"x=>{var X=[3, 7, 15],Y=[27.2, 22.8, 19.6];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"mediana"},{"f":"x=>{var X=[3, 7, 15],Y=[23.9, 22.0, 19.9];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"media"},{"f":"x=>18.2","c":"fg-3","dash":"6 8"}]' style="min-height:0;height:270px"></div>
+      <p class="cap" data-seq="2">discontinua: sin filtrar, 18,2 dB</p>
+      <div class="trap" data-seq="3"><b>¿y un tamaño enorme?</b>Borra los detalles: con 15×15 la mediana baja a 19,6 dB.</div>
+    </div>
+  </div>
+  <aside class="notes">Respuestas al enunciado del lab. Mediana frente a media contra sal y pimienta: la mediana es claramente más eficaz. Pero un tamaño muy grande destruye los detalles pequeños, y el PSNR empeora porque la imagen se aleja de la original.</aside>
+</section>
+
+<section class="slide" id="res-tabla" data-fx="vc" data-section="C · Filtros" data-title="PSNR de cada filtro">
+  <header class="s-head"><p class="kicker">arch256 · mismo ruido para todos · dB</p><h2 class="s-title">PSNR de cada filtro</h2></header>
+  <div class="s-body vstack" style="gap:26px">
+   <div style="display:grid;grid-template-columns:820px 1fr;gap:36px;align-items:start">
+    <table class="t" data-seq="1" style="white-space:nowrap">
+      <tr><th>filtro</th><th class="num">S&amp;P 5 %</th><th class="num">Gauss <span class="nc">σ</span> = 20</th></tr>
+      <tr><td>sin filtrar</td><td class="num">18,2</td><td class="num">22,1</td></tr>
+      <tr><td>media 3 / 7 / 15</td><td class="num">23,9 / 22,0 / 19,9</td><td class="num">25,6 / 22,3 / 20,0</td></tr>
+      <tr><td>gauss σ = 1 / 2 / 4</td><td class="num">24,5 / 22,8 / 20,7</td><td class="num">26,0 / 23,2 / 20,9</td></tr>
+      <tr><td>mediana 3 / 7 / 15</td><td class="num">27,2 / 22,8 / 19,6</td><td class="num">25,2 / 22,5 / 19,6</td></tr>
+    </table>
+    <div class="vstack" data-seq="2">
+      <p class="cap">gauss σ = 20 · tamaño 1, 2, 3 = columnas de la tabla</p>
+      <div class="fx" data-role="plot" data-x="0,4" data-y="18,26" data-xl="tamaño (pequeño → grande)" data-yl="PSNR (dB)" data-legend="bl"
+        data-fns='[{"f":"x=>{var X=[1, 2, 3],Y=[26.0, 23.2, 20.9];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"gaussiano"},{"f":"x=>{var X=[1, 2, 3],Y=[25.6, 22.3, 20.0];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"media"},{"f":"x=>{var X=[1, 2, 3],Y=[25.2, 22.5, 19.6];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"mediana"},{"f":"x=>22.1","c":"fg-3","dash":"6 8"}]' style="min-height:0;height:460px"></div>
+    </div>
+   </div>
+   <div class="g2">
+      <p class="txt" data-seq="3">Todos mejoran con el tamaño pequeño y <b>empeoran al crecer</b>: se pierde detalle.</p>
+      <p class="txt" data-seq="4">Contra S&amp;P gana la mediana pequeña. Contra gaussiano gana el gaussiano, con margen pequeño.</p>
+   </div>
+  </div>
+  <aside class="notes">Los tres números de cada celda son los tamaños 3, 7 y 15 (o σ = 1, 2, 4). Hay un cruce interesante: con tamaños grandes la media y el gaussiano pasan a la mediana en el caso gaussiano, porque la mediana de ventana grande destruye estructura. Estos valores salen del script gen_assets.py con semilla fija.</aside>
+</section>
+
+<!-- ============ D · EJERCICIOS ============ -->
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="17" data-section="D · Ejercicios" data-title="Ejercicios">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque d · ejercicios 1 a 8 del lab</p>
+    <h1 class="s-title xl">Ejercicios</h1>
+    <p class="lead">Tabla ruido × filtro, separabilidad, gaussiano explícito, color, imagen cociente y bordes.</p>
+  </div>
+</section>
+
+<section class="slide" id="e1" data-fx="vc" data-section="D · Ejercicios" data-title="E1: ruido por filtro">
+  <header class="s-head"><p class="kicker">ejercicio 1 · tabla ruido × filtro</p><h2 class="s-title">E1: ruido × filtro</h2></header>
+  <div class="s-body vstack" style="gap:26px">
+<pre class="code" data-seq="1">for nr, sucia in ruidos.items():          # S&amp;P 5 %, gauss σ = 20
+    for nf, f in filtros.items():         # media, gauss, mediana
+        print(nr, nf, psnr(im, f(sucia)))</pre>
+      <table class="t lg" data-seq="2">
+        <tr><th>ruido</th><th>sin filtrar</th><th>media 3×3</th><th>gauss <span class="nc">σ</span>=1</th><th>mediana 3×3</th></tr>
+        <tr><td>S&amp;P 5 %</td><td class="err">18,2 dB · malo</td><td class="warn">23,9 dB · regular</td><td class="warn">24,5 dB · regular</td><td class="ok">27,2 dB · bueno</td></tr>
+        <tr><td>Gauss σ=20</td><td class="err">22,1 dB · malo</td><td class="warn">25,6 dB · regular</td><td class="ok">26,0 dB · bueno</td><td class="warn">25,2 dB · regular</td></tr>
+      </table>
+    <div class="exam" data-seq="3"><b>regla para el examen</b>Ruido impulsivo (S&amp;P) → <b>mediana</b>, que no es lineal. Ruido gaussiano → <b>filtro gaussiano</b> (o media), lineal.</div>
+  </div>
+  <aside class="notes">La palabra de cada celda combina PSNR (en dB) y aspecto visual. Para S&amp;P, la mediana es la única que elimina los impulsos; media y gaussiano los diluyen. Para ruido gaussiano, el filtro lineal gaussiano es el adecuado, aunque la diferencia con la media y la mediana es pequeña. Valores: ruido generado con semilla 0, arch256.</aside>
+</section>
+
+<section class="slide" id="e1-vista" data-fx="vc" data-section="D · Ejercicios" data-title="E1: cómo se ve">
+  <header class="s-head"><p class="kicker">ejercicio 1 · recortes 80×80 de arch256</p><h2 class="s-title">E1: cómo se ve</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1002px 1fr;gap:36px;align-items:start">
+    <img class="shot" src="assets/e1.png" alt="recortes de S&amp;P y gaussiano filtrados con media, gaussiano y mediana" style="width:1002px;height:auto">
+    <div class="vstack" style="gap:22px">
+      <p class="txt" data-seq="1"><b>Fila S&amp;P</b>: media y gaussiano convierten cada punto en una <b>mancha</b>; la mediana los quita.</p>
+      <p class="txt" data-seq="2"><b>Fila gaussiano</b>: los tres suavizan; la mediana deja un grano más irregular.</p>
+      <div class="trap" data-seq="3"><b>efectos secundarios</b>Media y gaussiano emborronan los bordes. La mediana redondea esquinas y borra líneas finas.</div>
+    </div>
+  </div>
+  <aside class="notes">Mismo ruido y mismos filtros que la tabla anterior, pero mirando un recorte ampliado. La diferencia de PSNR entre filtros con ruido gaussiano es pequeña y a simple vista también lo es. Con sal y pimienta la diferencia salta a la vista: solo la mediana elimina los impulsos.</aside>
+</section>
+
+<section class="slide" id="e2-sep" data-fx="vc" data-section="D · Ejercicios" data-title="E2: media separable">
+  <header class="s-head"><p class="kicker">ejercicio 2 · averageFilterSep</p><h2 class="s-title">E2: media separable</h2></header>
+  <div class="s-body vstack" style="gap:30px">
+   <div class="g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def averageFilterSep(im, n):
+    row = np.ones((1, n)) / n      # máscara 1×n
+    return convolve(convolve(im, row), row.T)</pre>
+      <div class="exam" data-seq="5"><b>comprobado</b>Con n = 7 sobre arch256, la diferencia máxima entre ambas es ≈ 10⁻¹³ (solo error de coma flotante).</div>
+    </div>
+    <div class="deriv" style="grid-template-columns:1fr" >
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$h_{2D}[x,y]=\tfrac1{n^2}=\tfrac1n\cdot\tfrac1n=h_r[x]\,h_c[y]$$</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$f*(h_r*h_c)=(f*h_r)*h_c$$</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr"><span>$$n^2\ \Rightarrow\ 2n\ \text{productos por píxel}$$</span></div>
+    </div>
+   </div>
+   <div class="oprow" data-seq="6">
+     <div><div class="vc-heat" data-m='[[0.3333333333333333],[0.3333333333333333],[0.3333333333333333]]' data-dec="2" style="min-height:0;width:70px;height:210px"></div><p class="lbl">h_c (3×1)</p></div>
+     <span class="op">·</span>
+     <div><div class="vc-heat" data-m='[[0.3333333333333333,0.3333333333333333,0.3333333333333333]]' data-dec="2" style="min-height:0;width:210px;height:70px"></div><p class="lbl">h_r (1×3)</p></div>
+     <span class="op">=</span>
+     <div><div class="vc-heat" data-m='[[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111],[0.1111111111111111,0.1111111111111111,0.1111111111111111]]' data-dec="2" style="min-height:0;width:210px;height:210px"></div><p class="lbl">h_2D (3×3)</p></div>
+     <p class="txt" style="max-width:560px;margin-left:30px">n = 3: 9 productos por píxel con la 2D, 6 con las dos 1D. Con n = 15: 225 frente a 30.</p>
+   </div>
+  </div>
+  <aside class="notes">Primera línea: la máscara 2D de la media tiene todos los elementos iguales a 1/n², que es el producto de dos máscaras 1/n, una fila y una columna. Segunda: la convolución es asociativa, así que aplicar la máscara completa equivale a aplicar primero la fila y luego la columna. Tercera: el coste por píxel baja de n² a 2n productos. Las dos formas dan el mismo resultado salvo errores de redondeo.</aside>
+</section>
+
+<section class="slide" id="e2-tiempos" data-fx="vc" data-section="D · Ejercicios" data-title="E2: coste medido">
+  <header class="s-head"><p class="kicker">tiempos reales sobre arch512, ms</p><h2 class="s-title">E2: coste medido</h2></header>
+  <div class="s-body g2">
+    <div class="vstack"><p class="cap">tiempo (ms) según el tamaño n de la máscara</p>
+      <div class="fx" data-role="plot" data-x="3,31" data-y="0,1000" data-xl="tamaño de máscara n" data-yl="ms"
+        data-fns='[{"f":"x=>{var X=[3,7,11,15,21,31],Y=[5.3,22.6,64.1,134.4,296.9,690.3];for(var i=0;i<X.length-2;i++){if(x<=X[i+1])break;}return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"2D (n²)"},{"f":"x=>{var X=[3,7,11,15,21,31],Y=[8.3,12.0,13.1,16.1,22.8,30.4];for(var i=0;i<X.length-2;i++){if(x<=X[i+1])break;}return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"separable (2n)"}]' style="height:520px"></div>
+    </div>
+    <div class="vstack"><p class="cap">tiempo (ms) según el lado N de la imagen, con n = 15</p>
+      <div class="fx" data-role="plot" data-x="0,2048" data-y="0,2400" data-xl="lado de la imagen N" data-yl="ms"
+        data-fns='[{"f":"x=>{var X=[128,256,512,1024,2048],Y=[9.8,34.2,137.0,606.3,2109.8];for(var i=0;i<X.length-2;i++){if(x<=X[i+1])break;}return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"2D"},{"f":"x=>{var X=[128,256,512,1024,2048],Y=[0.9,3.2,13.5,70.8,212.4];for(var i=0;i<X.length-2;i++){if(x<=X[i+1])break;}return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","label":"separable"}]' style="height:520px"></div>
+    </div>
+  </div>
+  <div class="s-body" style="margin-top:12px"><p class="txt" data-seq="1">Con n = 15 la separable es 8,3× más rápida; con n = 31, 22,7×. La 2D crece como n² y la separable casi lineal. <span class="muted">(Medidas en esta máquina.)</span></p></div>
+  <aside class="notes">Teóricamente la ganancia es n²/2n = n/2: 7,5 para n = 15 y 15,5 para n = 31. Lo medido es algo mayor porque convolve 2D accede peor a memoria. La conclusión de examen: separable gana siempre que el núcleo sea separable, y la ventaja crece con n.</aside>
+</section>
+
+<section class="slide" id="e3" data-fx="vc" data-section="D · Ejercicios" data-title="E3: gaussiano explícito">
+  <header class="s-head"><p class="kicker">ejercicio 3 · n = 15, sigma = 4</p><h2 class="s-title">E3: gaussiano explícito</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:900px 1fr;gap:32px;align-items:start">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">from scipy.signal.windows import gaussian
+gv1d = gaussian(n, sigma)       # (a) pico = 1, suma ≠ 1
+gv1d = gv1d / gv1d.sum()        #     normalizar: suma 1
+gv2d = np.outer(gv1d, gv1d)     # (b) n×n
+out = convolve(im, gv2d)        # (c) máscara 2D
+col = gv1d[:, None]             # (d) separable: n×1
+out = convolve(convolve(im, col), col.T)</pre>
+      <div class="trap" data-seq="3"><b>sin normalizar</b>Para n = 15 y σ = 4 la suma es 9,42: la imagen saldría 9,42 veces más brillante.</div>
+      <div class="tip" data-seq="4"><b>frente a gaussian_filter</b>Con n = 33 (el que usa scipy) la diferencia es ≈ 10⁻¹²; con n = 15 llega a 13,2 niveles, porque 15 corta la campana en ±1,75σ.</div>
+    </div>
+    <div class="vstack" data-seq="2">
+      <p class="cap">gv1d normalizado (15 muestras), ×10⁻³; pico 106, extremos 23</p>
+      <div class="fx" data-role="plot" data-x="-7.5,7.5" data-y="0,120" data-xl="posición respecto al centro" data-yl="peso ×10⁻³" data-legend="tr"
+        data-bars='[23, 34, 49, 64, 80, 94, 103, 106, 103, 94, 80, 64, 49, 34, 23]' data-fns='[{"f":"x=>1000*Math.exp(-x*x/32)/9.4237","label":"σ = 4"}]' style="min-height:0;height:260px"></div>
+      <div style="display:grid;grid-template-columns:270px 1fr;gap:24px;align-items:center">
+        <div class="vc-heat" data-m='[[0.0005, 0.0008, 0.0011, 0.0015, 0.0018, 0.0021, 0.0024, 0.0024, 0.0024, 0.0021, 0.0018, 0.0015, 0.0011, 0.0008, 0.0005], [0.0008, 0.0012, 0.0017, 0.0022, 0.0028, 0.0032, 0.0035, 0.0037, 0.0035, 0.0032, 0.0028, 0.0022, 0.0017, 0.0012, 0.0008], [0.0011, 0.0017, 0.0024, 0.0031, 0.0039, 0.0045, 0.005, 0.0052, 0.005, 0.0045, 0.0039, 0.0031, 0.0024, 0.0017, 0.0011], [0.0015, 0.0022, 0.0031, 0.0041, 0.0052, 0.006, 0.0066, 0.0068, 0.0066, 0.006, 0.0052, 0.0041, 0.0031, 0.0022, 0.0015], [0.0018, 0.0028, 0.0039, 0.0052, 0.0064, 0.0075, 0.0082, 0.0085, 0.0082, 0.0075, 0.0064, 0.0052, 0.0039, 0.0028, 0.0018], [0.0021, 0.0032, 0.0045, 0.006, 0.0075, 0.0088, 0.0096, 0.0099, 0.0096, 0.0088, 0.0075, 0.006, 0.0045, 0.0032, 0.0021], [0.0024, 0.0035, 0.005, 0.0066, 0.0082, 0.0096, 0.0106, 0.0109, 0.0106, 0.0096, 0.0082, 0.0066, 0.005, 0.0035, 0.0024], [0.0024, 0.0037, 0.0052, 0.0068, 0.0085, 0.0099, 0.0109, 0.0113, 0.0109, 0.0099, 0.0085, 0.0068, 0.0052, 0.0037, 0.0024], [0.0024, 0.0035, 0.005, 0.0066, 0.0082, 0.0096, 0.0106, 0.0109, 0.0106, 0.0096, 0.0082, 0.0066, 0.005, 0.0035, 0.0024], [0.0021, 0.0032, 0.0045, 0.006, 0.0075, 0.0088, 0.0096, 0.0099, 0.0096, 0.0088, 0.0075, 0.006, 0.0045, 0.0032, 0.0021], [0.0018, 0.0028, 0.0039, 0.0052, 0.0064, 0.0075, 0.0082, 0.0085, 0.0082, 0.0075, 0.0064, 0.0052, 0.0039, 0.0028, 0.0018], [0.0015, 0.0022, 0.0031, 0.0041, 0.0052, 0.006, 0.0066, 0.0068, 0.0066, 0.006, 0.0052, 0.0041, 0.0031, 0.0022, 0.0015], [0.0011, 0.0017, 0.0024, 0.0031, 0.0039, 0.0045, 0.005, 0.0052, 0.005, 0.0045, 0.0039, 0.0031, 0.0024, 0.0017, 0.0011], [0.0008, 0.0012, 0.0017, 0.0022, 0.0028, 0.0032, 0.0035, 0.0037, 0.0035, 0.0032, 0.0028, 0.0022, 0.0017, 0.0012, 0.0008], [0.0005, 0.0008, 0.0011, 0.0015, 0.0018, 0.0021, 0.0024, 0.0024, 0.0024, 0.0021, 0.0018, 0.0015, 0.0011, 0.0008, 0.0005]]' data-nums="0" style="min-height:0;height:270px;width:270px"></div>
+        <p class="txt">gv2d = outer (15×15): más claro, más peso. Suma 1 porque (Σg)² = 1.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Paso (a): la ventana gaussiana de scipy no está normalizada, vale 1 en el centro. Hay que dividir por la suma para que el filtro conserve el brillo. Paso (b): el producto exterior construye la máscara 2D. Paso (c) y (d) dan el mismo resultado, pero (d) cuesta 2n en lugar de n² por píxel. La diferencia numérica entre la versión manual y gaussian_filter es de orden 1e-12 cuando se usa el mismo tamaño que scipy (2·int(4σ+0,5)+1 = 33).</aside>
+</section>
+
+<section class="slide" id="outer" data-fx="vc" data-section="D · Ejercicios" data-title="Por qué np.outer">
+  <header class="s-head"><p class="kicker">la gaussiana 2D es un producto</p><h2 class="s-title">Por qué np.outer funciona</h2></header>
+  <div class="s-body g2">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr"><span>$$G(x,y)=\tfrac1{2\pi\sigma^2}e^{-\frac{x^2+y^2}{2\sigma^2}}$$</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$=\bigl[\tfrac1{(2\pi)^{1/2}\sigma}e^{-\frac{x^2}{2\sigma^2}}\bigr]\Bigl[\tfrac1{(2\pi)^{1/2}\sigma}e^{-\frac{y^2}{2\sigma^2}}\bigr]=g(x)\,g(y)$$</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$\texttt{np.outer}(g,g)_{ij}=g_i\,g_j\iff G=g\,g^{T}$$</span></div>
+    </div>
+    <div class="vstack" data-seq="3">
+      <p class="cap">n = 5, σ = 1: g = (54, 244, 403, 244, 54) ×10⁻³; G = g gᵀ en ×10⁻³</p>
+      <div class="vc-heat" data-m='[[3,13,22,13,3],[13,60,98,60,13],[22,98,162,98,22],[13,60,98,60,13],[3,13,22,13,3]]' data-dec="0" style="height:400px"></div>
+      <p class="txt" data-seq="4">Matriz de <b>rango 1</b> (comprobado con <code>matrix_rank</code>): por eso el filtro es separable.</p>
+    </div>
+  </div>
+  <aside class="notes">El exponente de la suma se separa en producto: e^(a+b) = e^a · e^b. Cada factor es una gaussiana 1D. El producto exterior de un vector con otro es justo la matriz cuyo elemento (i, j) vale g_i · g_j. Cuando se normaliza g (suma 1), el producto exterior también suma 1, porque la suma total es (Σg)². En la matriz de ejemplo, el centro es 0,403 × 0,403 = 0,162.</aside>
+</section>
+
+<section class="slide" id="e4" data-fx="vc" data-section="D · Ejercicios" data-title="E4: ruido en color">
+  <header class="s-head"><p class="kicker">ejercicio 4 · peppers RGB, sd = 25</p><h2 class="s-title">E4: ruido en color</h2></header>
+  <div class="s-body vstack">
+<pre class="code sm" data-seq="1">ruido = addGaussianNoise(im, 25)                  # ya vale con (H, W, 3)
+bien = gaussian_filter(ruido, (2, 2, 0))          # 0: no mezclar canales
+mal  = gaussian_filter(ruido, 2)                  # mezcla R, G y B</pre>
+    <img class="shot c" src="assets/e4.png" alt="peppers original, ruidoso, filtrado bien y filtrado mezclando canales" style="width:1160px;height:auto;flex:none" data-seq="2">
+    <div class="tip" data-seq="3"><b>¿banda a banda?</b>No hace falta para el ruido: es independiente por píxel y canal (σ por banda 25,0 / 25,0 / 25,0; corr(R, G) = 0,004). <code>(σ, σ, 0)</code> da lo mismo que filtrar cada banda por separado.</div>
+  </div>
+  <aside class="notes">size=im.shape ya incluye el tercer eje, así que el broadcasting genera un ruido distinto para cada canal. Al filtrar sí hay que tener cuidado: con un sigma escalar se suaviza también entre canales y los colores se desvían.</aside>
+</section>
+
+<section class="slide" id="e5" data-fx="vc" data-section="D · Ejercicios" data-title="E5: imagen cociente">
+  <header class="s-head"><p class="kicker">ejercicio 5 · normalizar la iluminación</p><h2 class="s-title">E5: imagen cociente</h2></header>
+  <div class="s-body vstack">
+    <div class="g2" style="align-items:center">
+      <div class="eq" data-seq="1">$$Q=\frac{I}{I*G_\sigma+\varepsilon}\approx\frac{R\,L}{(R*G_\sigma)\,L}=\frac{R}{R*G_\sigma}$$</div>
+<pre class="code sm" data-seq="2">def quotientImage(im, sigma):
+    return im / (gaussian_filter(im, sigma) + 1e-6)</pre>
+    </div>
+    <img class="shot c" src="assets/e5.png" alt="einstein con luz variable y su imagen cociente" style="width:1135px;height:auto;flex:none;margin-top:6px" data-seq="3">
+    <p class="txt" data-seq="4">Si <i>I = R·L</i> (reflectancia × luz suave), la luz <i>L</i> casi no cambia en el entorno de σ y se <b>cancela</b>. Correlación entre Q de ambas: 0,9998, frente a 0,934 entre las imágenes.</p>
+  </div>
+  <aside class="notes">La imagen desenfocada estima la iluminación, que varía despacio. Dividir elimina esa componente y deja la reflectancia relativa. El ε evita dividir por cero. Para visualizar, el cociente (centrado en 1) se escala. Probado con una rampa de luz de 0,25 a 1 aplicada por columnas.</aside>
+</section>
+
+<section class="slide" id="e67" data-fx="vc" data-section="D · Ejercicios" data-title="E6 y E7: showInGrid">
+  <header class="s-head"><p class="kicker">ejercicios 6 y 7 · subtítulos y región</p><h2 class="s-title">E6 y E7: showInGrid</h2></header>
+  <div class="s-body g2">
+<pre class="code sm" data-seq="1">def showInGrid(imgs, m, n, title='',
+               subtitles=None, region=None):
+    fig = plt.figure()
+    for i, im in enumerate(imgs):
+        ax = fig.add_subplot(m, n, i + 1)
+        if region is not None:  # (r0,r1,c0,c1)
+            r0, r1, c0, c1 = region
+            im = im[r0:r1, c0:c1]
+        ax.imshow(im, cmap='gray')
+        if subtitles is not None:
+            ax.set_title(subtitles[i])
+    fig.suptitle(title)
+    plt.show()</pre>
+    <div class="vstack">
+      <img class="shot" src="assets/e7.png" alt="zoom 80×80 de S&P, media y mediana" style="width:100%" data-seq="2">
+<pre class="code sm" data-seq="3">subs = [rf'$\sigma = {s}$' for s in sigmas]   # LaTeX
+# filas 60–139, columnas 90–169
+region=(60, 140, 90, 170)</pre>
+      <p class="cap" data-seq="4">recorte <code>im[r0:r1, c0:c1]</code>: filas primero, r1 y c1 excluidos</p>
+    </div>
+  </div>
+  <aside class="notes">add_subplot(m, n, k) numera desde 1. Los títulos aceptan mathtext de Matplotlib, que es LaTeX entre signos de dólar; usa cadenas crudas r'...' para que la barra invertida no se interprete. El zoom muestra una ventana de 80×80 y deja ver cómo la mediana quita los puntos y la media los convierte en manchas.</aside>
+</section>
+
+<section class="slide" id="e8" data-fx="vc" data-section="D · Ejercicios" data-title="E8: relación σ y tamaño">
+  <header class="s-head"><p class="kicker">ejercicio 8 · gaussian_kernel</p><h2 class="s-title">E8: sigma y tamaño</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def gaussian_kernel(k=None, sigma=None):
+    if sigma is None:      # σ a partir de k
+        sigma = 0.3 * (k / 2 - 1) + 0.8
+    if k is None:          # k a partir de σ
+        k = 2 * int(np.ceil(3 * sigma))
+    g = gaussian(k + 1, sigma)
+    return np.outer(g, g) / g.sum() ** 2</pre>
+      <div class="eq sm" data-seq="2">$$k\approx 6\sigma\ \ (\pm3\sigma:\ 99{,}7\,\%)$$</div>
+      <p class="txt" data-seq="3">scipy usa ±4σ (<code>truncate=4</code>): tamaño ≈ 8σ.</p>
+      <table class="t" data-seq="4">
+        <tr><th>dado <span class="nc">σ</span></th><th class="num">máscara k+1</th><th>dado k</th><th class="num"><span class="nc">σ</span></th></tr>
+        <tr><td>σ = 1</td><td class="num">7×7</td><td>k = 6</td><td class="num">1,4</td></tr>
+        <tr><td>σ = 2</td><td class="num">13×13</td><td>k = 12</td><td class="num">2,3</td></tr>
+      </table>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,32" data-y="0,6" data-xl="tamaño k" data-yl="σ" data-seq="2"
+      data-fns='[{"f":"x=>x/6","label":"σ = k/6"},{"f":"x=>0.3*(x/2-1)+0.8","label":"regla OpenCV"}]' style="height:520px"></div>
+  </div>
+  <aside class="notes">Si se da k se calcula sigma; si se da sigma se calcula k; la máscara resultante es (k+1)×(k+1), impar porque k es par. La regla k ≈ 6σ cubre ±3σ, que contiene el 99,7 % del peso. La regla de OpenCV da σ ≈ 0,15k + 0,5, casi igual que k/6. La suma g.sum()**2 normaliza el producto exterior, porque la suma de outer(g, g) es (Σg)².</aside>
+</section>
+
+<section class="slide" id="bordes" data-fx="vc" data-section="D · Ejercicios" data-title="Efecto de los bordes">
+  <header class="s-head"><p class="kicker">filtro grande · sigma = 8</p><h2 class="s-title">Efecto de los bordes</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1080px 1fr;gap:36px;align-items:start">
+    <div class="vstack" style="gap:14px">
+    <img class="shot" src="assets/bordes.png" alt="original, mode constant y mode reflect con gaussiano grande" style="width:1080px" data-seq="1">
+      <p class="cap" data-seq="3">perfil junto al borde izquierdo (media de cada columna): <span style="color:var(--cat-1)">reflect</span> frente a <span style="color:var(--err)">constant</span></p>
+      <div class="fx" data-role="plot" data-seq="3" data-x="0,40" data-y="40,120" data-xl="columna" data-yl="nivel medio" 
+        data-fns='[{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[110.3, 110.2, 110.1, 110.0, 109.8, 109.6, 109.4, 109.1, 108.8, 108.5, 108.1, 107.8, 107.4, 107.1, 106.8, 106.5, 106.2, 106.0, 105.8, 105.6, 105.5, 105.3, 105.2, 105.0, 104.8, 104.5, 104.2, 103.8, 103.4, 102.9, 102.3, 101.7, 101.0, 100.3, 99.6, 98.9, 98.1, 97.4, 96.7, 96.0];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"cat-1"},{"f":"x=>{var X=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39],Y=[56.3, 61.6, 66.6, 71.5, 76.0, 80.2, 84.0, 87.4, 90.3, 92.9, 95.0, 96.7, 98.1, 99.2, 100.0, 100.6, 101.1, 101.4, 101.6, 101.7, 101.7, 101.7, 101.6, 101.5, 101.3, 101.1, 100.7, 100.3, 99.8, 99.3, 98.7, 98.0, 97.3, 96.5, 95.7, 94.9, 94.1, 93.4, 92.6, 91.9];if(x<X[0]||x>X[X.length-1])return NaN;var i=0;while(i<X.length-2&&x>X[i+1])i++;return Y[i]+(Y[i+1]-Y[i])*(x-X[i])/(X[i+1]-X[i]);}","c":"err"}]' style="min-height:0;height:250px"></div>
+    </div>
+    <div class="vstack">
+      <table class="t" data-seq="2">
+        <tr><th>media esquina 5×5</th><th class="num">valor</th></tr>
+        <tr><td>original</td><td class="num">102,6</td></tr>
+        <tr><td class="err">constant · oscuro</td><td class="num">39,3</td></tr>
+        <tr><td class="ok">reflect · fiel</td><td class="num">101,5</td></tr>
+      </table>
+      <p class="txt" data-seq="4"><code>'constant'</code> mete ceros fuera: borde oscuro. <code>'reflect'</code> (por defecto) refleja la imagen.</p>
+    </div>
+  </div>
+  <aside class="notes">Cuanto mayor es el filtro, más píxeles de la ventana caen fuera de la imagen y más pesa el relleno. Con ceros, el borde se mezcla con negro. La media de una esquina de 5×5 baja de 103 a 39 con constant y se queda en 102 con reflect. Recuerda que medfilt2d siempre rellena con ceros.</aside>
+</section>
+
+<!-- ============ E · CIERRE ============ -->
+<section class="slide is-plain divider" id="div-e" data-fx="backdrop" data-seed="19" data-section="E · Cierre" data-title="Para el examen">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque e · cierre</p>
+    <h1 class="s-title xl">Para el examen</h1>
+    <p class="lead">Chuleta, ejercicios tipo examen resueltos y verdadero/falso.</p>
+  </div>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="E · Cierre" data-title="Chuleta de filtros">
+  <header class="s-head"><p class="kicker">para el examen</p><h2 class="s-title">Chuleta de filtros</h2></header>
+  <div class="s-body vstack" style="gap:26px">
+    <table class="t lg" data-seq="1">
+      <tr><th>filtro</th><th>función</th><th>módulo</th><th>parámetros clave</th><th>mejor contra</th></tr>
+      <tr><td>media</td><td><code>convolve(im, ones/n²)</code></td><td>ndimage</td><td>mask suma 1, mode</td><td>gaussiano leve</td></tr>
+      <tr><td>gaussiano</td><td><code>gaussian_filter</code></td><td>ndimage</td><td>sigma, truncate, mode</td><td>gaussiano</td></tr>
+      <tr><td>mediana</td><td><code>medfilt2d</code></td><td>signal</td><td>kernel_size impar</td><td>sal y pimienta</td></tr>
+      <tr><td>mediana (color)</td><td><code>median_filter</code></td><td>ndimage</td><td>size=(n, n, 1)</td><td>sal y pimienta</td></tr>
+      <tr><td>ventana gauss</td><td><code>gaussian(n, σ)</code></td><td>signal.windows</td><td>sin normalizar</td><td>—</td></tr>
+      <tr><td>ruido S&amp;P</td><td><code>randint, rand</code></td><td>numpy.random</td><td>high excluido</td><td>—</td></tr>
+      <tr><td>ruido gaussiano</td><td><code>normal(0, sd, shape)</code></td><td>numpy.random</td><td>scale = σ; clip</td><td>—</td></tr>
+    </table>
+    <div class="g2">
+      <div class="trap" data-seq="2"><b>cuatro trampas</b>uint8 trunca · <code>medfilt2d</code> rellena con ceros · <code>gaussian(n, σ)</code> no suma 1 · en color, <code>sigma=(s, s, 0)</code>.</div>
+      <div class="exam" data-seq="3"><b>lineal o no</b>Media y gaussiano son convoluciones (separables: 2n en vez de n²). La mediana no tiene núcleo.</div>
+    </div>
+  </div>
+  <aside class="notes">Resumen para memorizar. Los lineales (media, gaussiano) se pueden hacer con convolve y una máscara que sume 1; la mediana no es lineal y necesita su función. Recuerda también las trampas: dtype uint8, bordes con ceros en medfilt2d, ventana gaussiana sin normalizar y sigma con tupla en color.</aside>
+</section>
+
+<section class="slide" id="ex-1" data-fx="vc" data-section="E · Cierre" data-title="Examen: countIm y vecinos">
+  <header class="s-head"><p class="kicker">ejercicios tipo examen · con solución</p><h2 class="s-title">Examen: countIm y vecinos</h2></header>
+  <div class="s-body vstack">
+    <p class="txt"><b>1.</b> <code>countIm</code>: ¿hay al menos <code>minCount</code> píxeles con gris &lt; <code>thr</code> en la ventana <code>sX × sY</code>?</p>
+<pre class="code sm" data-seq="1">def countIm(im, thr, sX, sY, minCount):
+    im_th = (im &lt; thr).astype(float)           # 1 si cumple
+    return convolve(im_th, np.ones((sX, sY))) &gt;= minCount</pre>
+    <p class="txt"><b>2.</b> Media de los 8 vecinos, <b>sin</b> el píxel central.</p>
+<pre class="code sm" data-seq="2">def neighborMean(im):
+    mask = np.ones((3, 3)); mask[1, 1] = 0   # centro fuera
+    return convolve(im, mask / 8)             # 8 vecinos</pre>
+    <div class="tip" data-seq="3"><b>idea</b>Contar o promediar en una ventana = convolución con unos. La máscara es simétrica: convolución y correlación coinciden.</div>
+  </div>
+  <aside class="notes">En countIm se umbraliza primero para obtener 1 donde se cumple la condición; la convolución con unos suma cuántos hay en la ventana, y comparar con minCount da la matriz booleana. En neighborMean el 0 central excluye el píxel y se divide entre 8 porque suma 8 elementos. El solucionario oficial de countim del examen es exactamente esa forma.</aside>
+</section>
+
+<section class="slide" id="ex-2" data-fx="vc" data-section="E · Cierre" data-title="Examen: TLA y blurFgBk">
+  <header class="s-head"><p class="kicker">ejercicios tipo examen · con solución</p><h2 class="s-title">Examen: TLA y blurFgBk</h2></header>
+  <div class="s-body vstack" style="gap:22px">
+    <div class="g2">
+      <div class="vstack">
+        <p class="txt"><b>remove_TLA_noise</b>: mediana por canal.</p>
+<pre class="code sm" data-seq="1">def remove_TLA_noise(im_noisy):
+    im = np.copy(im_noisy)
+    for k in range(im.shape[2]):
+        im[:, :, k] = medfilt2d(im_noisy[:, :, k])
+    return im</pre>
+      </div>
+      <div class="vstack">
+        <p class="txt"><b>blurFgBk</b>: difuminar objeto o fondo.</p>
+<pre class="code sm" data-seq="3">def blurFgBk(im, fgMask, bFg, sigma):
+    im_f = gaussian_filter(im, sigma)
+    if bFg: a, b = 1 - fgMask, fgMask
+    else:   a, b = fgMask, 1 - fgMask
+    return a * im + b * im_f</pre>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 722px;gap:36px;align-items:start">
+      <div class="vstack">
+        <div class="tip" data-seq="2"><b>por qué</b><code>medfilt2d</code> es 2D: se aplica a cada canal. El ruido TLA son impulsos poco representativos en el entorno: la mediana los descarta.</div>
+        <div class="trap" data-seq="4"><b>máscara</b>Mezcla con <code>a*im + b*im_f</code>, sin bucles. <code>fgMask</code> debe ser 0/1 numérico con la forma de <code>im</code>.</div>
+      </div>
+      <img class="shot" src="assets/ex2.png" alt="máscara circular y blurFgBk con bFg False y True sobre arch256" style="width:722px;height:auto" data-seq="5">
+    </div>
+  </div>
+  <aside class="notes">En remove_TLA_noise el tipo A pone 1/2 en R y B, que no es un valor extremo, pero sigue siendo poco representativo en su vecindad, así que la mediana también lo elimina. En blurFgBk se genera la imagen desenfocada completa y se combina con la original mediante la máscara: donde b vale 1 se toma la versión filtrada y donde a vale 1 la original.</aside>
+</section>
+
+<section class="slide" id="vf" data-fx="vc" data-section="E · Cierre" data-title="Verdadero o falso">
+  <header class="s-head"><p class="kicker">piensa la respuesta antes de avanzar</p><h2 class="s-title">Verdadero o falso</h2></header>
+  <div class="s-body">
+    <div class="vf">
+      <div>La media 3×3 elimina un píxel de sal aislado.</div><div class="a f" data-seq="1"><b>F</b>Lo reparte: 9 píxeles de 28,3.</div>
+      <div><code>medfilt2d</code> equivale a convolucionar con un núcleo bien elegido.</div><div class="a f" data-seq="2"><b>F</b>La mediana no es lineal: no hay núcleo.</div>
+      <div><code>gaussian(n, σ)</code> de <code>scipy.signal.windows</code> devuelve un núcleo que suma 1.</div><div class="a f" data-seq="3"><b>F</b>Vale 1 en el centro: hay que dividir por la suma.</div>
+      <div>Una media n×n separable cuesta 2n productos por píxel en lugar de n².</div><div class="a v" data-seq="4"><b>V</b>Fila 1×n y columna n×1 (asociatividad).</div>
+      <div><code>np.random.randint(0, 255, m)</code> puede devolver 255.</div><div class="a f" data-seq="5"><b>F</b>high está excluido: usa 256.</div>
+      <div><code>gaussian_filter(im_rgb, 2)</code> suaviza cada canal por separado.</div><div class="a f" data-seq="6"><b>F</b>Mezcla canales: usa (2, 2, 0).</div>
+      <div>Con <code>mode='constant'</code> los bordes de la imagen filtrada se oscurecen.</div><div class="a v" data-seq="7"><b>V</b>Rellena con cval = 0 fuera de la imagen.</div>
+      <div>Sumar ruido gaussiano a una imagen float puede dar valores fuera de [0, 255].</div><div class="a v" data-seq="8"><b>V</b>La normal no está acotada: np.clip.</div>
+    </div>
+  </div>
+  <aside class="notes">Cada afirmación sale de una trampa vista en el deck. La 1: la media es lineal y reparte el impulso (diapositiva del ejemplo numérico). La 2: la mediana ordena, no pondera. La 3: la ventana de scipy tiene pico 1; para n = 15 y σ = 4 suma 9,42. La 4: es la separabilidad del ejercicio 2. La 5: randint excluye high. La 6: el sigma escalar actúa también en el eje de canales. La 7: es el efecto de bordes del final del bloque D. La 8: por eso addGaussianNoise termina con np.clip.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

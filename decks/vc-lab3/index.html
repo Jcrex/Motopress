@@ -1,0 +1,848 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · Lab 3 · Fourier y convolución</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="8" data-section="Inicio" data-title="Lab 3: Fourier">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lab 3</p>
+    <h1 class="s-title xl">Lab 3 · Fourier</h1>
+    <p class="lead">fft2, fftshift, teorema de la convolución y filtros diseñados en frecuencia, a nivel de código.</p>
+  </div>
+  <aside class="notes">Objetivo del deck: poder escribir de memoria fft2, ifft2, fftshift e ifftshift, construir filtros en frecuencia con meshgrid y entender el teorema de la convolución a nivel de código, que es justo la pregunta de verdadero o falso del examen. Todas las imágenes y cifras de este deck son resultados reales de ejecutar el código del laboratorio sobre einstein.pgm, habas.pgm, a.pgm y b.pgm.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-a" data-fx="backdrop" data-seed="11" data-section="A · numpy.fft" data-title="Bloque A · numpy.fft">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque A · 7 diapositivas</p>
+    <h1 class="s-title xl">El módulo <span class="nc">numpy.fft</span></h1>
+    <p class="lead">fft2, ifft2, fftshift e ifftshift; complejos; magnitud, fase y reconstrucción con einstein.</p>
+  </div>
+  <aside class="notes">Primer bloque: las cuatro funciones del módulo numpy.fft que hay que saber escribir de memoria, por qué se deshace con ifftshift y no con fftshift, y cómo se visualiza un espectro.</aside>
+</section>
+
+<section class="slide" id="api-fft2" data-fx="vc" data-section="A · numpy.fft" data-title="fft2 e ifft2">
+  <header class="s-head"><p class="kicker">bloque A · el módulo numpy.fft</p><h2 class="s-title"><span class="nc">fft2</span> e <span class="nc">ifft2</span></h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="api"><div class="sig">F = np.fft.fft2(a)</div><table><tr><td>a</td><td>imagen (M×N), real o compleja</td></tr><tr><td>retorno</td><td>complejos, misma forma M×N</td></tr><tr><td>F[0, 0]</td><td>componente DC = suma de todos los píxeles</td></tr><tr><td>trampa</td><td>la frecuencia 0 está en la esquina superior izquierda, no en el centro</td></tr></table></div>
+<div class="api"><div class="sig">a = np.fft.ifft2(F)</div><table><tr><td>F</td><td>espectro con la frecuencia 0 en [0, 0]</td></tr><tr><td>retorno</td><td>complejos; si a era real, la parte imaginaria es ≈ 1e-13</td></tr><tr><td>regla</td><td>ifft2(fft2(a)) devuelve a, salvo redondeo</td></tr><tr><td>trampa</td><td>si F estaba centrada hay que deshacer el desplazamiento antes</td></tr></table></div>
+</div>
+<div class="g2" style="margin-top:22px">
+<div class="exam"><b>en el examen</b>Hay que saber que fft2 pone la DC en <code>[0, 0]</code> y que devuelve números complejos.</div>
+<div class="tip"><b>comprobación</b>Con einstein.pgm, <code>|F|.max()</code> = 19 285 918 = <code>im.sum()</code> exactamente (<code>np.isclose</code> da True).</div>
+</div>
+  </div>
+  <aside class="notes">La transformada de Fourier discreta en dos dimensiones se calcula con fft2. Devuelve un array complejo de la misma forma que la imagen. La convención de numpy es que la frecuencia cero, la componente continua, está en el índice cero cero, la esquina superior izquierda. Esa componente es la suma de todos los píxeles: lo hemos comprobado con einstein, el máximo del módulo es exactamente la suma de la imagen. ifft2 es la inversa y asume la misma convención.</aside>
+</section>
+
+<section class="slide" id="api-shift" data-fx="l3-swap" data-section="A · numpy.fft" data-title="fftshift e ifftshift">
+  <header class="s-head"><p class="kicker">bloque A · el módulo numpy.fft</p><h2 class="s-title"><span class="nc">fftshift</span> · <span class="nc">ifftshift</span></h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="api"><div class="sig">np.fft.fftshift(F)</div><table><tr><td>efecto</td><td>lleva la DC de [0, 0] al centro (índice N//2)</td></tr><tr><td>uso</td><td>solo para visualizar o diseñar filtros centrados</td></tr><tr><td>equivale a</td><td><code>np.roll(F, N//2)</code> en cada eje</td></tr></table></div>
+<div class="api"><div class="sig">np.fft.ifftshift(F)</div><table><tr><td>efecto</td><td>deshace fftshift: la DC vuelve a [0, 0]</td></tr><tr><td>equivale a</td><td><code>np.roll(F, -(N//2))</code> en cada eje</td></tr><tr><td>cuándo</td><td>antes de ifft2, o al preparar un filtro centrado</td></tr></table></div>
+</div>
+<div class="vstack" style="justify-items:center;align-content:center">
+<div class="quads">
+<figure class="fig"><div class="quad"><div class="q1">1</div><div class="q2">2</div><div class="q3">3</div><div class="q4">4</div></div><figcaption>fft2: DC en la esquina</figcaption></figure>
+<div class="arrow">⇄</div>
+<figure class="fig"><div class="quad swap"><div class="q4" data-dx="1" data-dy="1">4</div><div class="q3" data-dx="-1" data-dy="1">3</div><div class="q2" data-dx="1" data-dy="-1">2</div><div class="q1" data-dx="-1" data-dy="-1">1</div></div><figcaption>fftshift: DC al centro</figcaption></figure>
+</div>
+<p class="txt" data-seq="3" style="text-align:center">1 ↔ 4 y 2 ↔ 3: intercambio en diagonal. La DC (esquina del cuadrante 1) acaba en el centro.</p>
+</div>
+</div>
+  </div>
+  <aside class="notes">fftshift intercambia los cuatro cuadrantes en diagonal: el uno con el cuatro y el dos con el tres. El resultado es el espectro con las bajas frecuencias en el centro, que es como lo dibujamos. Es solo una reordenación de índices, no cambia ningún valor. ifftshift hace la operación contraria. Recuerda la equivalencia con np.roll: fftshift desplaza N//2 posiciones y ifftshift desplaza menos N//2.</aside>
+</section>
+
+<section class="slide" id="ifftshift-porque" data-fx="vc" data-section="A · numpy.fft" data-title="¿Por qué ifftshift?">
+  <header class="s-head"><p class="kicker">bloque A · tamaño impar</p><h2 class="s-title">¿Por qué <span class="nc">ifftshift</span>?</h2></header>
+  <div class="s-body">
+<div class="g21">
+<div class="strips">
+<div class="strip"><code class="lab">a = np.arange(5)</code><div class="cells"><span class="dc">0</span><span>1</span><span>2</span><span>3</span><span>4</span></div></div>
+<div class="strip" data-seq="1"><code class="lab">fftshift(a)</code><div class="cells"><span>3</span><span>4</span><span class="dc">0</span><span>1</span><span>2</span></div><span class="lab">roll +2</span></div>
+<div class="strip" data-seq="2"><code class="lab">ifftshift(fftshift(a))</code><div class="cells"><span class="dc">0</span><span>1</span><span>2</span><span>3</span><span>4</span></div><span class="ok">✓ deshace</span></div>
+<div class="strip" data-seq="3"><code class="lab">fftshift(fftshift(a))</code><div class="cells"><span>1</span><span>2</span><span>3</span><span>4</span><span class="dc">0</span></div><span class="bad">✗ roll +4</span></div>
+<p class="txt" data-seq="4">Con N par (<code>np.arange(4)</code>): <code>fftshift</code> = <code>[2 3 0 1]</code> y aplicarlo dos veces sí devuelve <code>[0 1 2 3]</code>.</p>
+</div>
+<div class="vstack">
+<table class="t"><tr><th>N</th><th>fftshift</th><th>ifftshift</th></tr>
+<tr><td>par</td><td>roll +N/2</td><td>roll −N/2 (idéntico)</td></tr>
+<tr><td>impar</td><td>roll +N//2</td><td class="warn">roll −N//2 (distinto)</td></tr></table>
+<div class="trap" data-seq="5"><b>trampa</b>Con N impar (einstein es 497×407) <code>fftshift</code> dos veces no deshace nada. Usa siempre <code>ifftshift</code> para deshacer.</div>
+</div></div>
+  </div>
+  <aside class="notes">Con tamaño par, mover N/2 posiciones hacia un lado o hacia el otro es lo mismo, así que fftshift es su propia inversa. Con tamaño impar no: la DC está en el índice N//2, así que fftshift desplaza N//2 y la operación inversa tiene que desplazar menos N//2. Los arrays de la diapositiva son la salida real de NumPy. Como las imágenes del laboratorio miden 497 por 407, usar fftshift para deshacer da un resultado equivocado: hay que usar ifftshift.</aside>
+</section>
+
+<section class="slide" id="ft-ift" data-fx="vc" data-section="A · numpy.fft" data-title="FT e IFT del profesor">
+  <header class="s-head"><p class="kicker">bloque A · p3.py</p><h2 class="s-title">FT e IFT del profesor</h2></header>
+  <div class="s-body">
+<div class="g21">
+<pre class="code" style="font-size:30px">def FT(im):
+    # DC al centro
+    return fft.fftshift(fft.fft2(im))
+
+def IFT(ft):
+    # deshace el shift ANTES de la inversa
+    return fft.ifft2(fft.ifftshift(ft))</pre>
+<div class="vstack">
+<div class="row-eq"><span class="eq">$$\mathrm{IFT}(\mathrm{FT}(x))=x$$</span></div>
+<div class="tip" data-seq="2"><b>simetría</b>Se aplican en orden inverso, como en \((AB)^{-1}=B^{-1}A^{-1}\): el último paso de FT es el primero de IFT.</div>
+<div class="exam" data-seq="3"><b>en el examen</b>Escribe FT e IFT de memoria: son dos líneas, pero el orden importa.</div>
+</div></div>
+<div class="flow" style="margin-top:56px" data-seq="1"><span class="n">im</span><span class="ar">→</span><span class="n">fft2</span><span class="ar">→</span><span class="n">fftshift</span><span class="ar">→</span><span class="n hl">F centrada</span><span class="ar">→</span><span class="n">ifftshift</span><span class="ar">→</span><span class="n">ifft2</span><span class="ar">→</span><span class="n">im</span></div>
+  </div>
+  <aside class="notes">Estas dos funciones son el núcleo de todo el laboratorio. FT calcula la transformada y centra el espectro. IFT primero deshace el desplazamiento y después aplica la inversa. Fíjate en la simetría: el orden de las operaciones se invierte, igual que la inversa de un producto de matrices. Con estas dos funciones y con el teorema de la convolución se resuelven casi todos los ejercicios.</aside>
+</section>
+
+<section class="slide" id="complejos" data-fx="vc" data-section="A · numpy.fft" data-title="Complejos en NumPy">
+  <header class="s-head"><p class="kicker">bloque A · lección 004, diapositiva 3</p><h2 class="s-title">Complejos en NumPy</h2></header>
+  <div class="s-body">
+<div class="g2">
+<table class="t" style="font-size:28px"><tr><th>expresión</th><th>qué da</th></tr>
+<tr><td><code>np.abs(z)</code> / <code>np.absolute</code></td><td>módulo \(\sqrt{a^2+b^2}\)</td></tr>
+<tr><td><code>np.angle(z)</code></td><td>fase \(\arctan(b/a)\) en \((-\pi,\pi]\)</td></tr>
+<tr><td><code>np.real(z)</code>, <code>np.imag(z)</code></td><td>partes real e imaginaria</td></tr>
+<tr><td><code>complex(a, b)</code> o <code>a + b*1j</code></td><td>construye \(a+bj\)</td></tr>
+<tr><td><code>np.conj(z)</code></td><td>conjugado \(a-bj\)</td></tr></table>
+<div class="vstack">
+<div class="eq">$$z=|z|\,e^{j\varphi}=|z|(\cos\varphi+j\sin\varphi)$$</div>
+<div class="trap" data-seq="1"><b>trampa</b>En Python la unidad imaginaria es <code>1j</code>, no <code>j</code>. Y <code>np.abs</code> de un complejo es el módulo, no «quitar el signo».</div>
+<div class="tip" data-seq="2"><b>reconstruir</b><code>F = np.abs(F) * np.exp(1j * np.angle(F))</code> devuelve F: módulo y fase lo contienen todo.</div>
+</div></div>
+  </div>
+  <aside class="notes">Repaso de las funciones sobre números complejos. El módulo y la fase son las dos representaciones de un número complejo que usamos para visualizar el espectro. Con ellos se puede reconstruir F exactamente, lo que usaremos al final en el experimento de intercambiar magnitud y fase.</aside>
+</section>
+
+<section class="slide" id="abs-real" data-fx="vc" data-section="A · numpy.fft" data-title="¿abs o real al invertir?">
+  <header class="s-head"><p class="kicker">bloque A · testFT</p><h2 class="s-title">¿abs o real al invertir?</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<figure class="fig" style="--h:400px"><img src="assets/ein.png" alt="original"><figcaption>original</figcaption></figure>
+<figure class="fig" style="--h:400px" data-seq="1"><img src="assets/ein_sin_ifftshift_zoom.png" alt="np.real, sin ifftshift (zoom 40×40)"><figcaption>np.real, sin ifftshift (zoom 40×40)</figcaption></figure>
+<div class="vstack">
+<div class="res" data-seq="2">sin <b>ifftshift</b>, con <code>np.abs</code> sale la imagen perfecta (error 2.6e-13); con <code>np.real</code> sale un tablero de signos alternos entre −233 y 234.</div>
+<div class="tip" data-seq="3"><b>por qué</b>Olvidar ifftshift multiplica la imagen por \(e^{j\theta n}\), de módulo 1: el módulo no lo ve, la parte real sí.</div>
+<div class="exam" data-seq="4"><b>regla</b>Imag residual ≈ 1e-13 = redondeo. Si el resultado puede ser negativo, usa <code>np.real</code>, no <code>np.abs</code>.</div>
+</div></div>
+  </div>
+  <aside class="notes">El código del profesor calcula im2 con np.absolute de la IFT y comenta que con el módulo no se aprecia el efecto de un desplazamiento mal deshecho. Lo hemos comprobado: si usas ifft2 directamente sobre el espectro centrado, la imagen queda multiplicada por una exponencial compleja de módulo uno. El módulo da la imagen original perfecta, así que el error pasa desapercibido. La parte real, en cambio, muestra el patrón de signos alternos. Por eso con np.real se detectan estos fallos, y por eso es la opción correcta cuando la salida puede tener signo.</aside>
+</section>
+
+<section class="slide" id="testft" data-fx="vc" data-section="A · numpy.fft" data-title="testFT con Einstein">
+  <header class="s-head"><p class="kicker">bloque A · magnitud, fase y reconstrucción</p><h2 class="s-title"><span class="nc">testFT</span> con Einstein</h2></header>
+  <div class="s-body">
+<div class="g4">
+<figure class="fig" style="--h:440px"><img src="assets/ein_mag.png" alt="log(1 + |F|)"><figcaption>log(1 + |F|)</figcaption></figure>
+<figure class="fig" style="--h:440px"><img src="assets/ein_fase.png" alt="fase en (−π, π]"><figcaption>fase en (−π, π]</figcaption></figure>
+<figure class="fig" style="--h:440px"><img src="assets/ein_rec.png" alt="IFT: reconstrucción"><figcaption>IFT: reconstrucción</figcaption></figure>
+<div class="vstack">
+<pre class="code sm">mag = np.log1p(np.abs(F))
+fase = np.angle(F)
+rec = np.real(IFT(F))</pre>
+<p class="txt">Error de reconstrucción: 3.1e-13. Parte imaginaria máxima: 1.2e-13.</p>
+</div></div>
+<div class="trap" style="margin-top:20px"><b>trampa</b>El log comprime el rango dinámico (|F| va de 4,9 a 1,9·10⁷). El código del profesor usa <code>np.log(np.abs(ft))</code>, que da −inf si algún |F| = 0: mejor <code>np.log1p</code>.</div>
+  </div>
+  <aside class="notes">La magnitud tiene un rango dinámico enorme: la componente continua vale diecinueve millones y las frecuencias altas valen unidades. Si la dibujas sin más, solo se ve un punto. Por eso se representa el logaritmo. La fase parece ruido, pero es ella quien lleva la estructura de la imagen, como veremos al final. La reconstrucción con la parte real coincide con el original hasta el redondeo numérico.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="12" data-section="B · Teorema" data-title="Bloque B · Teorema">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque B · 7 diapositivas</p>
+    <h1 class="s-title xl">Teorema en código</h1>
+    <p class="lead">averageFilterFrequency, testConvTheo y los tiempos reales que contestan la V/F del examen.</p>
+  </div>
+  <aside class="notes">Segundo bloque: el teorema de la convolución llevado a código. Veremos por qué hace falta rellenar la máscara, por qué hay que llevar su centro al origen y, con tiempos reales, cuándo compensa filtrar en frecuencia.</aside>
+</section>
+
+<section class="slide" id="teorema" data-fx="vc" data-section="B · Teorema" data-title="Teorema de la convolución">
+  <header class="s-head"><p class="kicker">bloque B · enunciado y demostración</p><h2 class="s-title">Teorema de la convolución</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="eq big">$$I*M=\mathcal F^{-1}\big(\mathcal F(I)\odot\mathcal F(M)\big)$$</div>
+<ul class="pts"><li>\(\odot\): producto elemento a elemento, no matricial.</li><li>I y M deben tener la <b>misma forma</b>: la máscara se rellena de ceros.</li><li>La convolución resultante es <b>circular</b>.</li></ul>
+</div>
+<div class="deriv" style="font-size:26px">
+<div data-seq="1"><span>$$(f\circledast h)[n]=\sum_m f[m]\,h[(n-m)\bmod N]$$</span><span class="why">convolución circular 1D</span></div>
+<div data-seq="2"><span>$$\sum_n\sum_m f[m]\,h[n-m]\,e^{-j2\pi kn/N}$$</span><span class="why">aplicamos la DFT</span></div>
+<div data-seq="3"><span>$$p=n-m:\ \sum_m f[m]e^{-j2\pi km/N}\sum_p h[p]e^{-j2\pi kp/N}$$</span><span class="why">el exponente se separa</span></div>
+<div data-seq="4"><span>$$=F[k]\,H[k]$$</span><span class="why">producto en frecuencia</span></div>
+</div></div>
+  </div>
+  <aside class="notes">Este es el enunciado del teorema, tal como aparece en el laboratorio. Convolucionar en el espacio equivale a multiplicar elemento a elemento en frecuencia. La demostración en una dimensión es corta: aplicas la DFT a la convolución circular, cambias de variable p igual a n menos m y la doble suma se separa en el producto de las dos transformadas. Dos detalles que caen en el examen: es producto elemento a elemento y la convolución es circular, no la que hace convolve con reflect.</aside>
+</section>
+
+<section class="slide" id="avg-freq" data-fx="vc" data-section="B · Teorema" data-title="averageFilterFrequency">
+  <header class="s-head"><p class="kicker">bloque B · línea a línea</p><h2 class="s-title nc">averageFilterFrequency</h2></header>
+  <div class="s-body">
+<div class="g21">
+<pre class="code sm">def averageFilterFrequency(im, filterSize):
+    filterMask = avgFilter(filterSize)       # 1
+    filterBig = np.zeros_like(im, dtype=float)  # 2
+    # pegar la máscara en el centro        # 3
+    w, h = filterMask.shape
+    W, H = filterBig.shape
+    filterBig[int(W/2-w/2):int(W/2+w/2),
+              int(H/2-h/2):int(H/2+h/2)] = filterMask
+    filterBig = fft.ifftshift(filterBig)     # 4
+    return np.absolute(IFT(FT(im) * FT(filterBig)))  # 5</pre>
+<div class="vstack">
+<div class="tip" data-seq="1"><b>1 · máscara pequeña</b>\(1/n^2\) en cada celda: suma 1.</div>
+<div class="trap" data-seq="2"><b>2 · el dtype importa</b>Con una imagen uint8, <code>zeros_like</code> daría enteros y 1/49 se guardaría como 0.</div>
+<div class="tip" data-seq="3"><b>3 · al centro</b>Misma forma que la imagen, requisito del teorema.</div>
+<div class="tip" data-seq="4"><b>4 · ifftshift</b>El centro de la máscara pasa a (0, 0).</div>
+<div class="exam" data-seq="5"><b>5 · teorema</b>FT de ambos, producto elemento a elemento, IFT.</div>
+</div></div>
+  </div>
+  <aside class="notes">Vamos línea a línea. Uno: la máscara de la media es una matriz de unos dividida por n al cuadrado. Dos: creamos una matriz de ceros del tamaño de la imagen y con dtype float; si la imagen fuese uint8, zeros_like heredaría el tipo entero y al pegar la máscara los valores 1 entre 49 se truncarían a cero. Tres: pegamos la máscara en el centro. Cuatro: ifftshift lleva el centro de la máscara a la esquina, que es donde la convolución espera el origen. Cinco: transformamos, multiplicamos elemento a elemento e invertimos. Fíjate en que FT de la imagen y FT del filtro llevan ambas fftshift, así que el producto está bien alineado.</aside>
+</section>
+
+<section class="slide" id="avg-diag" data-fx="vc" data-section="B · Teorema" data-title="Máscara: pequeña a grande">
+  <header class="s-head"><p class="kicker">bloque B · diagrama</p><h2 class="s-title">Máscara: pequeña a grande</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<div class="vstack" style="justify-items:center" data-seq="1"><div class="vc-heat" data-m='[[0.111,0.111,0.111],[0.111,0.111,0.111],[0.111,0.111,0.111]]' data-dec="2" style="height:400px;width:400px"></div><p class="txt" style="text-align:center">1 · máscara 3×3 (1/9)</p></div>
+<figure class="fig" style="--h:500px" data-seq="2"><img src="assets/diag_pequena.png" alt="2 · pegada en el centro (ilustrada con 61×61)"><figcaption>2 · pegada en el centro (ilustrada con 61×61)</figcaption></figure>
+<figure class="fig" style="--h:500px" data-seq="3"><img src="assets/diag_shift.png" alt="3 · ifftshift: centro en (0, 0), repartido en las esquinas"><figcaption>3 · ifftshift: centro en (0, 0), repartido en las esquinas</figcaption></figure>
+</div>
+  </div>
+  <aside class="notes">El diagrama muestra el proceso. La máscara pequeña se pega en el centro de una matriz del tamaño de la imagen, aquí ilustrada con una caja de 61 por 61 para que se vea. Después ifftshift lleva el centro de la caja a la esquina superior izquierda: por eso la caja aparece repartida en las cuatro esquinas, por la naturaleza circular de la transformada.</aside>
+</section>
+
+<section class="slide" id="sin-shift" data-fx="vc" data-section="B · Teorema" data-title="¿Por qué el centro a (0, 0)?">
+  <header class="s-head"><p class="kicker">bloque B · propiedad de traslación</p><h2 class="s-title">¿Por qué el centro a (0, 0)?</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<figure class="fig" style="--h:520px"><img src="assets/conv_frec.png" alt="con ifftshift: correcto"><figcaption>con ifftshift: correcto</figcaption></figure>
+<figure class="fig" style="--h:520px" data-seq="1"><img src="assets/conv_sin_shift.png" alt="sin ifftshift: desplazada media imagen"><figcaption>sin ifftshift: desplazada media imagen</figcaption></figure>
+<div class="vstack">
+<div class="eq sm" data-seq="2">$$f(x-x_0)\ \longleftrightarrow\ F(u)\,e^{-j2\pi u x_0/N}$$</div>
+<p class="txt" data-seq="3">Una máscara centrada equivale a una delta en \(x_0=(M/2,N/2)\): la convolución <b>traslada</b> la imagen ese vector, de forma circular.</p>
+<div class="trap" data-seq="4"><b>trampa</b>Es el fallo más típico al escribir esto en el examen: olvidar ifftshift sobre el filtro.</div>
+</div></div>
+  </div>
+  <aside class="notes">Si no llevamos el centro de la máscara al origen, el filtro lleva implícita una traslación. Por la propiedad de traslación de la transformada, desplazar la máscara equivale a desplazar la salida, y como todo es circular la imagen reaparece por el lado contrario. El resultado, aquí con una media de 15 por 15 sobre einstein, sale desplazado media imagen. Es un error muy habitual.</aside>
+</section>
+
+<section class="slide" id="testconv" data-fx="vc" data-section="B · Teorema" data-title="testConvTheo">
+  <header class="s-head"><p class="kicker">bloque B · RMS con margen de 5 píxeles</p><h2 class="s-title nc">testConvTheo</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="fx" data-role="plot" data-x="0,12" data-y="-15,1" data-xl="margen excluido (píxeles)" data-yl="log₁₀ RMS" data-legend="tr" data-fns='[{"f": "x=>{const a=[0.08,-0.12,-0.39,-13.31,-13.31,-13.31,-13.31,-13.31,-13.31,-13.31,-13.31,-13.31,-13.31];return a[Math.min(12,Math.floor(x+1e-9))]}", "label": "7×7 (radio 3)"}, {"f": "x=>{const a=[0.19,0.09,-0.01,-0.14,-0.29,-0.48,-0.72,-13.12,-13.12,-13.12,-13.12,-13.12,-13.12];return a[Math.min(12,Math.floor(x+1e-9))]}", "label": "15×15 (radio 7)"}]' style="height:470px"></div>
+<p class="txt" style="font-size:24px">RMS real (espacial con <code>reflect</code> frente a FFT) en einstein: cae a ≈10⁻¹³ justo cuando el margen alcanza el radio de la máscara.</p>
+</div>
+<div class="vstack">
+<table class="t" data-seq="1"><tr><th>media 7×7</th><th>valor</th></tr>
+<tr><td>fórmula del profesor, margen 5</td><td class="ok">6,0e−17 · coinciden</td></tr>
+<tr><td>RMS real, margen 5</td><td class="ok">4,9e−14 · coinciden</td></tr>
+<tr><td>RMS, toda la imagen (reflect)</td><td class="err">1,19 · bordes distintos</td></tr>
+<tr><td>RMS, toda la imagen (wrap)</td><td class="ok">4,8e−14 · idénticas</td></tr></table>
+<div class="trap" data-seq="2"><b>trampa</b><code>convolve</code> usa <code>reflect</code> y la FFT es circular: los bordes difieren. El margen debe ser ≥ radio de la máscara: con 15×15 un margen de 5 no basta.</div>
+</div></div>
+  </div>
+  <aside class="notes">testConvTheo compara la convolución espacial con la frecuencial excluyendo cinco píxeles de borde. La razón es que convolve de scipy completa los bordes reflejando la imagen, mientras que el teorema de la convolución asume señal periódica. En el interior los resultados coinciden hasta 1e-14. Si comparamos con mode igual a wrap, que también es circular, coinciden en toda la imagen. Ojo: la fórmula del profesor divide la norma por el número de píxeles, no por su raíz, así que no es exactamente un RMS; por eso da un valor aún más pequeño.</aside>
+</section>
+
+<section class="slide" id="tiempos" data-fx="vc" data-section="B · Teorema" data-title="E3 · tiempos">
+  <header class="s-head"><p class="kicker">bloque B · medición real (media y desviación)</p><h2 class="s-title">E3 · tiempos</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack"><p class="txt" style="text-align:center"><b>Imagen 512×512</b>, máscara m×m variable</p>
+<div class="fx" data-role="plot" data-x="0,32" data-y="0,240" data-xl="lado m de la máscara" data-yl="tiempo (ms)" data-legend="tl" data-fns='[{"f": "x=>{const p=[[3,1.68],[7,8.21],[11,23.44],[15,49.5],[21,101.39],[31,228.37]];if(x<p[0][0]||x>p[p.length-1][0])return NaN;for(let i=1;i<p.length;i++){if(x<=p[i][0]){const t=(x-p[i-1][0])/(p[i][0]-p[i-1][0]);return p[i-1][1]+t*(p[i][1]-p[i-1][1])}}return NaN}", "label": "espacial (convolve)"}, {"f": "x=>{const p=[[3,13.89],[7,13.6],[11,13.71],[15,13.06],[21,12.11],[31,11.89]];if(x<p[0][0]||x>p[p.length-1][0])return NaN;for(let i=1;i<p.length;i++){if(x<=p[i][0]){const t=(x-p[i-1][0])/(p[i][0]-p[i-1][0]);return p[i-1][1]+t*(p[i][1]-p[i-1][1])}}return NaN}", "label": "frecuencia (FFT)"}]' style="height:450px"></div></div>
+<div class="vstack"><p class="txt" style="text-align:center"><b>Máscara 7×7</b>, imagen N×N variable</p>
+<div class="fx" data-role="plot" data-x="0,2048" data-y="0,360" data-xl="lado N de la imagen" data-yl="tiempo (ms)" data-legend="tl" data-fns='[{"f": "x=>{const p=[[128,0.53],[256,1.97],[512,7.84],[1024,31.72],[2048,127.57]];if(x<p[0][0]||x>p[p.length-1][0])return NaN;for(let i=1;i<p.length;i++){if(x<=p[i][0]){const t=(x-p[i-1][0])/(p[i][0]-p[i-1][0]);return p[i-1][1]+t*(p[i][1]-p[i-1][1])}}return NaN}", "label": "espacial (convolve)"}, {"f": "x=>{const p=[[128,0.51],[256,2.0],[512,12.31],[1024,69.73],[2048,348.06]];if(x<p[0][0]||x>p[p.length-1][0])return NaN;for(let i=1;i<p.length;i++){if(x<=p[i][0]){const t=(x-p[i-1][0])/(p[i][0]-p[i-1][0]);return p[i-1][1]+t*(p[i][1]-p[i-1][1])}}return NaN}", "label": "frecuencia (FFT)"}]' style="height:450px"></div></div>
+</div>
+<p class="txt" style="margin-top:14px" data-seq="1">Izquierda: la FFT cuesta ≈ 12–14 ms <b>sin depender de m</b>; la directa crece con \(m^2\) y la supera desde m ≈ 9. Derecha: con 7×7 gana la directa. Desviación típica ≤ 2,1 ms.</p>
+  </div>
+  <aside class="notes">Esta es la medición real del ejercicio tres, con siete repeticiones y barras de desviación típica. A la izquierda, imagen fija de 512 por 512: el tiempo espacial crece con el cuadrado del lado de la máscara, desde 1,7 ms con 3 por 3 hasta 228 ms con 31 por 31, mientras que el frecuencial se queda en torno a 12 o 14 ms. A la derecha, con máscara 7 por 7 fija, ambos crecen con el tamaño de la imagen y la convolución directa gana. El cruce, para 512 por 512, está entre 7 y 11 de lado.</aside>
+</section>
+
+<section class="slide" id="vf-examen" data-fx="vc" data-section="B · Teorema" data-title="La V/F del examen">
+  <header class="s-head"><p class="kicker">bloque B · «offers the possibility of speeding up»</p><h2 class="s-title">La V/F del examen</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<p class="big-ok" data-a="pop" data-seq="1">VERDADERO</p>
+<p class="txt">«The convolution theorem offers the possibility of speeding up image filtering» — pero con matices:</p>
+<ul class="pts" style="font-size:28px"><li data-seq="2"><b>Núcleos grandes:</b> coste de la FFT casi constante (m = 31: 19× más rápida).</li><li data-seq="3"><b>Filtros lineales</b> e invariantes solamente.</li><li data-seq="4">La convolución es <b>circular</b>: bordes distintos.</li></ul>
+</div>
+<table class="t" data-seq="5" style="font-size:28px"><tr><th>caso (512×512)</th><th>espacial</th><th>frecuencia</th></tr>
+<tr><td>m = 3</td><td class="ok">1,7 ms</td><td class="err">13,9 ms</td></tr>
+<tr><td>m = 11</td><td class="err">23,4 ms</td><td class="ok">13,7 ms</td></tr>
+<tr><td>m = 31</td><td class="err">228,4 ms</td><td class="ok">11,9 ms</td></tr>
+<tr><td>7×7, N = 2048</td><td class="ok">127,6 ms</td><td class="err">348,1 ms</td></tr></table>
+</div>
+  </div>
+  <aside class="notes">La afirmación es verdadera porque existe la posibilidad: con núcleos grandes la FFT gana por mucho, con m igual a 31 es casi veinte veces más rápida. Pero no es siempre cierto: con núcleos pequeños la convolución directa es más rápida, como muestran las cifras de m igual a 3 y de 7 por 7 con imagen de 2048. Además solo vale para filtros lineales e invariantes, y la convolución es circular. En una respuesta escrita conviene mencionar esos tres matices.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="13" data-section="C · Filtros en frecuencia" data-title="Bloque C · Filtros">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque C · 9 diapositivas</p>
+    <h1 class="s-title xl">Filtros en frecuencia</h1>
+    <p class="lead">Diseñados en el espectro con meshgrid: ideal, Butterworth y gaussiano; por qué aparece el ringing.</p>
+  </div>
+  <aside class="notes">Tercer bloque: en vez de transformar una máscara espacial, diseñamos el filtro directamente en frecuencia como función de la distancia al centro del espectro.</aside>
+</section>
+
+<section class="slide" id="bandpass-code" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="bandPassFilter">
+  <header class="s-head"><p class="kicker">bloque C · línea a línea</p><h2 class="s-title nc">bandPassFilter</h2></header>
+  <div class="s-body">
+<div class="g21">
+<pre class="code sm">def bandPassFilter(shape, r=None, R=None):
+    n, m = shape
+    m2, n2 = np.floor(m / 2.0), np.floor(n / 2.0)
+    [vx, vy] = np.meshgrid(np.arange(-m2, m2 + 1),
+                           np.arange(-n2, n2 + 1))
+    distToCenter = np.sqrt(vx**2.0 + vy**2.0)
+    if R is None:            # paso bajo
+        filter = distToCenter &lt; r
+    elif r is None:          # paso alto
+        filter = distToCenter &gt; R
+    else:                    # paso banda
+        filter = np.logical_and(distToCenter &lt; R,
+                                distToCenter &gt; r)
+    return filter.astype('float')</pre>
+<div class="vstack">
+<div class="eq" data-seq="1">$$D=\sqrt{u^2+v^2}$$</div><p class="txt" data-seq="1" style="text-align:center">distancia al centro (la DC)</p>
+<div class="eq" data-seq="2">$$H_{LP}=[D&lt;r]$$</div>
+<div class="eq" data-seq="3">$$H_{HP}=[D&gt;R]$$</div>
+<div class="eq" data-seq="4">$$H_{BP}=[r&lt;D&lt;R]$$</div>
+<div class="exam" data-seq="5"><b>en el examen</b>La banda es un <code>logical_and</code>; el paso alto es el complemento del bajo.</div>
+</div></div>
+  </div>
+  <aside class="notes">Esta función construye directamente en el dominio de la frecuencia un filtro ideal. Calcula la distancia de cada posición al centro del espectro, que es donde está la DC después del fftshift, y compara con los radios. Paso bajo: distancia menor que r. Paso alto: mayor que R. Banda: entre r y R, con un logical and. El resultado es una máscara de ceros y unos.</aside>
+</section>
+
+<section class="slide" id="meshgrid" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="meshgrid y tamaño impar">
+  <header class="s-head"><p class="kicker">bloque C · ficha y trampa</p><h2 class="s-title"><span class="nc">meshgrid</span> y tamaño impar</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="api"><div class="sig">X, Y = np.meshgrid(x, y)</div><table><tr><td>x</td><td>valores a lo largo de las columnas</td></tr><tr><td>y</td><td>valores a lo largo de las filas</td></tr><tr><td>X</td><td>cada fila es x: varía por columnas</td></tr><tr><td>Y</td><td>cada columna es y: varía por filas</td></tr><tr><td>forma</td><td>(len(y), len(x))</td></tr></table></div>
+<pre class="code sm">np.meshgrid([0,1,2],[0,1])
+# X = [[0 1 2],[0 1 2]]   Y = [[0 0 0],[1 1 1]]</pre>
+</div>
+<div class="vstack">
+<div class="trap" data-seq="1"><b>trampa</b><code>np.arange(-m2, m2+1)</code> da m elementos solo si m es impar. Con 256×256 da 257 y el producto con <code>fft2(im)</code> falla (255×255 sí funciona).</div>
+<pre class="code sm" data-seq="2"># vale con N par e impar
+def distToCenter(shape):
+    vy, vx = np.indices(shape)
+    return np.hypot(vx - shape[1]//2,
+                    vy - shape[0]//2)</pre>
+<p class="txt" data-seq="3">El centro en <code>N//2</code> coincide con la DC que deja <code>fftshift</code>, tanto con N par como impar.</p>
+</div></div>
+  </div>
+  <aside class="notes">meshgrid con indexación xy devuelve dos matrices: la primera repite el vector x en cada fila, así que varía por columnas, y la segunda repite el vector y en cada columna. El código del profesor construye los vectores de menos m2 a m2 más uno, que solo tiene m elementos si m es impar; las imágenes del laboratorio miden 497 por 407 o 255 por 255, por eso funciona. Con 256 por 256 se obtienen 257 elementos y falla. La versión general con np.indices y la DC en N dividido entre dos entero sirve siempre.</aside>
+</section>
+
+<section class="slide" id="testband" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="testBandPassFilter">
+  <header class="s-head"><p class="kicker">bloque C · desplazar el filtro, no la imagen</p><h2 class="s-title nc">testBandPassFilter</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<pre class="code"># (a) del profesor: se desplaza el FILTRO
+H = bandPassFilter(im.shape, r, R)   # centrado
+H = fft.ifftshift(H)                 # DC a (0,0)
+out = np.absolute(fft.ifft2(H * fft.fft2(im)))
+
+# (b) equivalente: se desplaza la IMAGEN
+out = np.real(IFT(FT(im) * H_centrado))</pre>
+<p class="txt">Comprobado con matrices aleatorias: <code>np.allclose(a, b)</code> es True.</p>
+</div>
+<div class="vstack">
+<p class="txt" data-seq="1">Las dos formas son la misma operación: <code>fftshift</code> es solo una reordenación de índices, y reordenar los dos factores igual da el mismo producto elemento a elemento.</p>
+<div class="trap" data-seq="2"><b>trampa</b>El profesor usa <code>np.absolute</code>: con paso bajo ideal la salida tiene valores negativos (mín −8,9 con r = 20), que el módulo pliega. Usa <code>np.real</code>.</div>
+</div></div>
+<div class="vstack" style="margin-top:30px;gap:16px">
+<div class="flow" data-seq="3"><span class="n">(a)</span><span class="n">fft2(im)</span><span class="ar">×</span><span class="n hl">ifftshift(H)</span><span class="ar">→</span><span class="n">ifft2</span></div>
+<div class="flow" data-seq="4"><span class="n">(b)</span><span class="n hl">fftshift(fft2(im))</span><span class="ar">×</span><span class="n">H</span><span class="ar">→</span><span class="n">ifftshift</span><span class="ar">→</span><span class="n">ifft2</span></div>
+</div>
+  </div>
+  <aside class="notes">Aquí no se desplaza la imagen, se desplaza el filtro: el filtro está diseñado centrado, así que ifftshift lo lleva al orden de fft2. Es equivalente a desplazar el espectro de la imagen con fftshift y multiplicar por el filtro centrado, porque el desplazamiento es una permutación de índices y la multiplicación es elemento a elemento. Un detalle importante: con filtros ideales aparece ringing y la salida tiene valores negativos; np.absolute los convierte en positivos y falsea el resultado.</aside>
+</section>
+
+<section class="slide" id="res-lp" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="Paso bajo: r = 5, 20, 50">
+  <header class="s-head"><p class="kicker">bloque C · resultados reales y ringing</p><h2 class="s-title">Paso bajo: <span class="nc">r</span> = 5, 20, 50</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<figure class="fig" style="--h:500px" data-a="pop" data-seq="1"><img src="assets/lp5.png" alt="r = 5: muy borrosa, ringing fuerte"><figcaption>r = 5: muy borrosa, ringing fuerte</figcaption></figure>
+<figure class="fig" style="--h:500px" data-a="pop" data-seq="2"><img src="assets/lp20.png" alt="r = 20: borrosa"><figcaption>r = 20: borrosa</figcaption></figure>
+<figure class="fig" style="--h:500px" data-a="pop" data-seq="3"><img src="assets/lp50.png" alt="r = 50: casi nítida"><figcaption>r = 50: casi nítida</figcaption></figure>
+</div>
+  </div>
+  <aside class="notes">Paso bajo ideal con radios cinco, veinte y cincuenta. Cuanto menor es r, más frecuencias se eliminan y más borrosa queda la imagen. Además se aprecian ondas alrededor de los bordes: es el efecto ringing o de Gibbs, que explicamos al final del bloque. Esto es einstein.pgm real.</aside>
+</section>
+
+<section class="slide" id="res-hp" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="Paso alto y banda">
+  <header class="s-head"><p class="kicker">bloque C · figura 1 del enunciado</p><h2 class="s-title">Paso alto y banda</h2></header>
+  <div class="s-body">
+<div class="g4">
+<figure class="fig" style="--h:420px" data-seq="1"><img src="assets/hp10.png" alt="paso alto R = 10"><figcaption>paso alto R = 10</figcaption></figure>
+<figure class="fig" style="--h:420px" data-seq="2"><img src="assets/hp30.png" alt="paso alto R = 30"><figcaption>paso alto R = 30</figcaption></figure>
+<figure class="fig" style="--h:420px" data-seq="3"><img src="assets/bp30_80.png" alt="banda r = 30, R = 80"><figcaption>banda r = 30, R = 80</figcaption></figure>
+<figure class="fig" style="--h:420px" data-seq="3"><img src="assets/bp_mask.png" alt="filtro de banda 255×255"><figcaption>filtro de banda 255×255</figcaption></figure>
+</div>
+<div class="tip" style="margin-top:18px"><b>recuerda</b>Los bordes y detalles viven en las altas frecuencias: el paso alto deja solo contornos.</div>
+  </div>
+  <aside class="notes">El paso alto elimina las bajas frecuencias y deja los bordes y los detalles finos, que son las altas frecuencias. Con R igual a 30 se eliminan más frecuencias y quedan solo los contornos más marcados. El filtro de banda con r igual a 30 y R igual a 80 conserva un anillo; es la figura uno del enunciado, la máscara a la derecha.</aside>
+</section>
+
+<section class="slide" id="e7-formulas" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="E7 · filtros suavizados">
+  <header class="s-head"><p class="kicker">bloque C · Butterworth y gaussiano</p><h2 class="s-title">E7 · filtros suavizados</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="eq">$$H_{B}=\frac{1}{1+(D/D_0)^{2n}}\qquad H_G=e^{-D^2/(2D_0^2)}$$</div>
+<pre class="code sm">def butterLP(shape, c, n=2):
+    D = dist_centro(shape)
+    return 1 / (1 + (D / c)**(2 * n))
+
+def smoothBandPass(shape, r=None, R=None, n=2):
+    if R is None: return butterLP(shape, r, n)
+    if r is None: return 1 - butterLP(shape, R, n)
+    return (butterLP(shape, R, n) *
+            (1 - butterLP(shape, r, n)))</pre>
+</div>
+<div class="fx" data-role="plot" data-x="0,60" data-y="0,1.2" data-legend="tr" data-xl="D" data-yl="H(D)" data-fns='[{"f":"x=>x<20?1:0","label":"ideal r=20"},{"f":"x=>1/(1+Math.pow(x/20,4))","label":"Butterworth n=2"},{"f":"x=>Math.exp(-x*x/(2*400))","label":"gaussiano"}]' style="height:580px"></div>
+</div>
+  </div>
+  <aside class="notes">El ejercicio siete pide suavizar la transición entre cero y uno. El filtro de Butterworth de orden n baja de uno a cero gradualmente; con n grande se parece al ideal. El gaussiano baja sin ningún codo. La gráfica compara los tres perfiles para el mismo radio de corte veinte. El paso alto se obtiene como uno menos el paso bajo, y la banda como producto de un paso bajo por un paso alto.</aside>
+</section>
+
+<section class="slide" id="e7-result" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="Ideal frente a suave">
+  <header class="s-head"><p class="kicker">bloque C · mismo D₀ = 20</p><h2 class="s-title">Ideal frente a suave</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<figure class="fig" style="--h:470px" data-seq="1"><img src="assets/o_ideal.png" alt="ideal: ringing, mín −8,9"><figcaption>ideal: ringing, mín −8,9</figcaption></figure>
+<figure class="fig" style="--h:470px" data-seq="2"><img src="assets/o_butter.png" alt="Butterworth n=2: mín 9,0"><figcaption>Butterworth n=2: mín 9,0</figcaption></figure>
+<figure class="fig" style="--h:470px" data-seq="3"><img src="assets/o_gauss.png" alt="gaussiano: mín 10,6"><figcaption>gaussiano: mín 10,6</figcaption></figure>
+</div>
+<p class="txt" style="margin-top:14px">Los filtros suavizados no producen valores negativos apreciables ni ondas: desaparece el ringing.</p>
+  </div>
+  <aside class="notes">Comparación real con radio de corte veinte. El filtro ideal produce ondas alrededor de los bordes y valores negativos, con mínimo menos 8,9 en una imagen cuyo mínimo real es mayor o igual que cero. Butterworth y gaussiano no tienen esas ondas visibles, y los mínimos de la salida son positivos.</aside>
+</section>
+
+<section class="slide" id="e7-perfil" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="Perfil de una fila">
+  <header class="s-head"><p class="kicker">bloque C · fila 371 de einstein, columnas 110–328</p><h2 class="s-title">Perfil de una fila</h2></header>
+  <div class="s-body">
+<div class="g21">
+<div class="fx" data-role="plot" data-x="110,330" data-y="-20,240" data-xl="columna" data-yl="nivel de gris" data-fns='[{"f": "x=>{const a=[11,12,14,14,5,4,20,21,8,23,11,11,15,8,11,15,16,5,25,30,27,19,84,164,182,198,199,97,199,190,202,206,195,198,199,197,190,195,170,148,142,129,95,58,23,19,19,33,18,31,32,37,32,30,79,87,91,96,136,147,161,195,197,199,194,207,192,192,199,195,195,195,183,194,16,134,123,12,63,155,151,145,166,7,10,11,19,13,15,19,10,4,22,18,16,10,9,18,12,17,11,17,19,11,14,19,11,18,11,19];const u=(x-110)/2,k=Math.floor(u),t=u-k;if(k<0||k>=a.length-1)return a[Math.max(0,Math.min(a.length-1,k))];return a[k]*(1-t)+a[k+1]*t}", "c": "fg-3", "dash": "6 6"}, {"f": "x=>{const a=[11,14,18,22,25,26,25,21,16,9,2,-4,-8,-9,-6,-1,8,20,33,48,65,81,98,116,133,149,165,179,191,200,205,206,203,195,183,168,151,134,117,102,91,82,77,74,73,72,71,69,67,65,64,64,67,71,77,85,92,100,107,114,121,131,144,159,177,196,213,225,230,226,213,191,165,136,108,85,69,59,56,57,59,60,58,52,44,33,23,15,10,8,9,12,15,17,17,16,14,11,9,9,10,12,15,17,18,18,17,15,13,12];const u=(x-110)/2,k=Math.floor(u),t=u-k;if(k<0||k>=a.length-1)return a[Math.max(0,Math.min(a.length-1,k))];return a[k]*(1-t)+a[k+1]*t}", "c": "cat-2"}, {"f": "x=>{const a=[14,14,14,14,14,14,15,15,15,15,14,14,14,14,15,17,20,26,34,46,60,77,96,116,133,145,153,160,170,181,189,191,190,186,180,173,164,154,142,131,119,107,96,86,77,72,69,68,69,70,72,74,77,81,85,91,97,105,116,128,142,155,168,178,186,191,194,195,195,194,191,183,165,138,108,86,78,80,85,90,90,83,67,47,30,20,16,15,15,15,15,15,14,14,13,13,13,14,14,14,14,14,14,14,15,15,15,15,15,15];const u=(x-110)/2,k=Math.floor(u),t=u-k;if(k<0||k>=a.length-1)return a[Math.max(0,Math.min(a.length-1,k))];return a[k]*(1-t)+a[k+1]*t}", "c": "cat-3"}, {"f": "x=>0", "c": "err", "dash": "3 5"}]' style="height:580px"></div>
+<div class="vstack">
+<div class="lgd"><span><i style="border-top:4px dashed var(--fg-3)"></i>original</span><span><i style="border-top:4px solid var(--cat-2)"></i>ideal, D₀ = 20</span><span><i style="border-top:4px solid var(--cat-3)"></i>gaussiano, D₀ = 20</span><span><i style="border-top:4px dotted var(--err)"></i>nivel 0</span></div>
+<p class="txt">El ideal <b>oscila</b> junto a cada borde y baja de 0 (mín −8,9 en la columna 136: la línea roja es el cero).</p>
+<p class="txt">El gaussiano suaviza igual pero <b>sin ondas</b>: sigue al original de forma monótona.</p>
+<div class="exam" data-seq="1"><b>en el examen</b>Ringing = oscilaciones junto a los bordes por cortar el espectro de golpe.</div>
+</div></div>
+  </div>
+  <aside class="notes">Esta gráfica es un corte real: la fila 371 de einstein, que es justo donde el paso bajo ideal alcanza su mínimo de menos 8,9. En gris discontinuo, el original. El ideal sube y baja junto a cada borde: esas oscilaciones son el ringing, y llegan a valores negativos, por debajo de la línea roja del cero. El gaussiano, con el mismo radio de corte, suaviza los bordes de forma parecida pero sin oscilar.</aside>
+</section>
+
+<section class="slide" id="ringing" data-fx="vc" data-section="C · Filtros en frecuencia" data-title="Por qué aparece el ringing">
+  <header class="s-head"><p class="kicker">bloque C · caja en frecuencia = sinc en el espacio</p><h2 class="s-title">Por qué aparece el ringing</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="eq">$$\int_{-W}^{W}e^{j2\pi ux}du=\frac{\sin(2\pi Wx)}{\pi x}$$</div>
+<p class="txt">Una caja en frecuencia es una <b>sinc</b> en el espacio, con lóbulos negativos: al convolucionar, cada borde genera ondas.</p>
+<table class="t" data-seq="1"><tr><th>filtro</th><th>mín / máx de h (2D)</th></tr><tr><td>ideal</td><td class="err">−13,7 %</td></tr><tr><td>Butterworth</td><td class="warn">−1,4 %</td></tr><tr><td>gaussiano</td><td class="ok">≈ 0 %</td></tr></table>
+</div>
+<figure class="fig" style="--h:440px"><img src="assets/sinc1d.png" alt="corte 1D del filtro ideal (D₀ = 20)"><figcaption>corte 1D del filtro ideal (D₀ = 20)</figcaption></figure>
+</div>
+  </div>
+  <aside class="notes">La causa es el par transformado: la transformada de una caja es una función sinc, que oscila y tiene lóbulos negativos. Al multiplicar por una caja en frecuencia convolucionamos en el espacio con una sinc, así que cada borde de la imagen produce ondas alrededor. La tabla da la relación entre el lóbulo negativo más profundo y el máximo del núcleo espacial, calculada con la IFT de cada filtro: menos 13,7 por ciento para el ideal, menos 1,4 para Butterworth y prácticamente cero para el gaussiano, cuya transformada es otra gaussiana. Este es el mismo argumento que se ve en el deck de la lección tres.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="14" data-section="D · Ejercicios" data-title="Bloque D · Ejercicios">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque D · 12 diapositivas</p>
+    <h1 class="s-title xl">Ejercicios resueltos</h1>
+    <p class="lead">E1, E2, E4, E5, E6 y E8 del enunciado con resultados reales, y el experimento de magnitud frente a fase.</p>
+  </div>
+  <aside class="notes">Cuarto bloque: los ejercicios del laboratorio resueltos y comprobados en Python. E3 y E7 ya se vieron en los bloques anteriores.</aside>
+</section>
+
+<section class="slide" id="e1" data-fx="vc" data-section="D · Ejercicios" data-title="E1 · mínimo, máximo, gráficos">
+  <header class="s-head"><p class="kicker">bloque D · ejercicios resueltos</p><h2 class="s-title">E1 · mínimo, máximo, gráficos</h2></header>
+  <div class="s-body">
+<div class="g12">
+<div class="vstack">
+<pre class="code">F = FT(im)
+mag, fase = np.abs(F), np.angle(F)
+print(mag.min(), mag.max())
+print(np.isclose(mag.max(), im.sum()))
+plt.boxplot(mag.ravel()); plt.yscale('log')
+plt.hist(fase.ravel(), bins=64)</pre>
+<table class="t"><tr><th>resultado real</th><th>valor</th></tr><tr><td>mín |F|</td><td>4,92</td></tr><tr><td>máx |F| = Σ píxeles</td><td class="ok">19 285 918 · True</td></tr><tr><td>cuartiles</td><td>1367 · 2870 · 6546</td></tr></table>
+</div>
+<figure class="fig" style="--h:520px"><img src="assets/e1.png" alt="boxplot de |F| (log) y fase ≈ uniforme"><figcaption>boxplot de |F| (log) y fase ≈ uniforme</figcaption></figure>
+</div>
+  </div>
+  <aside class="notes">En el ejercicio uno: el mínimo de la magnitud es unos cinco y el máximo es la componente continua, que vale exactamente la suma de los píxeles, diecinueve millones; lo comprobamos con np.isclose. El boxplot necesita escala logarítmica porque casi todos los valores están entre mil y siete mil y hay unos pocos enormes cerca de la DC. El histograma de la fase es aproximadamente uniforme entre menos pi y pi: el cociente entre el contenedor más alto y el más bajo es 1,09.</aside>
+</section>
+
+<section class="slide" id="e2-gauss" data-fx="vc" data-section="D · Ejercicios" data-title="E2 · gaussiano en frecuencia">
+  <header class="s-head"><p class="kicker">bloque D · teorema con otro filtro</p><h2 class="s-title">E2 · gaussiano en frecuencia</h2></header>
+  <div class="s-body">
+<div class="g2">
+<pre class="code">def gaussFilter(sigma):
+    k = int(np.ceil(3 * sigma))     # radio 3σ
+    x = np.arange(-k, k + 1)
+    g = np.exp(-x**2 / (2 * sigma**2))
+    m = np.outer(g, g)              # separable
+    return m / m.sum()              # suma 1
+
+M = gaussFilter(2)
+big = pad_center(M, im.shape)      # al centro
+FM = FT(fft.ifftshift(big))        # FT del filtro
+out = np.real(IFT(FT(im) * FM))</pre>
+<div class="vstack">
+<table class="t"><tr><th><span class="nc">σ</span></th><th>RMS frente a convolve(wrap)</th></tr><tr><td>1</td><td class="ok">5,4e−14</td></tr><tr><td>2</td><td class="ok">6,3e−14</td></tr><tr><td>4</td><td class="ok">1,0e−13</td></tr></table>
+<div class="eq">$$\sigma_u=\frac{N}{2\pi\sigma}$$</div>
+<p class="txt">La FT de un gaussiano es otro gaussiano; cuanto más ancho en el espacio (σ grande), más estrecho en frecuencia. Con suma 1, F(M)(0, 0) = 1.</p>
+</div></div>
+  </div>
+  <aside class="notes">Para el gaussiano aplicamos exactamente el mismo esquema: construimos el núcleo, lo pegamos en el centro, tomamos la FT y multiplicamos. El resultado coincide con la convolución circular hasta 1e-13 para tres valores de sigma. La transformada de un gaussiano es un gaussiano con desviación N dividido por dos pi sigma en unidades de índice de frecuencia. Por tanto, cuanto más suaviza el filtro en el espacio, menos frecuencias deja pasar.</aside>
+</section>
+
+<section class="slide" id="e2-ft" data-fx="vc" data-section="D · Ejercicios" data-title="FT de gaussiano y de media">
+  <header class="s-head"><p class="kicker">bloque D · tamaño frente a frecuencia</p><h2 class="s-title">FT de gaussiano y de media</h2></header>
+  <div class="s-body">
+<div class="g3t">
+<figure class="fig" style="--h:470px" data-seq="1"><img src="assets/ftg1.png" alt="gaussiano σ = 1 (ancho en frecuencia)"><figcaption>gaussiano σ = 1 (ancho en frecuencia)</figcaption></figure>
+<figure class="fig" style="--h:470px" data-seq="2"><img src="assets/ftg4.png" alt="gaussiano σ = 4 (estrecho)"><figcaption>gaussiano σ = 4 (estrecho)</figcaption></figure>
+<figure class="fig" style="--h:470px" data-seq="3"><img src="assets/ftbox7.png" alt="media 7×7: sinc"><figcaption>media 7×7: sinc</figcaption></figure>
+</div>
+<p class="txt" style="margin-top:18px;text-align:center">|FT| del núcleo rellenado al tamaño de einstein (497×407), con la DC en el centro.</p>
+  </div>
+  <aside class="notes">Las dos primeras imágenes son la magnitud, en escala logarítmica realzada, de la transformada de un gaussiano de sigma uno y de sigma cuatro: el gaussiano más ancho en el espacio da una transformada más estrecha. La tercera es la transformada de la media de 7 por 7: una sinc en dos dimensiones, con ceros en múltiplos de N entre n, es decir unos 58 columnas y 71 filas para einstein. Por eso la media deja pasar parte de las altas frecuencias con signo alternante, a diferencia del gaussiano.</aside>
+</section>
+
+<section class="slide" id="e2-perfil" data-fx="vc" data-section="D · Ejercicios" data-title="Perfil 1D de las FT">
+  <header class="s-head"><p class="kicker">bloque D · corte por la DC, frecuencia f = u/N</p><h2 class="s-title">Perfil 1D de las FT</h2></header>
+  <div class="s-body">
+<div class="g21">
+<div class="fx" data-role="plot" data-x="0,0.5" data-y="0,1.05" data-xl="f = u / N" data-yl="|H(f)|" data-legend="tr" data-fns='[{"f": "x=>Math.exp(-2*Math.PI*Math.PI*x*x)", "label": "gaussiano σ = 1"}, {"f": "x=>Math.exp(-2*Math.PI*Math.PI*16*x*x)", "label": "gaussiano σ = 4"}, {"f": "x=>x<1e-9?1:Math.abs(Math.sin(7*Math.PI*x)/(7*Math.sin(Math.PI*x)))", "label": "media 7×7", "c": "accent-2"}]' style="height:580px"></div>
+<div class="vstack">
+<div class="eq" data-seq="1">$$|G(f)|\approx e^{-2\pi^2\sigma^2 f^2}$$</div>
+<div class="eq" data-seq="2">$$|B(f)|=\left|\frac{\sin(\pi n f)}{n\sin(\pi f)}\right|$$</div>
+<p class="txt" data-seq="3">La caja tiene su primer cero en \(f=1/n\) (\(u=N/n\)) y luego <b>lóbulos</b>: deja pasar altas frecuencias. El gaussiano cae sin rebotes.</p>
+</div></div>
+  </div>
+  <aside class="notes">Cortes unidimensionales de las transformadas anteriores, en frecuencia normalizada f igual a u entre N. El gaussiano de sigma uno es ancho; el de sigma cuatro, cuatro veces más estrecho, porque la desviación en frecuencia es uno entre dos pi sigma. La media de 7 tiene la forma de una sinc discreta: primer cero en f igual a un séptimo, es decir u igual a N entre 7, y después lóbulos secundarios que dejan pasar parte de las altas frecuencias. Las curvas son las fórmulas; las hemos comparado con la FFT real de los núcleos: el error es menor que 0,007.</aside>
+</section>
+
+<section class="slide" id="e4-mask" data-fx="vc" data-section="D · Ejercicios" data-title="E4 · my_mask(n)">
+  <header class="s-head"><p class="kicker">bloque D · sin bucles</p><h2 class="s-title">E4 · <span class="nc">my_mask(n)</span></h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<pre class="code">def my_mask(n):
+    i, j = np.indices((n, n))
+    # i - j: &gt;0 abajo, 0 diagonal, &lt;0 arriba
+    return np.sign(i - j)
+
+# alternativas equivalentes
+np.tri(n, k=-1) - np.tri(n, k=-1).T
+r = np.arange(n)
+np.sign(np.subtract.outer(r, r))</pre>
+<div class="tip" data-seq="3"><b>comprobado</b>Las tres reproducen las matrices del PDF para n = 3 y n = 4 (0 en la diagonal, 1 debajo, −1 encima).</div>
+</div>
+<div class="g2">
+<div class="vc-heat" data-seq="1" data-m='[[0,-1,-1],[1,0,-1],[1,1,0]]' data-signed="1" data-dec="0" style="height:400px"></div>
+<div class="vc-heat" data-seq="2" data-m='[[0,-1,-1,-1],[1,0,-1,-1],[1,1,0,-1],[1,1,1,0]]' data-signed="1" data-dec="0" style="height:400px"></div>
+</div></div>
+  </div>
+  <aside class="notes">La máscara tiene ceros en la diagonal, unos por debajo y menos unos por encima. Con np.indices obtenemos la fila y la columna de cada posición; el signo de i menos j da exactamente ese patrón: positivo cuando la fila es mayor, es decir por debajo de la diagonal. Las otras dos formas dan el mismo resultado. Hemos comprobado las tres con las matrices de ejemplo del enunciado.</aside>
+</section>
+
+<section class="slide" id="e4-fichas" data-fx="vc" data-section="D · Ejercicios" data-title="np.tri, tril, triu, sign">
+  <header class="s-head"><p class="kicker">bloque D · fichas</p><h2 class="s-title nc">np.tri, tril, triu, sign</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="api"><div class="sig">np.tri(N, M=None, k=0)</div><table><tr><td>retorno</td><td>matriz N×M con unos en y bajo la diagonal k</td></tr><tr><td>k = −1</td><td>solo estrictamente por debajo</td></tr><tr><td>tipo</td><td>float por defecto</td></tr></table></div>
+<div class="api"><div class="sig">np.tril(m, k=0) / np.triu(m, k=0)</div><table><tr><td>tril</td><td>pone a 0 lo que hay sobre la diagonal k</td></tr><tr><td>triu</td><td>pone a 0 lo que hay bajo la diagonal k</td></tr><tr><td>uso</td><td><code>np.tril(m, -1)</code> = parte estrictamente inferior</td></tr></table></div>
+</div>
+<div class="vstack">
+<div class="api"><div class="sig">np.sign(x)</div><table><tr><td>retorno</td><td>−1, 0 o 1 según el signo de cada elemento</td></tr><tr><td>uso</td><td><code>np.sign(i - j)</code> da el patrón de E4</td></tr></table></div>
+<pre class="code" data-seq="1">np.tri(3, k=-1)
+# [[0 0 0], [1 0 0], [1 1 0]]
+np.triu(np.ones((3, 3)), 1)
+# [[0 1 1], [0 0 1], [0 0 0]]</pre>
+<div class="exam" data-seq="2"><b>en el examen</b>«Sin bucles explícitos» invita a <code>np.indices</code>, <code>np.tri</code> o broadcasting.</div>
+</div></div>
+  </div>
+  <aside class="notes">Fichas de las funciones de este ejercicio. np.tri construye la matriz triangular inferior de unos; con k igual a menos uno se excluye la diagonal. np.tril y np.triu recortan una matriz dada. np.sign devuelve el signo. Cualquiera de ellas sirve para resolver el ejercicio sin bucles.</aside>
+</section>
+
+<section class="slide" id="e4-filter" data-fx="vc" data-section="D · Ejercicios" data-title="E4 · my_filter(im, n)">
+  <header class="s-head"><p class="kicker">bloque D · reutilizar el teorema</p><h2 class="s-title">E4 · <span class="nc">my_filter(im, n)</span></h2></header>
+  <div class="s-body">
+<div class="g21">
+<pre class="code">def my_filter(im, n):
+    mask = my_mask(n)                 # n×n
+    big = pad_center(mask, im.shape)  # centro
+    FM = FT(fft.ifftshift(big))       # FT núcleo
+    # np.real, no abs: hay signo
+    return np.real(IFT(FT(im) * FM))</pre>
+<div class="vstack">
+<div class="res" data-seq="1">n = 5 sobre einstein: salida entre <b>−1544</b> y <b>1523</b>.<br>RMS frente a <code>convolve(wrap)</code>: <b>1,7e−13</b>.</div>
+<div class="trap" data-seq="2"><b>trampa</b>La máscara tiene signo: la salida es negativa en muchos puntos. <code>np.absolute</code> la destruiría; hay que usar <code>np.real</code>.</div>
+</div></div>
+  </div>
+  <aside class="notes">my_filter es la misma plantilla que averageFilterFrequency pero con otra máscara. Como la máscara tiene signo, la salida puede ser negativa, y por eso hay que quedarse con la parte real y no con el módulo. Comprobamos que coincide con la convolución espacial circular hasta el redondeo.</aside>
+</section>
+
+<section class="slide" id="e5" data-fx="vc" data-section="D · Ejercicios" data-title="E5 · linealidad de la FT">
+  <header class="s-head"><p class="kicker">bloque D · dos líneas de demostración</p><h2 class="s-title">E5 · linealidad de la FT</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="deriv" style="font-size:28px">
+<div data-seq="1"><span>$$\mathcal F(\lambda I_1+(1-\lambda)I_2)=\lambda\mathcal F(I_1)+(1-\lambda)\mathcal F(I_2)$$</span><span class="why">la suma es lineal</span></div>
+<div data-seq="2"><span>$$\Rightarrow\ \mathcal F^{-1}(\lambda F_1+(1-\lambda)F_2)=\lambda I_1+(1-\lambda)I_2$$</span><span class="why">la inversa también</span></div>
+</div>
+<pre class="code sm" data-seq="3">for lam in np.linspace(0, 1, 5):
+    mix = np.real(IFT(lam*F1 + (1-lam)*F2))
+    print(np.allclose(mix, lam*I1 + (1-lam)*I2))
+# True True True True True</pre>
+</div>
+<div class="g3t">
+<figure class="fig" style="--h:230px"><img src="assets/st1.png" alt="I₁"><figcaption>I₁</figcaption></figure><figure class="fig" style="--h:230px"><img src="assets/st2.png" alt="I₂"><figcaption>I₂</figcaption></figure><figure class="fig" style="--h:230px"><img src="assets/st_mix.png" alt="λ = 0,5"><figcaption>λ = 0,5</figcaption></figure>
+</div></div>
+<p class="txt" style="margin-top:8px">Rayas binarias sintéticas equivalentes (stp1.gif y stp2.gif no están incluidas).</p>
+  </div>
+  <aside class="notes">El ejercicio cinco ilustra la linealidad de la transformada. La demostración son dos líneas: la DFT es una suma ponderada de los píxeles, así que respeta combinaciones lineales; lo mismo la inversa. Lo hemos comprobado numéricamente para cinco valores de lambda con np.allclose. Las imágenes originales stp1 y stp2 no vienen con el laboratorio; usamos rayas binarias equivalentes y lo marcamos así.</aside>
+</section>
+
+<section class="slide" id="e6" data-fx="vc" data-section="D · Ejercicios" data-title="E6 · ¿F(I₁I₂) = F(I₁)F(I₂)?">
+  <header class="s-head"><p class="kicker">bloque D · no: producto ⇒ convolución</p><h2 class="s-title">E6 · ¿F(I₁I₂) = F(I₁)F(I₂)?</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<div class="eq big">$$\mathcal F(I_1I_2)=\frac{1}{MN}\,\mathcal F(I_1)\circledast\mathcal F(I_2)$$</div>
+<p class="txt">Dualidad del teorema: producto en el espacio ⇒ convolución <b>circular</b> en frecuencia, con el factor 1/(MN).</p>
+</div>
+<div class="vstack">
+<pre class="code" data-seq="1" style="font-size:25px">def circconv(A, B):
+    return fft.ifft2(fft.fft2(A) * fft.fft2(B))
+
+F1, F2 = fft.fft2(I1), fft.fft2(I2)
+lhs = fft.fft2(I1 * I2)
+np.allclose(lhs, F1 * F2)                    # False
+np.allclose(lhs, circconv(F1, F2) / I1.size) # True</pre>
+<div class="tip" data-seq="2"><b>resultado real</b>Con las dos imágenes de rayas: False y True.</div>
+</div></div>
+  </div>
+  <aside class="notes">La pregunta es si la transformada del producto es el producto de transformadas. No: el teorema dice que el producto en el espacio se convierte en una convolución en frecuencia, circular y dividida por M por N. Lo verificamos con una función circconv que aplica el teorema a los espectros: la igualdad ingenua da False y la correcta da True.</aside>
+</section>
+
+<section class="slide" id="e8-proc" data-fx="vc" data-section="D · Ejercicios" data-title="E8 · marca de agua: método">
+  <header class="s-head"><p class="kicker">bloque D · positions.p y pickle</p><h2 class="s-title">E8 · marca de agua: método</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="api"><div class="sig">pickle.load(open(f, 'rb'))</div><table><tr><td>f</td><td>ruta a positions.p</td></tr><tr><td>'rb'</td><td>lectura binaria: pickle exige bytes</td></tr><tr><td>retorno</td><td>lista de 30 posiciones (fila, columna) de la FT</td></tr></table></div>
+<pre class="code sm" data-seq="1">E = load('einstein.pgm')
+idx = pickle.load(open('positions.p', 'rb'))
+r, c = np.array(idx).T      # 30 frecuencias
+FE = FT(E)
+for X in (a, b):
+    FX = FT(X)
+    # |ΔF| medio: en las 30 posiciones / en todo F
+    dPos = np.abs(FX[r, c] - FE[r, c]).mean()
+    dAll = np.abs(FX - FE).mean()
+    print(dPos / dAll)</pre>
+</div>
+<div class="tip" style="margin-top:20px" data-seq="2"><b>idea</b>La marca modifica solo 30 coeficientes de la FT. Si una imagen difiere del original mucho más en esas posiciones que en el resto, lleva la marca.</div>
+  </div>
+  <aside class="notes">La marca de agua se inserta modificando unos pocos coeficientes de la transformada de Fourier, en posiciones conocidas guardadas en positions.p. Para decidir qué imagen la lleva comparamos con el original: la diferencia media de la transformada en esas treinta posiciones frente a la diferencia media en toda la transformada. La otra imagen solo tiene un poco de ruido gaussiano, que se reparte por igual en todas las frecuencias.</aside>
+</section>
+
+<section class="slide" id="e8-res" data-fx="vc" data-section="D · Ejercicios" data-title="E8 · resultado">
+  <header class="s-head"><p class="kicker">bloque D · ¿a.pgm o b.pgm?</p><h2 class="s-title">E8 · resultado</h2></header>
+  <div class="s-body">
+<div class="g12">
+<div class="vstack">
+<table class="t" data-seq="1"><tr><th>imagen</th><th>RMS píxeles</th><th>dPos</th><th>dAll</th><th>ratio</th></tr>
+<tr><td>a.pgm</td><td>0,705</td><td>209,1</td><td>199,9</td><td class="err">1,05</td></tr>
+<tr><td>b.pgm</td><td>0,706</td><td>8663,7</td><td>75,2</td><td class="ok">115,2</td></tr></table>
+<div class="exam" data-seq="3"><b>conclusión</b>La marca está en <b>b.pgm</b> (ratio 115 frente a 1). En píxeles ambas difieren igual del original (0,70): solo la FT lo revela.</div>
+</div>
+<div class="g2">
+<figure class="fig" style="--h:440px" data-seq="2"><img src="assets/dF_a.png" alt="|F(a) − F(E)| (log)"><figcaption>|F(a) − F(E)| (log)</figcaption></figure>
+<figure class="fig" style="--h:440px" data-seq="2"><img src="assets/dF_b.png" alt="|F(b) − F(E)| (log)"><figcaption>|F(b) − F(E)| (log)</figcaption></figure>
+</div></div>
+  </div>
+  <aside class="notes">Resultado real. Para a.pgm el cociente es 1,05: la diferencia en las posiciones de la marca es igual que en el resto. Para b.pgm es 115: la diferencia en las treinta posiciones es 8664 frente a 75 de media global. Por tanto la marca de agua está en b.pgm. Observa que el error cuadrático medio en píxeles es casi idéntico, 0,70, así que en el dominio espacial no se podría distinguir. En las imágenes de diferencia espectral, a la derecha, aparecen puntos aislados.</aside>
+</section>
+
+<section class="slide" id="fase-mag" data-fx="vc" data-section="D · Ejercicios" data-title="Magnitud frente a fase">
+  <header class="s-head"><p class="kicker">bloque D · experimento real</p><h2 class="s-title">Magnitud frente a fase</h2></header>
+  <div class="s-body">
+<div class="g4">
+<figure class="fig" style="--h:360px"><img src="assets/ein256.png" alt="Einstein (256×256)"><figcaption>Einstein (256×256)</figcaption></figure>
+<figure class="fig" style="--h:360px"><img src="assets/habas.png" alt="habas"><figcaption>habas</figcaption></figure>
+<figure class="fig" style="--h:360px" data-seq="1"><img src="assets/mix_mE_fH.png" alt="magnitud Einstein + fase habas"><figcaption>magnitud Einstein + fase habas</figcaption></figure>
+<figure class="fig" style="--h:360px" data-seq="2"><img src="assets/mix_mH_fE.png" alt="magnitud habas + fase Einstein"><figcaption>magnitud habas + fase Einstein</figcaption></figure>
+</div>
+<div class="tip" style="margin-top:18px" data-seq="3"><b>corrección de los apuntes</b><code>np.abs(Fx) * np.exp(1j*np.angle(Fy))</code> se parece a <b>y</b>: la fase lleva la estructura; la magnitud solo la textura global.</div>
+  </div>
+  <aside class="notes">Intercambiamos la magnitud y la fase de las dos imágenes. La imagen con la magnitud de Einstein y la fase de las habas se parece a las habas; la que tiene la magnitud de las habas y la fase de Einstein se reconoce como Einstein. Es decir, la fase lleva la estructura. En los apuntes figura lo contrario en algunos sitios; la versión correcta es esta.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-e" data-fx="backdrop" data-seed="15" data-section="E · Cierre" data-title="Bloque E · Cierre">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque E · 5 diapositivas</p>
+    <h1 class="s-title xl">Para el examen</h1>
+    <p class="lead">Plantillas de código para escribir a mano, dos ejercicios tipo con solución y diez verdadero/falso.</p>
+  </div>
+  <aside class="notes">Cierre: lo que hay que llevar memorizado. Dos plantillas, dos ejercicios tipo y una batería de verdadero o falso.</aside>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="E · Cierre" data-title="Chuleta de código">
+  <header class="s-head"><p class="kicker">bloque E · plantillas</p><h2 class="s-title">Chuleta de código</h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack" data-seq="1"><p class="txt"><b>1 · Filtro diseñado en frecuencia</b> (H centrada)</p>
+<pre class="code">F = fft.fft2(im)             # DC en [0,0]
+H = (D &lt; r).astype(float)    # centrada
+Hs = fft.ifftshift(H)        # DC a (0,0)
+G = F * Hs                   # elemento a elem.
+out = np.real(fft.ifft2(G))  # parte real</pre></div>
+<div class="vstack" data-seq="2"><p class="txt"><b>2 · Teorema con máscara espacial</b> m×m</p>
+<pre class="code">big = np.zeros(im.shape)     # float
+big[r0:r0+m, c0:c0+m] = mask # al centro
+big = fft.ifftshift(big)     # a (0,0)
+G = fft.fft2(im) * fft.fft2(big)
+out = np.real(fft.ifft2(G))</pre></div>
+</div>
+<div class="g2" style="margin-top:22px">
+<div class="trap" data-seq="3"><b>cuidado</b>Un solo desplazamiento: o filtro con <code>ifftshift</code> y espectro sin centrar, o <code>FT</code>/<code>IFT</code> del profesor con H centrada. Nunca mezclar.</div>
+<div class="exam" data-seq="4"><b>siempre</b><code>np.real</code> al final (no <code>np.abs</code>) y <code>r0 = M//2 − m//2</code>, <code>c0 = N//2 − m//2</code>.</div>
+</div>
+  </div>
+  <aside class="notes">Dos plantillas para el examen. La primera es el filtrado con un filtro diseñado en frecuencia: cinco pasos. La segunda es el teorema de la convolución con una máscara espacial: se pega al centro, se lleva el centro al origen y se multiplican las transformadas. En las dos, el resultado final es la parte real.</aside>
+</section>
+
+<section class="slide" id="ex-lowpass" data-fx="vc" data-section="E · Cierre" data-title="Examen · lowpass y highpass">
+  <header class="s-head"><p class="kicker">bloque E · ejercicios con solución</p><h2 class="s-title">Examen · <span class="nc">lowpass</span> y <span class="nc">highpass</span></h2></header>
+  <div class="s-body">
+<div class="g2">
+<div class="vstack">
+<pre class="code">def lowpass(im, r):
+    n, m = im.shape
+    vy, vx = np.indices(im.shape)
+    D = np.hypot(vx - m//2, vy - n//2)
+    H = (D &lt; r).astype(float)
+    return np.real(fft.ifft2(fft.fft2(im) *
+                             fft.ifftshift(H)))</pre>
+<pre class="code" data-seq="1">def highpass(im, r):
+    # H' = 1 − H  ⇒  im − paso bajo
+    return im - lowpass(im, r)</pre>
+</div>
+<div class="vstack">
+<div class="eq" data-seq="2">$$H_{HP}=1-H_{LP}\Rightarrow I_{HP}=I-I_{LP}$$</div>
+<div class="tip" data-seq="3"><b>comprobado</b>Con einstein: <code>np.allclose(highpass + lowpass, im)</code> = True.</div>
+<div class="exam" data-seq="4"><b>por qué np.real</b>La salida ideal tiene valores negativos; el módulo los falsea.</div>
+</div></div>
+  </div>
+  <aside class="notes">Primer ejercicio: escribe lowpass en frecuencia. Construimos la distancia al centro con np.indices, la máscara menor que r, la desplazamos con ifftshift y multiplicamos con la transformada. El paso alto es uno menos H, que por linealidad es la imagen menos el paso bajo. Hemos comprobado que paso alto más paso bajo reconstruye la imagen.</aside>
+</section>
+
+<section class="slide" id="ex-teorema" data-fx="vc" data-section="E · Cierre" data-title="Examen · comprobar el teorema">
+  <header class="s-head"><p class="kicker">bloque E · np.allclose</p><h2 class="s-title">Examen · comprobar el teorema</h2></header>
+  <div class="s-body">
+<div class="g2">
+<pre class="code">def check_theorem(im, n=7):
+    esp = convolve(im, np.ones((n, n)) / n**2,
+                   mode='wrap')
+    big = np.zeros(im.shape)
+    r0 = im.shape[0]//2 - n//2
+    c0 = im.shape[1]//2 - n//2
+    big[r0:r0+n, c0:c0+n] = 1 / n**2
+    fre = np.real(fft.ifft2(fft.fft2(im) *
+                  fft.fft2(fft.ifftshift(big))))
+    return np.allclose(esp, fre)           # True</pre>
+<div class="vstack">
+<div class="res" data-seq="1">Resultado real con einstein.pgm y n = 7: <b>True</b>.</div>
+<div class="trap" data-seq="2"><b>trampa</b>Con el <code>reflect</code> por defecto de <code>convolve</code>, <code>np.allclose</code> daría False por los bordes; compara con <code>mode='wrap'</code> o recorta un margen ≥ radio.</div>
+</div></div>
+  </div>
+  <aside class="notes">Segundo ejercicio: comprobar numéricamente el teorema. Hay que comparar la convolución espacial circular con la frecuencial. Si usas el modo por defecto de convolve, que es reflect, los bordes no coinciden y np.allclose da False. Con mode igual a wrap da True. También vale recortar un margen al menos igual al radio de la máscara.</aside>
+</section>
+
+<section class="slide" id="vf-1" data-fx="vc" data-section="E · Cierre" data-title="Verdadero o falso (1)">
+  <header class="s-head"><p class="kicker">bloque E · piensa la respuesta antes de que aparezca</p><h2 class="s-title">Verdadero o falso (1)</h2></header>
+  <div class="s-body">
+<div class="vf">
+<div><span class="q">«El teorema de la convolución permite acelerar el filtrado de imágenes.»</span><span class="a v" data-seq="1"><b>V</b>Con núcleos grandes: m = 31 → 228 ms frente a 12 ms. Con 3×3 gana la directa.</span></div>
+<div><span class="q">«<code>fftshift</code> aplicado dos veces deshace el desplazamiento.»</span><span class="a f" data-seq="2"><b>F</b>Solo con N par. Con N impar hay que usar <code>ifftshift</code>.</span></div>
+<div><span class="q">«<code>np.fft.fft2</code> deja la componente DC en el centro del array.»</span><span class="a f" data-seq="3"><b>F</b>La deja en <code>[0, 0]</code>; el centro lo pone <code>fftshift</code>.</span></div>
+<div><span class="q">«|F(0, 0)| es la suma de todos los píxeles de la imagen.»</span><span class="a v" data-seq="4"><b>V</b>einstein: 19 285 918 = <code>im.sum()</code>.</span></div>
+<div><span class="q">«Con <code>np.abs(IFT(F))</code> se nota si olvidaste el <code>ifftshift</code>.»</span><span class="a f" data-seq="5"><b>F</b>El error es un factor de módulo 1: solo <code>np.real</code> lo delata.</span></div>
+</div>
+  </div>
+  <aside class="notes">Cinco afirmaciones del estilo del examen. Intenta contestarlas antes de que aparezca la respuesta. La primera es literalmente la del examen de ejemplo: verdadera, pero con el matiz de que solo compensa con núcleos grandes.</aside>
+</section>
+
+<section class="slide" id="vf-2" data-fx="vc" data-section="E · Cierre" data-title="Verdadero o falso (2)">
+  <header class="s-head"><p class="kicker">bloque E · piensa la respuesta antes de que aparezca</p><h2 class="s-title">Verdadero o falso (2)</h2></header>
+  <div class="s-body">
+<div class="vf">
+<div><span class="q">«Un paso bajo ideal produce ringing.»</span><span class="a v" data-seq="1"><b>V</b>Caja en frecuencia = sinc en el espacio (lóbulo −13,7 %).</span></div>
+<div><span class="q">«La fase de la FT lleva la mayor parte de la estructura.»</span><span class="a v" data-seq="2"><b>V</b>Magnitud de Einstein + fase de habas parece habas.</span></div>
+<div><span class="q">«<span class="nc">F(I₁·I₂) = F(I₁)·F(I₂)</span>.»</span><span class="a f" data-seq="3"><b>F</b>El producto en el espacio es convolución circular / MN en frecuencia.</span></div>
+<div><span class="q">«Los bordes de una imagen están en las bajas frecuencias.»</span><span class="a f" data-seq="4"><b>F</b>Están en las altas: el paso alto deja los contornos.</span></div>
+<div><span class="q">«Filtrar con la FFT equivale a <code>convolve</code> con <code>mode='reflect'</code>.»</span><span class="a f" data-seq="5"><b>F</b>Equivale a <code>mode='wrap'</code>: la FFT es circular.</span></div>
+</div>
+  </div>
+  <aside class="notes">Segunda tanda. Fíjate en las dos erratas de los apuntes que hay que contestar en su versión correcta: la fase lleva la estructura y los bordes están en las altas frecuencias.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+<script src="fx.js"></script>
+</body>
+</html>

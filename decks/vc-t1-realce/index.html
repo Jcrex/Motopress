@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC T1 · Realce de imagen</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ===================== BLOQUE A · MARCO ===================== -->
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="11" data-section="Marco" data-title="Realce de imagen">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lección 001 · parcial 19-oct</p>
+    <h1 class="s-title xl">Realce de imagen</h1>
+    <p class="lead">Transformaciones geométricas y de intensidad, histogramas, ecualización y pseudocolor, con las demostraciones y el código que hay que saber escribir a mano.</p>
+  </div>
+  <aside class="notes">Esta presentación cubre la lección 001 completa. El hilo es siempre el mismo: una función T que lleva cada valor de entrada a uno de salida. Para el examen escrito necesitas saber dibujar cada T(r), deducir sus constantes y escribir el código NumPy vectorizado sin ordenador.</aside>
+</section>
+
+<section class="slide" id="familias" data-fx="vc" data-section="Marco" data-title="Tres familias de operaciones">
+  <header class="s-head"><p class="kicker">marco · qué es realzar</p><h2 class="s-title">Tres familias de operaciones</h2></header>
+  <div class="s-body vstack">
+    <div class="flow" data-seq="1">
+      <div class="box">entrada \(f(x,y)\)</div><div class="arr">→</div>
+      <div class="box t">operación \(T\)</div><div class="arr">→</div>
+      <div class="box">salida \(g(x,y)\)</div>
+    </div>
+    <div class="g3">
+      <div class="card" data-seq="2"><h3>Puntual</h3><svg class="ico" viewBox="0 0 350 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><rect class="cell" x="20" y="15" width="22" height="22"/><rect class="cell" x="44" y="15" width="22" height="22"/><rect class="cell" x="68" y="15" width="22" height="22"/><rect class="cell" x="92" y="15" width="22" height="22"/><rect class="cell" x="116" y="15" width="22" height="22"/><rect class="cell" x="20" y="39" width="22" height="22"/><rect class="cell" x="44" y="39" width="22" height="22"/><rect class="cell" x="68" y="39" width="22" height="22"/><rect class="cell" x="92" y="39" width="22" height="22"/><rect class="cell" x="116" y="39" width="22" height="22"/><rect class="cell" x="20" y="63" width="22" height="22"/><rect class="cell" x="44" y="63" width="22" height="22"/><rect class="cell on1" x="68" y="63" width="22" height="22"/><rect class="cell" x="92" y="63" width="22" height="22"/><rect class="cell" x="116" y="63" width="22" height="22"/><rect class="cell" x="20" y="87" width="22" height="22"/><rect class="cell" x="44" y="87" width="22" height="22"/><rect class="cell" x="68" y="87" width="22" height="22"/><rect class="cell" x="92" y="87" width="22" height="22"/><rect class="cell" x="116" y="87" width="22" height="22"/><rect class="cell" x="20" y="111" width="22" height="22"/><rect class="cell" x="44" y="111" width="22" height="22"/><rect class="cell" x="68" y="111" width="22" height="22"/><rect class="cell" x="92" y="111" width="22" height="22"/><rect class="cell" x="116" y="111" width="22" height="22"/><path class="arw" d="M150 75 H200"/><path class="arw" d="M190 67 L200 75 L190 83"/><rect class="cell" x="210" y="15" width="22" height="22"/><rect class="cell" x="234" y="15" width="22" height="22"/><rect class="cell" x="258" y="15" width="22" height="22"/><rect class="cell" x="282" y="15" width="22" height="22"/><rect class="cell" x="306" y="15" width="22" height="22"/><rect class="cell" x="210" y="39" width="22" height="22"/><rect class="cell" x="234" y="39" width="22" height="22"/><rect class="cell" x="258" y="39" width="22" height="22"/><rect class="cell" x="282" y="39" width="22" height="22"/><rect class="cell" x="306" y="39" width="22" height="22"/><rect class="cell" x="210" y="63" width="22" height="22"/><rect class="cell" x="234" y="63" width="22" height="22"/><rect class="cell on1" x="258" y="63" width="22" height="22"/><rect class="cell" x="282" y="63" width="22" height="22"/><rect class="cell" x="306" y="63" width="22" height="22"/><rect class="cell" x="210" y="87" width="22" height="22"/><rect class="cell" x="234" y="87" width="22" height="22"/><rect class="cell" x="258" y="87" width="22" height="22"/><rect class="cell" x="282" y="87" width="22" height="22"/><rect class="cell" x="306" y="87" width="22" height="22"/><rect class="cell" x="210" y="111" width="22" height="22"/><rect class="cell" x="234" y="111" width="22" height="22"/><rect class="cell" x="258" y="111" width="22" height="22"/><rect class="cell" x="282" y="111" width="22" height="22"/><rect class="cell" x="306" y="111" width="22" height="22"/></svg><p>\(s=T(r)\): cada píxel se transforma solo, con una ventana de 1×1. Es esta lección: negativo, log, gamma, ecualización.</p></div>
+      <div class="card c2" data-seq="3"><h3>De vecindad</h3><svg class="ico" viewBox="0 0 350 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><rect class="cell" x="20" y="15" width="22" height="22"/><rect class="cell" x="44" y="15" width="22" height="22"/><rect class="cell" x="68" y="15" width="22" height="22"/><rect class="cell" x="92" y="15" width="22" height="22"/><rect class="cell" x="116" y="15" width="22" height="22"/><rect class="cell" x="20" y="39" width="22" height="22"/><rect class="cell on2" x="44" y="39" width="22" height="22"/><rect class="cell on2" x="68" y="39" width="22" height="22"/><rect class="cell on2" x="92" y="39" width="22" height="22"/><rect class="cell" x="116" y="39" width="22" height="22"/><rect class="cell" x="20" y="63" width="22" height="22"/><rect class="cell on2" x="44" y="63" width="22" height="22"/><rect class="cell on2" x="68" y="63" width="22" height="22"/><rect class="cell on2" x="92" y="63" width="22" height="22"/><rect class="cell" x="116" y="63" width="22" height="22"/><rect class="cell" x="20" y="87" width="22" height="22"/><rect class="cell on2" x="44" y="87" width="22" height="22"/><rect class="cell on2" x="68" y="87" width="22" height="22"/><rect class="cell on2" x="92" y="87" width="22" height="22"/><rect class="cell" x="116" y="87" width="22" height="22"/><rect class="cell" x="20" y="111" width="22" height="22"/><rect class="cell" x="44" y="111" width="22" height="22"/><rect class="cell" x="68" y="111" width="22" height="22"/><rect class="cell" x="92" y="111" width="22" height="22"/><rect class="cell" x="116" y="111" width="22" height="22"/><path class="arw" d="M150 75 H200"/><path class="arw" d="M190 67 L200 75 L190 83"/><rect class="cell" x="210" y="15" width="22" height="22"/><rect class="cell" x="234" y="15" width="22" height="22"/><rect class="cell" x="258" y="15" width="22" height="22"/><rect class="cell" x="282" y="15" width="22" height="22"/><rect class="cell" x="306" y="15" width="22" height="22"/><rect class="cell" x="210" y="39" width="22" height="22"/><rect class="cell" x="234" y="39" width="22" height="22"/><rect class="cell" x="258" y="39" width="22" height="22"/><rect class="cell" x="282" y="39" width="22" height="22"/><rect class="cell" x="306" y="39" width="22" height="22"/><rect class="cell" x="210" y="63" width="22" height="22"/><rect class="cell" x="234" y="63" width="22" height="22"/><rect class="cell on1" x="258" y="63" width="22" height="22"/><rect class="cell" x="282" y="63" width="22" height="22"/><rect class="cell" x="306" y="63" width="22" height="22"/><rect class="cell" x="210" y="87" width="22" height="22"/><rect class="cell" x="234" y="87" width="22" height="22"/><rect class="cell" x="258" y="87" width="22" height="22"/><rect class="cell" x="282" y="87" width="22" height="22"/><rect class="cell" x="306" y="87" width="22" height="22"/><rect class="cell" x="210" y="111" width="22" height="22"/><rect class="cell" x="234" y="111" width="22" height="22"/><rect class="cell" x="258" y="111" width="22" height="22"/><rect class="cell" x="282" y="111" width="22" height="22"/><rect class="cell" x="306" y="111" width="22" height="22"/></svg><p>\(g(x,y)\) depende de una ventana alrededor de \((x,y)\): filtros. Es la Lección 002.</p></div>
+      <div class="card c3" data-seq="4"><h3>Geométrica</h3><svg class="ico" viewBox="0 0 350 150" preserveAspectRatio="xMidYMid meet" aria-hidden="true"><rect class="cell" x="20" y="15" width="22" height="22"/><rect class="cell" x="44" y="15" width="22" height="22"/><rect class="cell" x="68" y="15" width="22" height="22"/><rect class="cell" x="92" y="15" width="22" height="22"/><rect class="cell" x="116" y="15" width="22" height="22"/><rect class="cell" x="20" y="39" width="22" height="22"/><rect class="cell" x="44" y="39" width="22" height="22"/><rect class="cell" x="68" y="39" width="22" height="22"/><rect class="cell" x="92" y="39" width="22" height="22"/><rect class="cell" x="116" y="39" width="22" height="22"/><rect class="cell" x="20" y="63" width="22" height="22"/><rect class="cell" x="44" y="63" width="22" height="22"/><rect class="cell" x="68" y="63" width="22" height="22"/><rect class="cell" x="92" y="63" width="22" height="22"/><rect class="cell" x="116" y="63" width="22" height="22"/><rect class="cell" x="20" y="87" width="22" height="22"/><rect class="cell" x="44" y="87" width="22" height="22"/><rect class="cell" x="68" y="87" width="22" height="22"/><rect class="cell" x="92" y="87" width="22" height="22"/><rect class="cell" x="116" y="87" width="22" height="22"/><rect class="cell" x="20" y="111" width="22" height="22"/><rect class="cell" x="44" y="111" width="22" height="22"/><rect class="cell" x="68" y="111" width="22" height="22"/><rect class="cell" x="92" y="111" width="22" height="22"/><rect class="cell" x="116" y="111" width="22" height="22"/><path class="arw" d="M150 75 H200"/><path class="arw" d="M190 67 L200 75 L190 83"/><rect class="cell" x="210" y="15" width="22" height="22"/><rect class="cell" x="234" y="15" width="22" height="22"/><rect class="cell" x="258" y="15" width="22" height="22"/><rect class="cell" x="282" y="15" width="22" height="22"/><rect class="cell" x="306" y="15" width="22" height="22"/><rect class="cell" x="210" y="39" width="22" height="22"/><rect class="cell" x="234" y="39" width="22" height="22"/><rect class="cell" x="258" y="39" width="22" height="22"/><rect class="cell" x="282" y="39" width="22" height="22"/><rect class="cell" x="306" y="39" width="22" height="22"/><rect class="cell" x="210" y="63" width="22" height="22"/><rect class="cell" x="234" y="63" width="22" height="22"/><rect class="cell" x="258" y="63" width="22" height="22"/><rect class="cell" x="282" y="63" width="22" height="22"/><rect class="cell" x="306" y="63" width="22" height="22"/><rect class="cell" x="210" y="87" width="22" height="22"/><rect class="cell" x="234" y="87" width="22" height="22"/><rect class="cell" x="258" y="87" width="22" height="22"/><rect class="cell" x="282" y="87" width="22" height="22"/><rect class="cell" x="306" y="87" width="22" height="22"/><rect class="cell" x="210" y="111" width="22" height="22"/><rect class="cell" x="234" y="111" width="22" height="22"/><rect class="cell" x="258" y="111" width="22" height="22"/><rect class="cell" x="282" y="111" width="22" height="22"/><rect class="cell" x="306" y="111" width="22" height="22"/><rect class="on3" x="222" y="27" width="96" height="96" transform="rotate(30 270 75)"/></svg><p>Mueve píxeles de sitio: escalado, rotación, traslación. Obliga a interpolar valores.</p></div>
+    </div>
+    <p class="txt" data-seq="5"><b>Realce = «¿mejor para quién?»</b> Mejorar para un humano (ver detalle) no es lo mismo que para una máquina (separar clases). No hay una medida universal: depende del problema.</p>
+  </div>
+  <aside class="notes">Una operación puntual no mira a los vecinos, por eso se puede escribir como una tabla de consulta de 256 entradas. Las de vecindad necesitan convolución. Las geométricas cambian las coordenadas, no solo los valores. Recuerda que realzar es subjetivo: el criterio lo pone la aplicación.</aside>
+</section>
+
+<section class="slide" id="mapa" data-fx="vc" data-section="Marco" data-title="Mapa del deck y examen">
+  <header class="s-head"><p class="kicker">marco · qué cae en el examen</p><h2 class="s-title">Mapa y examen</h2></header>
+  <div class="s-body g2">
+    <div class="tf-list">
+      <div data-seq="1"><span class="n">B</span><span>Geometría e interpolación</span></div>
+      <div data-seq="2"><span class="n">C</span><span>Transformaciones de intensidad</span></div>
+      <div data-seq="3"><span class="n">D</span><span>Histograma y ecualización</span></div>
+      <div data-seq="4"><span class="n">E</span><span>Pseudocolor y multiespectral</span></div>
+      <div data-seq="5"><span class="n">F</span><span>Chuleta y preguntas V/F</span></div>
+    </div>
+    <div class="vstack">
+      <div class="exam" data-seq="6"><b>en el examen</b>Dibujar \(T(r)\) de cada transformación y deducir sus constantes.</div>
+      <div class="exam" data-seq="7"><b>en el examen</b>Ecualizar a mano un histograma pequeño (tabla de CDF).</div>
+      <div class="exam" data-seq="8"><b>en el examen</b>Escribir código NumPy vectorizado: <code>threshold</code>, <code>gamma_correction</code>, <code>histeq</code>, <code>cumsum</code>.</div>
+      <div class="exam" data-seq="9"><b>en el examen</b>Preguntas V/F con matices («la ecualización garantiza un histograma plano»).</div>
+    </div>
+  </div>
+  <aside class="notes">El examen es escrito de 1,5 horas. El ejemplo de examen incluye el ejercicio 4 de gamma y rgb2gray, que veremos en el bloque C. La ecualización con números pequeños es el ejercicio clásico de cálculo a mano.</aside>
+</section>
+
+<!-- ===================== BLOQUE B · GEOMETRÍA ===================== -->
+
+<section class="slide is-plain divider" id="div-geo" data-fx="backdrop" data-seed="21" data-section="Geometría e interpolación" data-title="Geometría e interpolación">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b · geometría e interpolación</p>
+    <h1 class="s-title xl">Geometría</h1>
+    <p class="lead">Coordenadas homogéneas, mapeo directo frente a inverso e interpolación: vecino, bilineal y bicúbica.</p>
+  </div>
+</section>
+
+<section class="slide" id="afin" data-fx="vc" data-section="Geometría e interpolación" data-title="Transformación afín">
+  <header class="s-head"><p class="kicker">geometría · coordenadas homogéneas</p><h2 class="s-title">Transformación afín</h2></header>
+  <div class="s-body g12" style="align-items:center">
+    <div class="vstack">
+      <p class="eq sm">$$\begin{bmatrix}x'\\y'\\1\end{bmatrix}=A\begin{bmatrix}x\\y\\1\end{bmatrix}$$</p>
+      <p class="eq sm">$$A=\begin{bmatrix}a&b&t_x\\c&d&t_y\\0&0&1\end{bmatrix}$$</p>
+      <p class="txt" data-seq="2"><b>¿Por qué el 1 extra?</b> La traslación \(x'=x+t_x\) no es lineal en \(\mathbb{R}^2\): no cabe en una matriz 2×2. Con coordenadas homogéneas pasa a ser un producto de matrices, como las demás.</p>
+    </div>
+    <table class="t m" data-seq="1">
+      <tr><th>transformación</th><th>matriz \(A\)</th><th>efecto</th></tr>
+      <tr><td>identidad</td><td>\(\begin{bmatrix}1&0&0\\0&1&0\\0&0&1\end{bmatrix}\)</td><td>no cambia nada</td></tr>
+      <tr><td>escalado</td><td>\(\begin{bmatrix}s_x&0&0\\0&s_y&0\\0&0&1\end{bmatrix}\)</td><td>\(x'=s_xx,\;y'=s_yy\)</td></tr>
+      <tr><td>rotación \(\theta\)</td><td>\(\begin{bmatrix}\cos\theta&-\sin\theta&0\\\sin\theta&\cos\theta&0\\0&0&1\end{bmatrix}\)</td><td>gira alrededor del origen</td></tr>
+      <tr><td>traslación</td><td>\(\begin{bmatrix}1&0&t_x\\0&1&t_y\\0&0&1\end{bmatrix}\)</td><td>desplaza \((t_x,t_y)\)</td></tr>
+      <tr><td>cizalla (<i>shear</i>)</td><td>\(\begin{bmatrix}1&h&0\\0&1&0\\0&0&1\end{bmatrix}\)</td><td>\(x'=x+hy\): inclina</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Se usan coordenadas homogéneas porque la traslación no es una aplicación lineal de R2: x' = x + tx no se puede escribir como producto 2×2. Añadiendo un 1 como tercera coordenada, la traslación pasa a ser un producto de matrices y todas las transformaciones afines se tratan igual. En imágenes el eje y apunta hacia abajo, así que el sentido de giro visual de la matriz de rotación es el horario.</aside>
+</section>
+
+<section class="slide" id="composicion" data-fx="vc" data-section="Geometría e interpolación" data-title="Componer transformaciones">
+  <header class="s-head"><p class="kicker">geometría · demostración</p><h2 class="s-title">Componer = multiplicar</h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$\mathbf{x}'=A\mathbf{x}$$</span><span class="why">primera transformación</span></div>
+      <div data-seq="2"><span>$$\mathbf{x}''=B\mathbf{x}'=B(A\mathbf{x})$$</span><span class="why">segunda, sobre el resultado</span></div>
+      <div data-seq="3"><span>$$\mathbf{x}''=(BA)\,\mathbf{x}$$</span><span class="why">asociativa: una sola matriz</span></div>
+      <div data-seq="4"><span>$$AB\neq BA$$</span><span class="why">el producto de matrices no conmuta</span></div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="5"><b>Contraejemplo.</b> \(T\) = traslación (1,0) y \(R\) = rotación de 90°. Aplicadas al origen:</p>
+      <p class="eq sm" data-seq="5">$$RT=\begin{bmatrix}0&-1&0\\1&0&1\\0&0&1\end{bmatrix}\;\Rightarrow\;(0,0)\mapsto(0,1)$$</p>
+      <p class="eq sm" data-seq="6">$$TR=\begin{bmatrix}0&-1&1\\1&0&0\\0&0&1\end{bmatrix}\;\Rightarrow\;(0,0)\mapsto(1,0)$$</p>
+      <div class="trap" data-seq="7"><b>orden</b>\(BA\) significa «primero \(A\), luego \(B\)»: la primera transformación queda a la derecha.</div>
+    </div>
+  </div>
+  <aside class="notes">Comprobación: RT aplicada al origen, primero se traslada a (1,0) y luego se gira 90 grados a (0,1). TR aplicada al origen: el giro deja el origen en el origen y la traslación lo lleva a (1,0). Resultados distintos, así que el orden importa. Es la razón por la que en el código la matriz compuesta se escribe al revés del orden en que se aplican las operaciones.</aside>
+</section>
+
+<section class="slide" id="fwd-inv" data-fx="vc" data-section="Geometría e interpolación" data-title="Forward frente a inverse">
+  <header class="s-head"><p class="kicker">geometría · cómo se implementa</p><h2 class="s-title">Forward e inverse mapping</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="imgrow">
+        <figure class="im s pix" data-seq="1"><img src="assets/src128.png" alt="imagen origen"><figcaption>origen 128×128</figcaption></figure>
+        <figure class="im s pix" data-seq="2"><img src="assets/fwd_holes.png" alt="forward mapping con huecos"><figcaption><b>forward</b>: huecos negros</figcaption></figure>
+        <figure class="im s pix" data-seq="3"><img src="assets/inv_ok.png" alt="inverse mapping"><figcaption><b>inverse</b>: sin huecos</figcaption></figure>
+      </div>
+      <p class="mini" data-seq="3">rotación de 30° y escala 1,3, resultados reales (<code>map_coordinates</code>, orden 1)</p>
+    </div>
+    <div class="vstack">
+      <div class="card" data-seq="2"><h3>Directo (forward)</h3><p>Recorre la entrada: \((x',y')=A(x,y)\), redondeado. Varios píxeles caen en el mismo sitio (solapes) y otros no reciben ninguno (huecos).</p></div>
+      <div class="card c2" data-seq="3"><h3>Inverso (inverse)</h3><p>Recorre la salida \((x',y')\), calcula \((x,y)=A^{-1}(x',y')\) e <b>interpola</b> en la entrada. Cada píxel de salida recibe valor exactamente una vez.</p></div>
+      <div class="tip" data-seq="4"><b>regla</b>En la práctica se usa siempre el inverso. Para una rotación, \(A^{-1}=R(-\theta)\).</div>
+    </div>
+  </div>
+  <aside class="notes">En el mapeo directo, al ampliar la imagen la rejilla de salida es más densa que la de entrada y quedan píxeles sin escribir. El mapeo inverso invierte el problema: para cada píxel de salida se pregunta de dónde viene. Como el punto de origen casi nunca cae en coordenadas enteras, hace falta interpolar.</aside>
+</section>
+
+<section class="slide" id="bilineal" data-fx="vc" data-section="Geometría e interpolación" data-title="Interpolación bilineal">
+  <header class="s-head"><p class="kicker">interpolación · demostración</p><h2 class="s-title">Interpolación bilineal</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv">
+      <div data-seq="1"><span>$$f(x,y)\approx ax+by+cxy+d$$</span><span class="why">4 incógnitas, 4 vecinos</span></div>
+      <div data-seq="2"><span>$$d=f_{00}$$</span><span class="why">en \((0,0)\)</span></div>
+      <div data-seq="3"><span>$$a=f_{10}-f_{00},\;\;b=f_{01}-f_{00}$$</span><span class="why">en \((1,0)\) y \((0,1)\)</span></div>
+      <div data-seq="4"><span>$$c=f_{11}-f_{10}-f_{01}+f_{00}$$</span><span class="why">en \((1,1)\)</span></div>
+      <div data-seq="5"><span>$$f=(1-x)(1-y)f_{00}+x(1-y)f_{10}+(1-x)y\,f_{01}+xy\,f_{11}$$</span><span class="why">pesos = áreas opuestas</span></div>
+    </div>
+    <div class="g3">
+      <p class="txt" data-seq="6"><b>Equivale a dos lineales encadenadas:</b> primero en \(x\) sobre las dos filas y luego en \(y\).</p>
+      <div class="tip" data-seq="6"><b>nombre</b>«Bi-lineal» = lineal en cada variable por separado; el término \(cxy\) hace que no sea un plano.</div>
+      <div class="exam" data-seq="7"><b>en el examen</b>Usa 4 vecinos; los 4 pesos suman 1, así que el resultado queda entre el mínimo y el máximo de los vecinos.</div>
+    </div>
+  </div>
+  <aside class="notes">Se plantea un polinomio con un término por cada monomio de grado máximo uno en cada variable, que son cuatro: x, y, xy y constante. Con los cuatro vecinos en las esquinas del cuadrado unidad se obtiene un sistema triangular que se resuelve a mano. Al expandir la fórmula de los pesos se vuelve a la forma ax + by + cxy + d: son la misma función.</aside>
+</section>
+
+<section class="slide" id="bilineal-num" data-fx="vc" data-section="Geometría e interpolación" data-title="Ejemplo bilineal resuelto">
+  <header class="s-head"><p class="kicker">interpolación · cálculo a mano</p><h2 class="s-title">Bilineal en (0,25 ; 0,5)</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[10,20],[30,40]]' data-dec="0" style="height:260px"></div>
+      <p class="mini">filas = \(y\) (0 y 1); columnas = \(x\) (0 y 1)<br>\(f_{00}=10,\;f_{10}=20,\;f_{01}=30,\;f_{11}=40\) (de ejemplo)</p>
+    </div>
+    <div class="deriv">
+      <div data-seq="1"><span>$$f(0{,}25;0)=10+0{,}25\,(20-10)=12{,}5$$</span><span class="why">lineal en \(x\), fila \(y=0\)</span></div>
+      <div data-seq="2"><span>$$f(0{,}25;1)=30+0{,}25\,(40-30)=32{,}5$$</span><span class="why">lineal en \(x\), fila \(y=1\)</span></div>
+      <div data-seq="3"><span>$$f(0{,}25;0{,}5)=12{,}5+0{,}5\,(32{,}5-12{,}5)=22{,}5$$</span><span class="why">lineal en \(y\) entre filas</span></div>
+      <div data-seq="4"><span>$$a=10,\;b=20,\;c=0,\;d=10$$</span><span class="why">coeficientes de la demostración</span></div>
+      <div data-seq="5"><span>$$10(0{,}25)+20(0{,}5)+0+10=22{,}5\;\checkmark$$</span><span class="why">comprobación con \(ax+by+cxy+d\)</span></div>
+    </div>
+  </div>
+  <aside class="notes">Resultado 22,5. Comprobado por dos caminos: encadenando dos interpolaciones lineales y con los coeficientes a, b, c, d. Aquí c vale cero porque los cuatro valores forman un plano: 10, 20, 30, 40 cumplen f11 + f00 = f10 + f01.</aside>
+</section>
+
+<section class="slide" id="interp-coste" data-fx="vc" data-section="Geometría e interpolación" data-title="Coste y calidad">
+  <header class="s-head"><p class="kicker">interpolación · comparación</p><h2 class="s-title">Coste y calidad</h2></header>
+  <div class="s-body vstack">
+    <div class="imgrow">
+      <figure class="im" data-seq="1"><img src="assets/interp_nn.png" alt="vecino más próximo"><figcaption><b>vecino</b> (orden 0)</figcaption></figure>
+      <figure class="im" data-seq="2"><img src="assets/interp_bl.png" alt="bilineal"><figcaption><b>bilineal</b> (orden 1)</figcaption></figure>
+      <figure class="im" data-seq="3"><img src="assets/interp_bc.png" alt="bicúbica"><figcaption><b>bicúbica</b> (orden 3)</figcaption></figure>
+    </div>
+    <table class="t" data-seq="4">
+      <tr><th>método</th><th>vecinos</th><th>resultado</th></tr>
+      <tr><td>vecino más próximo</td><td>1 píxel</td><td class="warn">bloques (pixelado), pero no inventa valores nuevos</td></tr>
+      <tr><td>bilineal</td><td>4 píxeles</td><td class="ok">suaviza; no sobrepasa el rango</td></tr>
+      <tr><td>bicúbica</td><td>16 píxeles</td><td class="warn">más nítida y más cara; puede sobrepasar el rango</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Recorte de 20 por 20 píxeles de la imagen de la cabeza ampliado dieciséis veces con scipy.ndimage.zoom, órdenes 0, 1 y 3. La bicúbica usa un polinomio cúbico por eje, así que puede producir valores por encima de 255 o por debajo de 0 en los bordes: hay que recortar con np.clip.</aside>
+</section>
+
+
+<section class="slide" id="interp-nucleos" data-fx="vc" data-section="Geometría e interpolación" data-title="Núcleos de interpolación">
+  <header class="s-head"><p class="kicker">interpolación · por qué la bicúbica se sale</p><h2 class="s-title">Núcleos de interpolación</h2></header>
+  <div class="s-body g21">
+    <div class="fx" data-role="plot" data-x="-2,2" data-y="-0.5,1.5" data-xl="distancia x al píxel (en píxeles)" data-yl="peso h(x)" data-legend="tr" data-fns='[{"f":"x=>Math.abs(x)<0.5?1:0","label":"vecino"},{"f":"x=>Math.max(0,1-Math.abs(x))","label":"lineal"},{"f":"x=>{const t=Math.abs(x),a=-0.5;return t<=1?(a+2)*t*t*t-(a+3)*t*t+1:(t<2?a*t*t*t-5*a*t*t+8*a*t-4*a:0)}","label":"cúbica (a = −0,5)"}]' style="height:600px"></div>
+    <div class="vstack">
+      <p class="eq" data-seq="1">$$f(x)=\sum_k f_k\,h(x-k)$$</p>
+      <p class="txt" data-seq="2">Interpolar es <b>convolucionar</b> las muestras con un núcleo \(h\). Su anchura fija cuántos vecinos entran: 1, 2 y 4 por eje, es decir <b>1, 4 y 16</b> en 2D.</p>
+      <div class="trap" data-seq="3"><b>lóbulos negativos</b>La cúbica vale \(h(1{,}5)=-0{,}0625\): resta un poco de los vecinos lejanos. Por eso realza bordes y puede dar valores &lt; 0 o &gt; 255. Recorta con <code>np.clip</code>.</div>
+      <div class="tip" data-seq="4"><b>lineal</b>Todos sus pesos son \(\ge 0\) y suman 1: el resultado nunca sale de \([\min,\max]\) de los vecinos.</div>
+    </div>
+  </div>
+  <aside class="notes">Los tres núcleos en 1D. En 2D se aplican por separado en x y en y, de ahí que el número de vecinos sea el cuadrado: 1, 4 y 16. El núcleo cúbico dibujado es el de Keys con a = -0,5, el clásico de la convolución bicúbica: vale 1 en 0, 0 en los enteros y tiene lóbulos negativos entre 1 y 2, con h(1,5) = -0,0625. scipy.ndimage.zoom con orden 3 usa splines cúbicos, que también tienen lóbulos negativos en su núcleo equivalente y también se salen del rango.</aside>
+</section>
+
+<!-- ===================== BLOQUE C · INTENSIDAD ===================== -->
+
+<section class="slide is-plain divider" id="div-int" data-fx="backdrop" data-seed="31" data-section="Transformaciones de intensidad" data-title="Transformaciones de intensidad">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque c · transformaciones de intensidad</p>
+    <h1 class="s-title xl">Intensidad</h1>
+    <p class="lead">Funciones \(s=T(r)\) píxel a píxel: umbral, negativo, logaritmo, gamma y lineal a trozos, con su código NumPy.</p>
+  </div>
+</section>
+
+<section class="slide" id="umbral" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Umbral y estiramiento">
+  <header class="s-head"><p class="kicker">intensidad · \(s=T(r)\)</p><h2 class="s-title">Umbral y estiramiento</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r (entrada)" data-yl="s (salida)" data-fns='[{"f":"x=>x>128?255:0","label":"umbral m = 128"}]' style="height:470px"></div>
+      <p class="eq">$$s=\begin{cases}L-1&r>m\\0&r\le m\end{cases}$$</p>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r (entrada)" data-yl="s (salida)" data-fns='[{"f":"x=>255/(1+Math.pow(128/x,4))","label":"E = 4, m = 128"}]' style="height:470px"></div>
+      <p class="eq">$$s=\frac{L-1}{1+(m/r)^{E}}$$</p>
+    </div>
+  </div>
+  <aside class="notes">El umbral binariza: todo lo que supera m pasa a blanco. El estiramiento de contraste es una versión suave: oscurece lo que está por debajo de m y aclara lo que está por encima; cuanto mayor es E, más se parece al umbral. En el límite E tiende a infinito se obtiene exactamente el umbral. Con L = 256, L-1 = 255.</aside>
+</section>
+
+<section class="slide" id="umbral-cod" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Código: threshold">
+  <header class="s-head"><p class="kicker">examen · código vectorizado</p><h2 class="s-title">threshold(im, thr)</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def threshold(im, thr):
+    return (im &gt; thr) * 255
+
+def threshold2(im, thr):
+    return np.where(im &gt; thr, 255, 0)</pre>
+      <div class="trap" data-seq="2"><b>tipo</b>Ambas devuelven <code>int64</code>. Para guardar o mostrar como imagen: <code>.astype(np.uint8)</code>.</div>
+      <div class="imgrow" data-seq="3">
+        <figure class="im xs"><img src="assets/cab_orig.png" alt="cabeza"><figcaption>entrada</figcaption></figure>
+        <figure class="im xs"><img src="assets/cab_thr.png" alt="cabeza umbralizada"><figcaption><code>thr = 90</code></figcaption></figure>
+      </div>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="2"><div class="sig">np.where(condicion, x, y)</div>
+        <table>
+          <tr><td>condicion</td><td>array booleano del tamaño de <code>im</code></td></tr>
+          <tr><td>x, y</td><td>valor donde es <code>True</code> / <code>False</code>; admiten escalares o arrays</td></tr>
+          <tr><td>retorno</td><td>array nuevo; con un solo argumento devuelve los índices de los <code>True</code></td></tr>
+        </table>
+      </div>
+      <div class="api" data-seq="3"><div class="sig">im &gt; thr</div>
+        <table>
+          <tr><td>efecto</td><td>comparación elemento a elemento: array booleano con la forma de <code>im</code></td></tr>
+          <tr><td>× 255</td><td><code>True</code> vale 1 y <code>False</code> vale 0: da 255 o 0</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Nunca se escribe un doble bucle for sobre los píxeles: la comparación im > thr ya produce una máscara booleana con la forma de la imagen, y multiplicarla por 255 convierte True en 255 y False en 0. np.where es la forma más explícita y permite otros valores de salida.</aside>
+</section>
+
+<section class="slide" id="negativo" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Negativo">
+  <header class="s-head"><p class="kicker">intensidad · \(s=L-1-r\)</p><h2 class="s-title">Negativo</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="imgrow">
+        <figure class="im n" data-seq="1"><img src="assets/cab_orig.png" alt="cabeza"><figcaption>original</figcaption></figure>
+        <figure class="im n" data-seq="2"><img src="assets/cab_neg.png" alt="negativo"><figcaption>negativo</figcaption></figure>
+      </div>
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r (entrada)" data-yl="s" data-legend="tr" data-fns='[{"f":"x=>255-x","label":"s = 255 − r"}]' style="min-height:0;height:260px"></div>
+    </div>
+    <div class="vstack">
+      <p class="eq big" data-seq="2">$$s=L-1-r$$</p>
+      <p class="txt" data-seq="3"><b>Para qué sirve.</b> En una mamografía, el detalle claro o gris sobre una zona grande oscura cuesta verlo. Al invertir queda oscuro sobre fondo claro, donde el ojo distingue mejor pequeñas variaciones.</p>
+      <div class="tip" data-seq="4"><b>propiedad</b>\(T\) es decreciente: invierte el orden de los niveles. Aplicarla dos veces devuelve la imagen original.</div>
+    </div>
+  </div>
+  <aside class="notes">La transformación es una recta con pendiente menos uno que pasa por (0, L-1) y (L-1, 0). No cambia el contenido de información: es una biyección de los niveles de gris. Solo cambia cómo lo percibe el ojo.</aside>
+</section>
+
+<section class="slide" id="negativo-cod" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Negativo y desbordamiento">
+  <header class="s-head"><p class="kicker">examen · trampa de uint8</p><h2 class="s-title">Negativo y uint8</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def negative(im):
+    return 255 - im            # bien: 255 - 10 = 245
+
+im = np.array([10, 20, 200], dtype=np.uint8)
+im - 255     # [ 11  21 200]  ¡mal! envuelve</pre>
+      <div class="trap" data-seq="2"><b>desbordamiento</b><code>uint8</code> solo guarda 0–255 y la aritmética es módulo 256: \(10-255=-245\equiv 11\pmod{256}\). No es una advertencia: numpy no avisa.</div>
+      <div class="tip" data-seq="4"><b>seguro</b>Si vas a restar o elevar, convierte antes: <code>im.astype(float)</code>. En <code>255 - im</code> el resultado nunca sale del rango.</div>
+    </div>
+    <div class="vstack">
+      <table class="t" data-seq="3">
+        <tr><th>\(r\)</th><th><code>255 - im</code></th><th><code>im - 255</code></th></tr>
+        <tr><td>10</td><td class="ok">245</td><td class="err">11 (error)</td></tr>
+        <tr><td>20</td><td class="ok">235</td><td class="err">21 (error)</td></tr>
+        <tr><td>200</td><td class="ok">55</td><td class="err">201 (error)</td></tr>
+      </table>
+      <div class="fx" data-role="plot" data-seq="3" data-x="0,255" data-y="0,255" data-xl="r (uint8)" data-yl="resultado" data-legend="tr" data-fns='[{"f":"x=>255-x","label":"255 - im","c":"ok"},{"f":"x=>x<255?x+1:0","label":"im - 255","c":"err"}]' style="min-height:0;height:340px"></div>
+    </div>
+  </div>
+  <aside class="notes">En la primera línea, 255 menos un uint8 está siempre entre 0 y 255, así que no desborda. Con im - 255 los resultados serían negativos y se envuelven: -245 mas 256 vale 11. Hay que acordarse de esto cada vez que se opere con imágenes cargadas con PIL, que son uint8.</aside>
+</section>
+
+<section class="slide" id="logaritmo" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Logaritmo">
+  <header class="s-head"><p class="kicker">intensidad · \(s=c\log(1+r)\)</p><h2 class="s-title">Transformación logarítmica</h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$s=c\log(1+r)$$</span><span class="why">definición; \(1+r\) evita \(\log 0\)</span></div>
+      <div data-seq="2"><span>$$T(L-1)=L-1$$</span><span class="why">exigimos mapear \([0,L-1]\to[0,L-1]\)</span></div>
+      <div data-seq="3"><span>$$c\log(1+(L-1))=c\log L=L-1$$</span><span class="why">sustituimos \(r=L-1\)</span></div>
+      <div data-seq="4"><span>$$c=\frac{L-1}{\log L}\;\overset{L=256}{=}\;\frac{255}{\ln 256}\approx 45{,}99$$</span><span class="why">despejamos \(c\)</span></div>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r (entrada)" data-yl="s (salida)" data-fns='[{"f":"x=>45.986*Math.log(1+x)"},{"f":"x=>x","dash":"6 8"}]' style="height:400px"></div>
+      <div class="leg"><span><i style="background:var(--cat-1)"></i>log, c = 45,99</span><span><i style="background:var(--cat-2)"></i>identidad</span></div>
+      <p class="txt" data-seq="5"><b>Expande los oscuros</b> (pendiente alta cerca de 0) y <b>comprime los claros</b>.</p>
+    </div>
+  </div>
+  <aside class="notes">T(0) = c log 1 = 0, así que el origen se conserva sin condiciones adicionales. Solo falta fijar el extremo superior. La derivada es c/(1+r): grande para r pequeño y pequeña para r grande, de ahí que dilate las zonas oscuras y comprima las claras. El logaritmo puede ser natural o decimal: c compensa el cambio de base.</aside>
+</section>
+
+<section class="slide" id="log-uso" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Uso del logaritmo">
+  <header class="s-head"><p class="kicker">intensidad · aplicaciones</p><h2 class="s-title">Dónde se usa el log</h2></header>
+  <div class="s-body vstack">
+    <div class="imgrow">
+      <figure class="im m" data-seq="1"><img src="assets/spec_lin.png" alt="espectro lineal"><figcaption>\(|F|\) lineal: solo un punto</figcaption></figure>
+      <figure class="im m" data-seq="2"><img src="assets/spec_log.png" alt="espectro log"><figcaption>\(\log(1+|F|)\): estructura</figcaption></figure>
+      <figure class="im m" data-seq="3"><img src="assets/hue_orig.png" alt="huesos"><figcaption>huesos (casi negra)</figcaption></figure>
+      <figure class="im m" data-seq="4"><img src="assets/hue_log.png" alt="huesos con log"><figcaption>tras el log</figcaption></figure>
+    </div>
+    <div class="exam" data-seq="5"><b>enlace con la Lección 003</b>El espectro de Fourier tiene un rango dinámico enorme (la componente continua domina). Para verlo se muestra <code>np.log(1 + np.abs(F))</code>.</div>
+  </div>
+  <aside class="notes">En el espectro de Lena, la componente de frecuencia cero es varios órdenes de magnitud mayor que el resto, y en escala lineal solo se ve un punto brillante. El logaritmo comprime ese rango y revela la estructura. En la imagen de huesos, con valores máximos de 93, el log aclara las zonas oscuras con c calculado para llegar a 255.</aside>
+</section>
+
+<section class="slide" id="gamma" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Potencia (gamma)">
+  <header class="s-head"><p class="kicker">intensidad · \(s=c\,r^{\gamma}\)</p><h2 class="s-title">Transformación gamma</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+    <div class="fx" data-role="plot" data-x="0,1" data-y="0,1" data-xl="r (normalizado)" data-yl="s (salida)" data-fns='[{"f":"x=>Math.pow(x,0.04)"},{"f":"x=>Math.pow(x,0.4)"},{"f":"x=>x","dash":"6 8"},{"f":"x=>Math.pow(x,2.5)"},{"f":"x=>Math.pow(x,10)"}]' style="height:540px"></div>
+      <div class="leg"><span><i style="background:var(--cat-1)"></i>γ = 0,04</span><span><i style="background:var(--cat-2)"></i>γ = 0,4</span><span><i style="background:var(--cat-3)"></i>γ = 1</span><span><i style="background:var(--cat-4)"></i>γ = 2,5</span><span><i style="background:var(--cat-5)"></i>γ = 10</span></div>
+    </div>
+    <div class="vstack">
+      <p class="eq" data-seq="1">$$s=c\,r^{\gamma},\quad r\in[0,1]$$</p>
+      <ul class="pts">
+        <li data-seq="2"><b>γ &lt; 1</b>: aclara (curva por encima de la identidad)</li>
+        <li data-seq="3"><b>γ &gt; 1</b>: oscurece (curva por debajo)</li>
+        <li data-seq="4"><b>γ = 1</b>: identidad</li>
+      </ul>
+      <div class="tip" data-seq="5"><b>truco</b>Con γ &lt; 1 se expanden los oscuros, como el log; con γ &gt; 1 se expanden los claros.</div>
+    </div>
+  </div>
+  <aside class="notes">La gamma es una familia de curvas con un parámetro. Se trabaja con r normalizado en [0,1]; en el código esto es im/255. Si γ es menor que uno la curva sube rápido cerca de cero, por eso aclara; si es mayor que uno, es plana cerca de cero y se dispara al final, por eso oscurece.</aside>
+</section>
+
+<section class="slide" id="gamma-demo" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Gamma conserva extremos">
+  <header class="s-head"><p class="kicker">intensidad · demostración</p><h2 class="s-title">Por qué \(r^\gamma\) en [0,1]</h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$T(0)=0^{\gamma}=0,\quad T(1)=1^{\gamma}=1$$</span><span class="why">con \(c=1\) y \(\gamma>0\): extremos fijos</span></div>
+      <div data-seq="2"><span>$$T'(r)=\gamma\,r^{\gamma-1}>0$$</span><span class="why">creciente: no invierte niveles</span></div>
+      <div data-seq="3"><span>$$\frac{r^{\gamma}}{r}=r^{\gamma-1}$$</span><span class="why">compara con la identidad</span></div>
+      <div data-seq="4"><span>$$0\lt r\lt 1,\;\gamma\lt 1\Rightarrow r^{\gamma-1}>1\Rightarrow r^{\gamma}>r$$</span><span class="why">exponente negativo, base menor que 1</span></div>
+      <div data-seq="5"><span>$$r=0{,}25:\;\;\gamma=0{,}5\to0{,}5,\;\;\gamma=2\to0{,}0625$$</span><span class="why">ejemplo numérico</span></div>
+    </div>
+    <div class="imgrow">
+      <figure class="im s" data-seq="6"><img src="assets/hue_orig.png" alt="huesos"><figcaption>original</figcaption></figure>
+      <figure class="im s" data-seq="6"><img src="assets/hue_g04.png" alt="huesos gamma 0,4"><figcaption>γ = 0,4 (real)</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Si no se normaliza a [0,1], 255 elevado a gamma se sale del rango. Por eso en el laboratorio aparece el factor 255 elevado a p menos uno: es exactamente la normalización. El resultado siempre permanece en [0,1] porque la función es creciente y fija 0 y 1.</aside>
+</section>
+
+<section class="slide" id="gamma-monitor" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Corrección gamma de monitores">
+  <header class="s-head"><p class="kicker">intensidad · aplicación clásica</p><h2 class="s-title">Corrección de monitores</h2></header>
+  <div class="s-body vstack">
+    <div class="flow" data-seq="1">
+      <div class="box">\(r\)</div><div class="arr">→</div>
+      <div class="box t">corrección \(r^{1/2{,}5}=r^{0{,}4}\)</div><div class="arr">→</div>
+      <div class="box">monitor \((\cdot)^{2{,}5}\)</div><div class="arr">→</div>
+      <div class="box">\(r\)</div>
+    </div>
+    <div class="g21">
+      <div class="vstack">
+        <div class="deriv nw">
+          <div data-seq="2"><span>$$\left(r^{1/\gamma}\right)^{\gamma}=r^{\gamma/\gamma}=r$$</span><span class="why">potencia de potencia: se multiplican exponentes</span></div>
+          <div data-seq="3"><span>$$0{,}25^{0{,}4}\approx0{,}574$$</span><span class="why">corrección de \(r=0{,}25\)</span></div>
+          <div data-seq="4"><span>$$0{,}574^{2{,}5}\approx0{,}25$$</span><span class="why">el monitor devuelve \(r\)</span></div>
+        </div>
+        <p class="txt" data-seq="5">El monitor aplica \(r^{2{,}5}\) (típico entre 2,2 y 2,5) y oscurece los medios tonos. Precorregimos con \(r^{1/2{,}5}\): la composición es la identidad y vemos la imagen original.</p>
+      </div>
+      <div class="vstack">
+        <div class="fx" data-role="plot" data-x="0,1" data-y="0,1" data-xl="r" data-yl="salida" data-fns='[{"f":"x=>Math.pow(x,0.4)"},{"f":"x=>Math.pow(x,2.5)"},{"f":"x=>x","dash":"6 8"}]' style="min-height:0;height:400px"></div>
+        <div class="leg"><span><i style="background:var(--cat-1)"></i>corrección r^0,4</span><span><i style="background:var(--cat-2)"></i>monitor r^2,5</span><span><i style="background:var(--cat-3)"></i>composición = r</span></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Un monitor CRT, y los modernos por compatibilidad, convierte el voltaje o el valor del píxel en luz con una curva potencial de exponente cercano a 2,5. Si no se compensa, los grises medios se ven demasiado oscuros. La corrección es la función inversa: elevar a 1 partido por gamma.</aside>
+</section>
+
+<section class="slide" id="gamma-examen" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Examen: gamma_correction">
+  <header class="s-head"><p class="kicker">examen · ejercicio 4</p><h2 class="s-title">gamma_correction y rgb2gray</h2></header>
+  <div class="s-body g21">
+<pre class="code" data-seq="1">def gamma_correction(im, a, gamma):
+    return a * im ** gamma          # im normalizada a [0,1]
+
+def rgb2gray(im_rgb):
+    coeffs = np.array([0.2126, 0.7512, 0.0722])
+    g = 1 / 2.2
+    return (gamma_correction(im_rgb[:, :, 0], coeffs[0], g) +
+            gamma_correction(im_rgb[:, :, 1], coeffs[1], g) +
+            gamma_correction(im_rgb[:, :, 2], coeffs[2], g))</pre>
+    <div class="vstack">
+      <div class="tip" data-seq="2"><b>equivalente</b>Aplicar \(R'=R^{1/2{,}2}\) a toda la imagen y luego ponderar da lo mismo: \(c\,R^{\gamma}=c\cdot(R^{\gamma})\). La segunda forma evita una copia.</div>
+      <div class="trap" data-seq="3"><b>normalizar</b>Divide antes por 255 (<code>np.array(Image.open(f))/255.0</code>), o la potencia se sale de rango.</div>
+      <div class="trap" data-seq="4"><b>errata del enunciado</b>Los coeficientes suman \(0{,}2126+0{,}7512+0{,}0722=1{,}036\). El estándar Rec. 709 usa 0,7152 para el verde (suma 1).</div>
+    </div>
+  </div>
+  <aside class="notes">El ejercicio pide usar gamma_correction dentro de rgb2gray. El coeficiente a de gamma_correction se aprovecha como peso del canal. Ojo con el verde: el enunciado del ejemplo escribe 0,7512 y el valor estándar es 0,7152, con lo que los pesos suman uno. Para el examen, usa el valor que te den en el enunciado.</aside>
+</section>
+
+<section class="slide" id="dark-bright" data-fx="vc" data-section="Transformaciones de intensidad" data-title="darkenImg y brightenImg">
+  <header class="s-head"><p class="kicker">lab 1 · demostración algebraica</p><h2 class="s-title">Son gammas disfrazadas</h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$\text{dark}(r)=\frac{r^{p}}{255^{p-1}}=\frac{255\,r^{p}}{255^{p}}$$</span><span class="why">\(255^{p-1}=255^p/255\)</span></div>
+      <div data-seq="2"><span>$$=255\left(\frac{r}{255}\right)^{p}$$</span><span class="why">gamma con \(\gamma=p>1\)</span></div>
+      <div data-seq="3"><span>$$\text{bright}(r)=\left(255^{p-1}r\right)^{1/p}=255^{\frac{p-1}{p}}\,r^{1/p}$$</span><span class="why">reparto el exponente</span></div>
+      <div data-seq="4"><span>$$=255\cdot255^{-1/p}\,r^{1/p}=255\left(\frac{r}{255}\right)^{1/p}$$</span><span class="why">\(\tfrac{p-1}{p}=1-\tfrac1p\)</span></div>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r" data-yl="s" data-fns='[{"f":"x=>255*Math.pow(x/255,2)"},{"f":"x=>255*Math.pow(x/255,0.5)"},{"f":"x=>x","dash":"6 8"}]' style="height:400px"></div>
+      <div class="leg"><span><i style="background:var(--cat-1)"></i>dark, p = 2</span><span><i style="background:var(--cat-2)"></i>bright, p = 2</span><span><i style="background:var(--cat-3)"></i>identidad</span></div>
+      <p class="mini" data-seq="5">p = 2 es el valor por defecto del lab</p>
+    </div>
+  </div>
+  <aside class="notes">El laboratorio escribe darkenImg como r elevado a p dividido por 255 elevado a p menos uno. Es una gamma normalizada con exponente p, y brightenImg es la misma con exponente 1 partido por p. En ambas, el factor 255 es la normalización a [0,1] y la desnormalización de vuelta.</aside>
+</section>
+
+<section class="slide" id="dark-bright2" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Una es la inversa de la otra">
+  <header class="s-head"><p class="kicker">lab 1 · código y comprobación</p><h2 class="s-title">dark y bright son inversas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="deriv">
+        <div data-seq="1"><span>$$\text{bright}(\text{dark}(r))=255\left(\frac{255\,(r/255)^{p}}{255}\right)^{1/p}$$</span><span class="why">sustituir</span></div>
+        <div data-seq="2"><span>$$=255\left(\left(\tfrac{r}{255}\right)^{p}\right)^{1/p}=255\cdot\frac{r}{255}=r$$</span><span class="why">\((x^p)^{1/p}=x\)</span></div>
+      </div>
+<pre class="code" data-seq="3">def darkenImg(im, p=2):
+    return (im ** float(p)) / (255 ** (p - 1))
+
+def brightenImg(im, p=2):
+    return np.power(255.0 ** (p - 1) * im, 1. / p)</pre>
+    </div>
+    <div class="vstack">
+      <div class="trap" data-seq="4"><b>float(p)</b>Con <code>uint8</code>, <code>im ** 2</code> desborda: 20² = 400 se guarda como 144, 200² = 40000 como 64. Con <code>float(p)</code> el resultado es <code>float64</code>.</div>
+      <div class="tip" data-seq="5"><b>np.power</b><code>np.power(a, b)</code> opera elemento a elemento sobre arrays; <code>math.pow</code> solo admite escalares.</div>
+      <div class="exam" data-seq="6"><b>en el examen</b>Pueden pedir escribir una de ellas o decir cuál es la inversa de la otra, o probar que son gammas.</div>
+    </div>
+  </div>
+  <aside class="notes">La composición de ambas es la identidad en [0,255], salvo por redondeos al guardar como uint8. En la práctica, al guardar con astype(np.uint8) se trunca, así que bright(dark(im)) puede diferir de im en una unidad.</aside>
+</section>
+
+<section class="slide" id="ej-gamma" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Ejercicio: empareja gammas">
+  <header class="s-head"><p class="kicker">ejercicio de la diapositiva 18</p><h2 class="s-title">Empareja <span class="nc">γ</span> = 3, 4, 5</h2></header>
+  <div class="s-body vstack">
+    <div class="g21" style="grid-template-columns:1.45fr 1fr;align-items:center">
+      <div class="imgrow" style="gap:20px">
+        <figure class="im"><img src="assets/igl_orig.png" alt="iglesia original"><figcaption>original</figcaption></figure>
+        <figure class="im"><img src="assets/igl_g4.png" alt="A"><figcaption><b>A</b></figcaption></figure>
+        <figure class="im"><img src="assets/igl_g5.png" alt="B"><figcaption><b>B</b></figcaption></figure>
+        <figure class="im"><img src="assets/igl_g3.png" alt="C"><figcaption><b>C</b></figcaption></figure>
+      </div>
+      <div data-seq="2"><div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r" data-yl="s" data-fns='[{"f":"x=>255*Math.pow(x/255,3)","label":"γ = 3 → C"},{"f":"x=>255*Math.pow(x/255,4)","label":"γ = 4 → A"},{"f":"x=>255*Math.pow(x/255,5)","label":"γ = 5 → B"}]' style="min-height:0;height:380px"></div></div>
+    </div>
+    <div class="exam" data-seq="1"><b>solución</b>A = 4, B = 5, C = 3. Mayor \(\gamma\) oscurece más: con \(r=0{,}8\), \(0{,}8^3=0{,}512\), \(0{,}8^4=0{,}41\), \(0{,}8^5=0{,}328\).</div>
+    <p class="mini" data-seq="2">iglesia.pgm real; las tres versiones se calculan con \(255\,(r/255)^{\gamma}\)</p>
+  </div>
+  <aside class="notes">La imagen original está lavada: casi todo son grises claros. Para recuperarla hace falta oscurecer, es decir γ mayor que uno. Cuanto mayor es γ, más baja la curva y más oscura la imagen. Se ordenan por brillo medio: la C, de γ=3, es la más clara, y la B, de γ=5, la más oscura.</aside>
+</section>
+
+<section class="slide" id="trozos" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Lineal a trozos">
+  <header class="s-head"><p class="kicker">intensidad · puntos \((r_1,s_1),(r_2,s_2)\)</p><h2 class="s-title">Lineal a trozos</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="eq sm" data-seq="1">$$T(r)=\begin{cases}\dfrac{s_1}{r_1}\,r & r\le r_1\\[2mm] s_1+\dfrac{s_2-s_1}{r_2-r_1}(r-r_1) & r_1\lt r\le r_2\\[2mm] s_2+\dfrac{L-1-s_2}{L-1-r_2}(r-r_2) & r>r_2\end{cases}$$</p>
+      <div class="tip" data-seq="2"><b>caso límite</b>\(r_1=r_2=m,\;s_1=0,\;s_2=L-1\): los dos tramos laterales son planos y el central es vertical. Es el <b>umbral</b>.</div>
+      <p class="txt" data-seq="3"><b>Rebanado de planos de bits</b> (<i>bit-plane slicing</i>): <code>(im &gt;&gt; k) &amp; 1</code> extrae el bit \(k\). <b>Intensity-level slicing</b>: resaltar un rango \([A,B]\).</p>
+    </div>
+    <div class="vstack">
+    <div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-xl="r (entrada)" data-yl="s (salida)" data-pts='[[80,30,"(r1,s1)"],[170,225,"(r2,s2)"]]' data-fns='[{"f":"x=>x<=80?x*30/80:(x<=170?30+(x-80)*195/90:225+(x-170)*30/85)","label":""}]' style="height:530px"></div>
+      <p class="mini">T(r) de ejemplo, con puntos de control inventados</p>
+    </div>
+  </div>
+  <aside class="notes">Tres tramos rectos unidos en dos puntos de control. Si el punto (r1, s1) está por debajo de la diagonal y (r2, s2) por encima, el tramo central tiene pendiente mayor que uno y estira el contraste entre r1 y r2, a costa de comprimir los extremos. Los puntos del gráfico son de ejemplo.</aside>
+</section>
+
+<section class="slide" id="trozos-cod" data-fx="vc" data-section="Transformaciones de intensidad" data-title="Estiramiento con np.interp">
+  <header class="s-head"><p class="kicker">examen · código</p><h2 class="s-title">Lineal a trozos con np.interp</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def stretch(im, r1, s1, r2, s2):
+    return np.interp(im, [0, r1, r2, 255],
+                         [0, s1, s2, 255])
+
+def stretch_full(im):               # (rmin,0) y (rmax,255)
+    return stretch(im, im.min(), 0, im.max(), 255)</pre>
+      <div class="api" data-seq="2"><div class="sig">np.interp(x, xp, fp)</div>
+        <table>
+          <tr><td>x</td><td>valores a evaluar: aquí la imagen (cualquier forma)</td></tr>
+          <tr><td>xp</td><td>abscisas de los nodos, <b>crecientes</b></td></tr>
+          <tr><td>fp</td><td>ordenadas de los nodos; fuera de rango se repiten los extremos</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="vstack">
+      <div class="imgrow">
+        <figure class="im s" data-seq="3"><img src="assets/hue_orig.png" alt="huesos"><figcaption>huesos, máx = 93</figcaption></figure>
+        <figure class="im s" data-seq="3"><img src="assets/hue_stretch.png" alt="estirada"><figcaption>estirada a [0,255]</figcaption></figure>
+      </div>
+      <div class="trap" data-seq="4"><b>trampa</b>Con \(r_1=r_2\) (umbral) <code>xp</code> no es estrictamente creciente: usa <code>np.where</code> para el umbral.</div>
+    </div>
+  </div>
+  <aside class="notes">np.interp recorre los nodos y para cada valor de la imagen interpola linealmente entre los dos nodos que lo rodean: es exactamente una función lineal a trozos. Aquí se aplica de forma vectorizada a toda la imagen. Con r1 igual a r2 los puntos xp se repiten y el resultado queda mal definido.</aside>
+</section>
+
+<!-- ===================== BLOQUE D · HISTOGRAMA ===================== -->
+
+<section class="slide is-plain divider" id="div-hist" data-fx="backdrop" data-seed="41" data-section="Histograma y ecualización" data-title="Histograma y ecualización">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque d · histograma y ecualización</p>
+    <h1 class="s-title xl">Histograma</h1>
+    <p class="lead">Qué mide un histograma, por qué la CDF lo uniformiza, el cálculo a mano y el código <code>histeq</code>.</p>
+  </div>
+</section>
+
+<section class="slide" id="histograma" data-fx="vc" data-section="Histograma y ecualización" data-title="Qué es un histograma">
+  <header class="s-head"><p class="kicker">histograma · definición</p><h2 class="s-title">Qué es un histograma</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="eq big" data-seq="1">$$h(r_k)=n_k$$</p>
+      <p class="eq big" data-seq="2">$$p(r_k)=\frac{n_k}{MN}$$</p>
+      <p class="txt" data-seq="3">\(n_k\) = nº de píxeles con nivel \(r_k\); \(MN\) = nº total de píxeles. Así \(\sum_k p(r_k)=1\).</p>
+      <div class="trap" data-seq="4"><b>errata de la diapositiva 21</b>La diapositiva escribe \(p(r_k)=r_k/MN\); lo correcto es \(n_k/MN\). Con \(r_k\) no sumaría 1.</div>
+    </div>
+    <div class="vstack">
+<pre class="code sm" data-seq="5">h = np.bincount(im.ravel(), minlength=256)
+# o bien
+h, _ = np.histogram(im, bins=256, range=(0, 256))
+p = h / im.size</pre>
+      <div class="exam" data-seq="6"><b>idea clave</b>«Un histograma no es un gráfico, aunque se pueda dibujar»: es una <b>tabla de recuentos</b>. Pierde la posición espacial: imágenes distintas pueden tener el mismo histograma.</div>
+    </div>
+  </div>
+  <aside class="notes">El histograma cuenta cuántos píxeles hay de cada nivel de gris. Normalizado por el número total de píxeles es la estimación de la función de masa de probabilidad del nivel de gris. Mezclar los píxeles de sitio no cambia el histograma. Cuidado con la errata de la diapositiva: es n sub k, no r sub k.</aside>
+</section>
+
+<section class="slide" id="ej-hist" data-fx="vc" data-section="Histograma y ecualización" data-title="Ejercicio: empareja histogramas">
+  <header class="s-head"><p class="kicker">ejercicio de la diapositiva 20</p><h2 class="s-title">Empareja imágenes e histogramas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="imgrow">
+        <figure class="im xs"><img src="assets/h1.png" alt="1"><figcaption><b>1</b> huesos</figcaption></figure>
+        <figure class="im xs"><img src="assets/h2.png" alt="2"><figcaption><b>2</b> iglesia</figcaption></figure>
+      </div>
+      <div class="imgrow">
+        <figure class="im xs"><img src="assets/h3.png" alt="3"><figcaption><b>3</b> toys comprimida</figcaption></figure>
+        <figure class="im xs"><img src="assets/h4.png" alt="4"><figcaption><b>4</b> cabeza</figcaption></figure>
+      </div>
+    </div>
+    <div class="vstack">
+      <div class="g2" style="gap:16px">
+        <div class="fx" data-role="plot" data-x="0,256" data-y="0,1" data-yl="a" data-bars='[1.0,0.865,0.771,0.711,0.691,0.671,0.655,0.647,0.709,0.72,0.878,0.88,0.933,1.0,0.822,0.771,0.722,0.64,0.633,0.68,0.624,0.633,0.549,0.538,0.536,0.598,0.578,0.425,0.247,0.145,0.084,0.044,0.055,0.035,0.044,0.056,0.045,0.036,0.038,0.029,0.036,0.04,0.035,0.027,0.038,0.031,0.042,0.029,0.031,0.042,0.027,0.049,0.029,0.053,0.033,0.055,0.036,0.038,0.033,0.02,0.035,0.031,0.058,0.556]' style="height:215px;min-height:0"></div>
+        <div class="fx" data-role="plot" data-x="0,256" data-y="0,1" data-yl="b" data-bars='[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.001,0.0,0.01,0.031,0.0,0.037,0.0,0.053,0.052,0.046,0.043,0.036,0.035,0.067,0.03,0.03,0.053,0.025,0.047,0.022,0.066,0.021,0.064,0.042,0.062,0.064,0.042,0.062,0.085,0.066,0.087,0.046,0.094,0.102,0.109,0.134,0.129,0.117,0.109,0.119,0.088,0.112,0.071,0.106,0.074,0.09,0.343,1.0,1.0,0.46,0.162,0.133,0.172,0.04,0.006]' style="height:215px;min-height:0"></div>
+        <div class="fx" data-role="plot" data-x="0,256" data-y="0,1" data-yl="c" data-bars='[1.0,1.0,0.774,0.946,0.842,0.819,0.587,0.426,0.235,0.172,0.105,0.069,0.042,0.028,0.021,0.015,0.012,0.006,0.004,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]' style="height:215px;min-height:0"></div>
+        <div class="fx" data-role="plot" data-x="0,256" data-y="0,1" data-yl="d" data-bars='[0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.006,0.052,0.174,1.0,1.0,0.835,0.483,0.066,0.173,0.059,0.002,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]' style="height:215px;min-height:0"></div>
+      </div>
+      <div class="exam" data-seq="1"><b>solución</b>1→c (oscura) · 2→b (clara) · 3→d (estrecho: poco contraste) · 4→a (ancho: alto contraste)</div>
+    </div>
+  </div>
+  <aside class="notes">Histogramas reales con 64 contenedores (suma de cuatro niveles), normalizados por su pico y recortando el dominante. La imagen 3 es toys comprimida a [100,150] por mí para tener un caso de poco contraste. Regla: la posición del histograma dice brillo, el ancho dice contraste.</aside>
+</section>
+
+<section class="slide" id="eq-idea" data-fx="vc" data-section="Histograma y ecualización" data-title="Idea de la ecualización">
+  <header class="s-head"><p class="kicker">ecualización · objetivo</p><h2 class="s-title">Idea de la ecualización</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,256" data-y="0,255" data-xl="r (huesos.pgm, real)" data-yl="T(r) = 255·CDF" data-bars='[255.0,255.0,197.4,241.2,214.7,208.8,149.7,108.6,59.9,43.9,26.8,17.6,10.7,7.1,5.4,3.8,3.1,1.5,1.0,0.3,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0]' data-fns='[{"f":"x=>[5.5,69.3,94.3,122.8,151.0,180.4,203.2,222.8,233.8,241.3,246.0,249.3,251.1,252.4,253.2,253.9,254.3,254.7,254.9,254.9,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0,255.0][Math.min(63,Math.floor(x/4))]","label":"T(r)"}]' data-legend="br" style="height:520px"></div>
+      <p class="mini">barras: histograma (recortado); curva: \(T(r)\) real de la imagen</p>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Una imagen con <b>mucho rango dinámico</b> y detalle tiene un histograma <b>parecido al uniforme</b>.</p>
+      <p class="txt" data-seq="2">¿Existe una \(T\) que convierta cualquier histograma en uno uniforme?</p>
+      <ul class="pts">
+        <li data-seq="3">\(T\) <b>monótona creciente</b>: no invierte niveles.</li>
+        <li data-seq="4">Pendiente alta donde hay muchos píxeles: <b>los separa</b>.</li>
+      </ul>
+      <div class="tip" data-seq="5"><b>respuesta</b>Sí: la CDF (histograma acumulado) escalada. Es lo que hace el gráfico.</div>
+    </div>
+  </div>
+  <aside class="notes">En la imagen de huesos casi todos los píxeles están por debajo de 40. La curva T sube muy rápido ahí: separa esos niveles que estaban amontonados, y luego se aplana porque casi no hay píxeles brillantes. La curva es la suma acumulada del histograma multiplicada por 255.</aside>
+</section>
+
+<section class="slide" id="eq-continua" data-fx="vc" data-section="Histograma y ecualización" data-title="Demostración continua">
+  <header class="s-head"><p class="kicker">ecualización · demostración</p><h2 class="s-title">Por qué la CDF uniformiza</h2></header>
+  <div class="s-body">
+    <div class="deriv">
+      <div data-seq="1"><span>$$s=T(r)=(L-1)\int_0^{r}p_r(w)\,dw$$</span><span class="why">definición: CDF escalada; creciente, \(T(0)=0\)</span></div>
+      <div data-seq="2"><span>$$\frac{ds}{dr}=(L-1)\,p_r(r)$$</span><span class="why">teorema fundamental del cálculo</span></div>
+      <div data-seq="3"><span>$$p_s(s)\,ds=p_r(r)\,dr\;\Rightarrow\;p_s(s)=p_r(r)\left|\frac{dr}{ds}\right|$$</span><span class="why">cambio de variable: se conserva la probabilidad</span></div>
+      <div data-seq="4"><span>$$p_s(s)=p_r(r)\cdot\frac{1}{(L-1)\,p_r(r)}=\frac{1}{L-1}$$</span><span class="why">se cancela \(p_r\): uniforme en \([0,L-1]\), c.q.d.</span></div>
+    </div>
+    <div class="tip" data-seq="5"><b>condición</b>Se necesita \(p_r>0\) para que \(T\) sea estrictamente creciente e invertible. Esto vale para variables <b>continuas</b>.</div>
+  </div>
+  <aside class="notes">La clave es el cambio de variable para densidades: la probabilidad de que r esté en un intervalo pequeño es igual a la de que s esté en su imagen. Como la derivada de T es L-1 por la densidad, al invertirla la densidad se cancela y queda una constante. Es la misma idea que la transformada integral de probabilidad.</aside>
+</section>
+
+<section class="slide" id="eq-discreta" data-fx="vc" data-section="Histograma y ecualización" data-title="Versión discreta">
+  <header class="s-head"><p class="kicker">ecualización · imágenes digitales</p><h2 class="s-title">Versión discreta</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="eq" data-seq="1">$$s_k=\mathrm{round}\!\left((L-1)\sum_{j=0}^{k}p_r(r_j)\right)$$</p>
+      <p class="eq" data-seq="2">$$=\mathrm{round}\!\left(\frac{L-1}{MN}\sum_{j=0}^{k}n_j\right)$$</p>
+      <p class="txt" data-seq="3">La integral pasa a ser una <b>suma acumulada</b> y el resultado se <b>redondea</b> a un nivel entero. Los números de la derecha son los del ejemplo del libro (siguiente diapositiva).</p>
+    </div>
+    <div class="vstack">
+      <div class="tf-list">
+        <div data-seq="4"><span class="n">1</span><span>histograma \(n_k\)<br><span class="mini">790, 1023, 850, …</span></span></div>
+        <div data-seq="5"><span class="n">2</span><span>acumulado: CDF \(=\sum n_j/MN\)<br><span class="mini">0,193, 0,443, 0,650, …</span></span></div>
+        <div data-seq="6"><span class="n">3</span><span>multiplicar por \(L-1\)<br><span class="mini">1,350, 3,098, 4,551, …</span></span></div>
+        <div data-seq="7"><span class="n">4</span><span>redondear: tabla \(T\)<br><span class="mini">1, 3, 5, …</span></span></div>
+      </div>
+      <div class="trap" data-seq="8"><b>sin garantía</b>Al redondear se <b>fusionan</b> niveles, así que el histograma resultante <b>no es plano</b>: solo está «más repartido».</div>
+    </div>
+  </div>
+  <aside class="notes">Receta de cuatro pasos para hacer a mano. El redondeo es lo que impide la uniformidad exacta: como los niveles son enteros, no se pueden dividir las columnas del histograma, solo se pueden fusionar o desplazar enteras.</aside>
+</section>
+
+<section class="slide" id="eq-ejemplo" data-fx="vc" data-section="Histograma y ecualización" data-title="Ejemplo resuelto a mano">
+  <header class="s-head"><p class="kicker">ecualización · 3 bits, 64×64, \(MN=4096\)</p><h2 class="s-title">Ecualización a mano</h2></header>
+  <div class="s-body g21">
+    <table class="t mid" data-seq="1">
+      <tr><th>\(r_k\)</th><th>\(n_k\)</th><th>\(p_r\)</th><th>CDF</th><th>7·CDF</th><th>\(s_k\)</th></tr>
+      <tr><td>0</td><td>790</td><td>0,193</td><td>0,193</td><td>1,350</td><td><b>1</b></td></tr>
+      <tr><td>1</td><td>1023</td><td>0,250</td><td>0,443</td><td>3,098</td><td><b>3</b></td></tr>
+      <tr><td>2</td><td>850</td><td>0,208</td><td>0,650</td><td>4,551</td><td><b>5</b></td></tr>
+      <tr><td>3</td><td>656</td><td>0,160</td><td>0,810</td><td>5,672</td><td><b>6</b></td></tr>
+      <tr><td>4</td><td>329</td><td>0,080</td><td>0,891</td><td>6,234</td><td><b>6</b></td></tr>
+      <tr><td>5</td><td>245</td><td>0,060</td><td>0,950</td><td>6,653</td><td><b>7</b></td></tr>
+      <tr><td>6</td><td>122</td><td>0,030</td><td>0,980</td><td>6,862</td><td><b>7</b></td></tr>
+      <tr><td>7</td><td>81</td><td>0,020</td><td>1,000</td><td>7,000</td><td><b>7</b></td></tr>
+    </table>
+    <div class="vstack">
+      <p class="txt" data-seq="2"><b>Fusiones</b> (mismo \(s_k\)):</p>
+      <p class="eq sm" data-seq="2">$$\{3,4\}\to6,\qquad\{5,6,7\}\to7$$</p>
+      <p class="txt" data-seq="3"><b>Nuevo histograma</b>:</p>
+      <p class="txt" data-seq="3"><code>{1: 790, 3: 1023, 5: 850, 6: 985, 7: 448}</code></p>
+      <div class="tip" data-seq="4"><b>comprobación</b>\(656+329=985\); \(245+122+81=448\); la suma es 4096.</div>
+    </div>
+  </div>
+  <aside class="notes">Los datos son los del libro de Gonzalez y Woods: 790, 1023, 850, 656, 329, 245, 122 y 81, que suman 4096. Se calcula la probabilidad, se acumula, se multiplica por 7 y se redondea. Los niveles 0, 2 y 4 no aparecen en la salida: los niveles 3 y 4 se funden en el 6 y los niveles 5, 6 y 7 en el 7. Los valores se verificaron con Python.</aside>
+</section>
+
+<section class="slide" id="eq-barras" data-fx="vc" data-section="Histograma y ecualización" data-title="Antes y después">
+  <header class="s-head"><p class="kicker">ecualización · el resultado</p><h2 class="s-title">No sale plano</h2></header>
+  <div class="s-body vstack">
+    <div class="g2">
+      <div><div class="fx" data-role="plot" data-x="0,8" data-y="0,1200" data-xl="nivel k (la barra k ocupa [k, k+1))" data-bars="[790,1023,850,656,329,245,122,81]" style="height:380px"></div><p class="mini">antes: \(n_k\)</p></div>
+      <div data-seq="1"><div class="fx" data-role="plot" data-x="0,8" data-y="0,1200" data-xl="nivel s (la barra s ocupa [s, s+1))" data-bars="[0,790,0,1023,0,850,985,448]" style="height:380px"></div><p class="mini">después: 0, 2 y 4 vacíos</p></div>
+    </div>
+    <div class="exam" data-seq="2"><b>V/F</b>«La ecualización garantiza un histograma plano en imágenes digitales»: <b>falso</b>. Garantiza uno más repartido y con más rango; el caso discreto no es uniforme.</div>
+  </div>
+  <aside class="notes">Antes ocupa los niveles 0 a 7 con muchos píxeles en los oscuros. Después se reparte hacia los claros pero con huecos: aparecen niveles con cero píxeles y el 6 y el 7 acumulan bastantes. Eso es consecuencia directa del redondeo.</aside>
+</section>
+
+<section class="slide" id="histeq-lab" data-fx="vc" data-section="Histograma y ecualización" data-title="Lab 1: histeq">
+  <header class="s-head"><p class="kicker">lab 1 · código línea a línea</p><h2 class="s-title">histeq del laboratorio</h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1" style="font-size:26px">def histeq(im, nbins=256):
+    imhist, bins = np.histogram(im.flatten(), list(range(nbins)), density=False)
+    cdf = imhist.cumsum()
+    factor = 255 / cdf[-1]
+    im2 = np.interp(im.flatten(), bins[:-1], factor*cdf)
+    return im2.reshape(im.shape), cdf</pre>
+    <table class="t mid" data-seq="2">
+      <tr><th>línea</th><th>qué hace</th></tr>
+      <tr><td><code>np.histogram(...)</code></td><td>\(n_k\) y los bordes <code>bins</code> (los niveles 0…254)</td></tr>
+      <tr><td><code>imhist.cumsum()</code></td><td>histograma acumulado: \(\sum_{j\le k}n_j\)</td></tr>
+      <tr><td><code>255 / cdf[-1]</code></td><td><code>cdf[-1]</code> \(=MN\): factor \((L-1)/MN\)</td></tr>
+      <tr><td><code>np.interp(...)</code></td><td>evalúa \(T\) en cada píxel con la tabla (nivel, <code>factor*cdf</code>)</td></tr>
+    </table>
+  </div>
+  <aside class="notes">La función aplana la imagen con flatten, calcula el histograma y su acumulada, y define T como factor por cdf, que es 255 por la CDF normalizada. Después evalúa T en cada píxel con np.interp, que es una búsqueda en tabla. Devuelve la imagen y la CDF para poder dibujarla. Detalle: con bins igual a range(256) hay 255 contenedores y el último, cerrado por la derecha, agrupa 254 y 255; la suma sigue siendo MN.</aside>
+</section>
+
+<section class="slide" id="interp-lut" data-fx="vc" data-section="Histograma y ecualización" data-title="np.interp como tabla">
+  <header class="s-head"><p class="kicker">lab 1 · funciones usadas</p><h2 class="s-title">np.interp y np.histogram</h2></header>
+  <div class="s-body g2">
+    <div class="api" data-seq="1"><div class="sig">np.histogram(a, bins, range, density)</div>
+      <table>
+        <tr><td>a</td><td>datos; con <code>flatten()</code> o <code>ravel()</code> para aplanar</td></tr>
+        <tr><td>bins</td><td>entero o lista de <b>bordes</b>: devuelve <code>len(bins)-1</code> recuentos</td></tr>
+        <tr><td>range</td><td>(mín, máx) si <code>bins</code> es entero</td></tr>
+        <tr><td>retorno</td><td><code>(hist, bin_edges)</code></td></tr>
+        <tr><td>trampa</td><td><code>list(range(256))</code> da 255 contenedores; el último incluye 254 y 255</td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="2"><div class="sig">np.interp(x, xp, fp)</div>
+        <table>
+          <tr><td>idea</td><td>«busca \(x\) en la tabla \((x_p,f_p)\) e interpola»: es la <b>LUT</b> de \(T\)</td></tr>
+          <tr><td>aquí</td><td><code>xp = bins[:-1]</code> (niveles), <code>fp = factor*cdf</code> (\(T\))</td></tr>
+        </table>
+      </div>
+      <div class="exam" data-seq="3"><b>en el examen</b>No hay que memorizar el contenedor 254: escribe la alternativa corta con <code>np.bincount</code> e indexación (siguiente diapositiva).</div>
+    </div>
+  </div>
+  <aside class="notes">np.interp con xp igual a los niveles enteros devuelve, para un píxel de nivel entero, exactamente el valor de la tabla. Por eso es equivalente a consultar una tabla. La salida es de tipo float; al guardar se convierte a uint8.</aside>
+</section>
+
+<section class="slide" id="histeq-lut" data-fx="vc" data-section="Histograma y ecualización" data-title="Alternativa corta: T[im]">
+  <header class="s-head"><p class="kicker">examen · versión para escribir a mano</p><h2 class="s-title">Ecualizar con una LUT</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">def histeq2(im):
+    h = np.bincount(im.ravel(), minlength=256)
+    T = np.round(255 * np.cumsum(h) / im.size)
+    T = T.astype(np.uint8)
+    return T[im]</pre>
+      <div class="tip" data-seq="5"><b>equivalente</b>Da el mismo resultado que <code>histeq</code> del lab salvo un redondeo (diferencia máxima &lt; 0,5 niveles en iglesia.pgm).</div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="2"><b>¿Por qué funciona <code>T[im]</code>?</b> Es <i>fancy indexing</i>: si <code>im</code> es un array de enteros, <code>T[im][i,j] = T[im[i,j]]</code>. El resultado tiene la forma de <code>im</code>.</p>
+      <div data-seq="3">
+        <div class="vc-heat" data-m='[[1,3,5,6,6,7,7,7]]' data-dec="0" style="min-height:0;height:110px"></div>
+        <p class="mini" style="text-align:center"><code>T</code> del ejemplo de 3 bits: la posición \(k\) guarda \(s_k\)</p>
+      </div>
+      <div class="g2" data-seq="4" style="gap:24px">
+        <div><div class="vc-heat" data-m='[[0,1],[3,7]]' data-dec="0" style="min-height:0;height:190px"></div><p class="mini" style="text-align:center"><code>im</code> (índices)</p></div>
+        <div><div class="vc-heat" data-m='[[1,3],[6,7]]' data-dec="0" style="min-height:0;height:190px"></div><p class="mini" style="text-align:center"><code>T[im]</code> = T[0], T[1], T[3], T[7]</p></div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">np.bincount cuenta ocurrencias de enteros no negativos: con minlength 256 siempre devuelve 256 posiciones. La suma acumulada dividida por im.size es la CDF normalizada. T es una tabla de 256 entradas, y indexarla con la imagen aplica la transformación a todos los píxeles a la vez, sin bucles. Verificado en Python contra histeq del lab.</aside>
+</section>
+
+<section class="slide" id="ej-cumsum" data-fx="vc" data-section="Histograma y ecualización" data-title="Ejercicio: tu propio cumsum">
+  <header class="s-head"><p class="kicker">ejercicio de la diapositiva 24</p><h2 class="s-title">Escribe tu cumsum</h2></header>
+  <div class="s-body g2">
+<pre class="code" data-seq="1">def my_cumsum(h):                    # con bucle
+    H = np.zeros_like(h)
+    acc = 0
+    for i in range(len(h)):
+        acc += h[i]
+        H[i] = acc
+    return H
+
+def my_cumsum_vec(h):                # sin bucle
+    n = len(h)
+    return np.tril(np.ones((n, n))) @ h
+
+def check_cumsum(H1, H2):
+    return np.allclose(H1, H2)  # o array_equal</pre>
+    <div class="vstack">
+      <div class="deriv" data-seq="2">
+        <div><span>$$H_i=\sum_{j\le i}h_j=\sum_{j}L_{ij}\,h_j$$</span><span class="why">\(L_{ij}=1\) si \(j\le i\)</span></div>
+      </div>
+      <p class="txt" data-seq="2">La matriz <code>np.tril(np.ones((n,n)))</code> es triangular inferior de unos: la fila \(i\) suma \(h_0\ldots h_i\).</p>
+      <div class="tip" data-seq="3"><b>prueba</b><code>check_cumsum(my_cumsum(h), np.cumsum(h))</code> debe dar <code>True</code>.</div>
+      <div class="trap" data-seq="4"><b>coste</b>La versión matricial es \(O(n^2)\) en memoria: sirve para entender, no para imágenes grandes.</div>
+    </div>
+  </div>
+  <aside class="notes">Tres piezas: la versión con bucle, la matricial y el comprobador. Con enteros pequeños la versión matricial devuelve floats pero con valores exactos, así que array_equal también vale. Para floats generales es mejor allclose, por los errores de redondeo.</aside>
+</section>
+
+<section class="slide" id="glob-loc" data-fx="vc" data-section="Histograma y ecualización" data-title="Global frente a local">
+  <header class="s-head"><p class="kicker">ecualización · resultados reales</p><h2 class="s-title">Ecualización global y local</h2></header>
+  <div class="s-body vstack">
+    <div class="imgrow">
+      <figure class="im s" data-seq="1"><img src="assets/hue_orig.png" alt="original"><figcaption>original</figcaption></figure>
+      <figure class="im s" data-seq="2"><img src="assets/hue_glob.png" alt="global"><figcaption><b>global</b> (<code>histeq</code>)</figcaption></figure>
+      <figure class="im s" data-seq="3"><img src="assets/hue_loc3.png" alt="local 3x3"><figcaption>local 3×3</figcaption></figure>
+      <figure class="im s" data-seq="4"><img src="assets/hue_loc31.png" alt="local 31x31"><figcaption>local 31×31</figcaption></figure>
+    </div>
+    <div class="g2" data-seq="5">
+      <div class="tip"><b>local</b>Una tabla \(T\) por ventana: revela detalles ocultos que la global no ve.</div>
+      <div class="trap"><b>ruido</b>En zonas planas amplifica el ruido: con 3×3 casi solo se ve ruido.</div>
+    </div>
+  </div>
+  <aside class="notes">Resultados reales sobre huesos.pgm con la implementación de histeq del laboratorio y con skimage.filters.rank.equalize para la local. La ventana 3 por 3 tiene solo nueve píxeles, la CDF local es muy ruidosa y el resultado es casi ruido. Una ventana de 31 por 31 es un compromiso mejor entre detalle y ruido.</aside>
+</section>
+
+<section class="slide" id="errata-entropia" data-fx="vc" data-section="Histograma y ecualización" data-title="Errata: la entropía">
+  <header class="s-head"><p class="kicker">errata conocida</p><h2 class="s-title">Ecualización y entropía</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="eq big" data-seq="1">$$H(f(X))\le H(X)$$</p>
+      <p class="txt" data-seq="2"><b>Desigualdad de procesamiento de datos.</b> \(T\) es una función determinista del nivel: no puede añadir información. Al <b>fusionar</b> niveles, la entropía baja o se queda igual (igual solo si \(T\) es inyectiva).</p>
+      <div class="exam" data-seq="3"><b>V/F</b>«La ecualización aumenta la información de la imagen»: <b>falso</b>. Mejora el contraste <i>visible</i>, no la información.</div>
+    </div>
+    <div class="vstack">
+      <table class="t" data-seq="4">
+        <tr><th>imagen (real)</th><th>\(H\) antes</th><th>\(H\) después</th></tr>
+        <tr><td>huesos.pgm</td><td>5,254 bits</td><td class="warn">5,204 bits</td></tr>
+        <tr><td>iglesia.pgm</td><td>5,975 bits</td><td class="warn">5,918 bits</td></tr>
+      </table>
+      <p class="txt" data-seq="5"><b>A mano</b> (de ejemplo): 4 niveles equiprobables; \(T\) fusiona los niveles 2 y 3.</p>
+      <p class="eq sm" data-seq="6">$$H\big(\tfrac14,\tfrac14,\tfrac14,\tfrac14\big)=2\;\longrightarrow\;H\big(\tfrac14,\tfrac14,\tfrac12\big)=1{,}5\ \text{bits}$$</p>
+      <p class="mini" data-seq="6">\(H=-\sum_k p_k\log_2 p_k\); \(\tfrac12\log_2 2=0{,}5\) y \(2\cdot\tfrac14\log_2 4=1\)</p>
+    </div>
+  </div>
+  <aside class="notes">Algunos apuntes dicen que la ecualización maximiza la entropía. Eso es falso para imágenes digitales: la entropía de salida no puede superar la de entrada porque T es una función. El histograma parece más completo porque ocupa más niveles, pero la entropía se calcula sobre la distribución de los valores y la fusión de niveles la reduce. Se calculó con la fórmula de Shannon sobre los histogramas de 256 niveles de las dos imágenes, con la salida redondeada a enteros.</aside>
+</section>
+
+<!-- ===================== BLOQUE E · COLOR ===================== -->
+
+<section class="slide is-plain divider" id="div-color" data-fx="backdrop" data-seed="51" data-section="Pseudocolor" data-title="Pseudocolor">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque e · pseudocolor y multiespectral</p>
+    <h1 class="s-title xl">Pseudocolor</h1>
+    <p class="lead">Rebanado de intensidad, composición de bandas en falso color y mapas de color de Matplotlib.</p>
+  </div>
+</section>
+
+<section class="slide" id="slicing" data-fx="vc" data-section="Pseudocolor" data-title="Intensity slicing">
+  <header class="s-head"><p class="kicker">pseudocolor · rebanar en colores</p><h2 class="s-title">Intensity slicing</h2></header>
+  <div class="s-body g2" style="grid-template-columns:1.1fr 1fr">
+    <div class="imgrow">
+      <figure class="im l" data-seq="1"><img src="assets/cab_gray.png" alt="gris"><figcaption>256 grises</figcaption></figure>
+      <figure class="im l" data-seq="2"><img src="assets/cab_slice.png" alt="8 colores"><figcaption>8 rebanadas de color</figcaption></figure>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="3">El ojo distingue unas <b>decenas de grises</b> pero <b>miles de colores</b>: asignar color a rangos de intensidad hace visibles diferencias pequeñas.</p>
+<pre class="code" data-seq="4">idx = im // 32                  # 0..7
+out = palette[idx]              # (M, N, 3)</pre>
+      <p class="mini" data-seq="4"><code>palette</code> es un array (8, 3) de colores RGB; indexar con <code>idx</code> es la misma LUT de antes.</p>
+    </div>
+  </div>
+  <aside class="notes">Es una transformación puntual otra vez: cada nivel pasa a un color según la rebanada. L/8 = 32 niveles por rebanada, y la paleta de 8 colores está indexada por idx. Es una tabla de consulta como la de la ecualización, pero con salida de tres canales.</aside>
+</section>
+
+<section class="slide" id="aeropuerto" data-fx="vc" data-section="Pseudocolor" data-title="Ejemplo de rayos X">
+  <header class="s-head"><p class="kicker">pseudocolor · límite del método</p><h2 class="s-title">Rayos X de aeropuerto</h2></header>
+  <div class="s-body vstack">
+    <div class="imgrow">
+      <figure class="im" data-seq="1"><img src="assets/bag_gray.png" alt="equipaje gris"><figcaption>sintético en gris</figcaption></figure>
+      <figure class="im" data-seq="2"><img src="assets/bag_slice.png" alt="equipaje rebanado"><figcaption>rebanado en 8 colores</figcaption></figure>
+    </div>
+    <div class="g2">
+      <table class="t" data-seq="3">
+        <tr><th>zona (de ejemplo)</th><th>nivel</th><th>rebanada</th></tr>
+        <tr><td>fondo</td><td>100</td><td>3 (96–127)</td></tr>
+        <tr><td>maleta</td><td>140</td><td>4 (128–159)</td></tr>
+        <tr><td>objeto</td><td>150</td><td class="warn">4 (128–159)</td></tr>
+      </table>
+      <div class="trap" data-seq="4"><b>misma rebanada</b>El objeto sospechoso (150) y la maleta (140) tienen intensidades distintas pero caen en la <b>misma rebanada</b>: salen del mismo color y se pierde el contraste. El resultado depende de dónde pongas los cortes.</div>
+    </div>
+  </div>
+  <aside class="notes">Imagen sintética creada para el ejemplo, con niveles inventados. Se ve cómo una diferencia de 10 niveles, visible en gris si se mira con atención, desaparece al colorear porque los dos valores caen en la misma rebanada. La elección de los umbrales es crítica y debe adaptarse a lo que se busca.</aside>
+</section>
+
+<section class="slide" id="bandas" data-fx="vc" data-section="Pseudocolor" data-title="Composición de bandas">
+  <header class="s-head"><p class="kicker">multiespectral · falso color</p><h2 class="s-title">Composición de bandas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t" data-seq="1">
+        <tr><th>canal de pantalla</th><th>banda del sensor</th></tr>
+        <tr><td>R</td><td>NIR (infrarrojo cercano)</td></tr>
+        <tr><td>G</td><td>G (verde)</td></tr>
+        <tr><td>B</td><td>B (azul)</td></tr>
+      </table>
+<pre class="code" data-seq="2">fc = np.dstack((nir, g, b))     # (M, N, 3)</pre>
+      <div class="api" data-seq="3"><div class="sig">np.dstack(tup)</div>
+        <table><tr><td>tup</td><td>arrays 2D del mismo tamaño; se apilan en el <b>eje 3</b> y salen \((M,N,3)\)</td></tr></table>
+      </div>
+    </div>
+    <div class="vstack">
+      <div class="imgrow">
+        <figure class="im" data-seq="4"><img src="assets/pep_rgb.png" alt="peppers rgb"><figcaption>RGB real</figcaption></figure>
+        <figure class="im" data-seq="4"><img src="assets/pep_false.png" alt="peppers falso color"><figcaption>(G, R, B)</figcaption></figure>
+      </div>
+      <p class="mini" data-seq="4">No hay banda NIR en el curso: ejemplo con R y G permutadas, para mostrar <code>np.dstack</code>.</p>
+      <p class="txt" data-seq="5">La vegetación refleja mucho NIR: en falso color aparece <b>roja</b>.</p>
+    </div>
+  </div>
+  <aside class="notes">Un sensor multiespectral tiene más bandas que un monitor tiene canales. Se elige qué banda se envía a cada canal de pantalla. Con NIR en el canal rojo, la vegetación sana, que refleja mucho infrarrojo, aparece en rojo intenso. Aquí no disponemos de una imagen NIR, así que se muestran dos canales permutados.</aside>
+</section>
+
+<section class="slide" id="colormaps" data-fx="vc" data-section="Pseudocolor" data-title="Mapas de color">
+  <header class="s-head"><p class="kicker">matplotlib · pseudocolor</p><h2 class="s-title">Mapas de color</h2></header>
+  <div class="s-body vstack">
+    <div class="imgrow">
+      <figure class="im m" data-seq="1"><img src="assets/cab_gray.png" alt="gris"><figcaption>gray</figcaption></figure>
+      <figure class="im m" data-seq="2"><img src="assets/cab_hot.png" alt="hot"><figcaption>hot</figcaption></figure>
+      <figure class="im m" data-seq="3"><img src="assets/cab_jet.png" alt="jet"><figcaption>jet (no perceptual)</figcaption></figure>
+      <figure class="im m" data-seq="4"><img src="assets/cab_viridis.png" alt="viridis"><figcaption>viridis (perceptual)</figcaption></figure>
+    </div>
+    <div class="g2">
+<pre class="code" data-seq="5">plt.imshow(im, cmap='hot')
+plt.colorbar()</pre>
+      <div class="tip" data-seq="6"><b>colorbar</b>Sin la barra, el color no tiene significado cuantitativo: es la leyenda que traduce cada color a su nivel.</div>
+    </div>
+  </div>
+  <aside class="notes">El mismo dato con cuatro mapas de color. plt.colorbar es imprescindible: sin ella el color no tiene significado cuantitativo. Con jet aparecen franjas aparentes que no existen en los datos. Los mapas perceptuales como viridis aumentan de luminosidad de forma monótona.</aside>
+</section>
+
+
+<section class="slide" id="lum-cmaps" data-fx="vc" data-section="Pseudocolor" data-title="Luminosidad de los mapas">
+  <header class="s-head"><p class="kicker">pseudocolor · ¿qué podemos perder?</p><h2 class="s-title">Luminosidad de los mapas</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,1" data-y="0,100" data-xl="valor normalizado del píxel" data-yl="luminosidad L*" data-fns='[{"f":"x=>{const a=[0.0,2.2,4.7,8.2,12.3,16.1,19.9,23.5,27.1,30.6,34.0,37.4,40.7,44.0,47.2,50.4,53.6,56.7,59.8,62.8,65.9,68.9,71.8,74.8,77.7,80.6,83.5,86.3,89.2,92.0,94.8,97.6,100.0],t=x*32,i=Math.min(31,Math.floor(t));return a[i]+(a[i+1]-a[i])*(t-i)}","label":"gray","c":"fg-3"},{"f":"x=>{const a=[0.6,2.7,6.7,12.2,17.5,22.6,27.5,32.3,37.0,41.6,46.1,50.5,53.4,54.2,55.6,57.8,60.7,64.2,68.2,72.6,77.4,82.4,87.6,92.9,97.1,97.2,97.3,97.5,97.8,98.2,98.7,99.4,100.0],t=x*32,i=Math.min(31,Math.floor(t));return a[i]+(a[i+1]-a[i])*(t-i)}","label":"hot","c":"warn"},{"f":"x=>{const a=[12.9,18.7,24.3,29.6,32.3,34.6,39.5,46.5,54.9,63.8,73.0,82.1,90.4,90.0,89.8,90.0,90.4,91.2,92.2,93.6,95.2,92.5,85.1,77.9,71.2,65.3,60.3,56.5,54.2,48.5,40.7,32.7,25.4],t=x*32,i=Math.min(31,Math.floor(t));return a[i]+(a[i+1]-a[i])*(t-i)}","label":"jet","c":"cat-1"},{"f":"x=>{const a=[14.9,17.7,20.4,23.1,25.7,28.3,30.8,33.3,35.7,38.1,40.5,42.8,45.1,47.4,49.8,52.1,54.4,56.7,59.0,61.4,63.7,66.0,68.3,70.7,73.0,75.3,77.5,79.8,82.1,84.3,86.6,88.9,90.9],t=x*32,i=Math.min(31,Math.floor(t));return a[i]+(a[i+1]-a[i])*(t-i)}","label":"viridis","c":"ok"}]' style="height:540px"></div>
+      <p class="mini">L* (CIELAB) real de cada mapa de Matplotlib, calculado con skimage</p>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">En gris, <b>más valor = más claro</b>: la luminosidad crece de forma monótona y el ojo ordena los niveles sin esfuerzo.</p>
+      <div class="tip" data-seq="2"><b>viridis</b>L* sube recta de 15 a 91: es <b>perceptual</b>; impresa en gris conserva el orden.</div>
+      <div class="trap" data-seq="3"><b>jet</b>L* sube hasta ≈95 (amarillo) y vuelve a bajar a ≈25: valores muy distintos se ven igual de claros y la meseta cian-amarilla crea «bordes» que no existen. Difícil para daltónicos.</div>
+    </div>
+  </div>
+  <aside class="notes">La luminosidad L* de CIELAB mide lo claro que percibimos un color. Se ha calculado muestreando cada mapa en 33 puntos y convirtiendo a Lab con skimage.color.rgb2lab. Gray y viridis son monótonas, hot es monótona pero se satura en blanco a partir de 0,75, y jet no es monótona: sube hasta el amarillo y baja en el rojo oscuro. Esa es la respuesta a qué podemos perder con un mapa no perceptual: el orden de los valores y la ausencia de bordes falsos.</aside>
+</section>
+
+<!-- ===================== BLOQUE F · CIERRE ===================== -->
+
+<section class="slide is-plain divider" id="div-cierre" data-fx="backdrop" data-seed="61" data-section="Cierre" data-title="Cierre">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque f · cierre</p>
+    <h1 class="s-title xl">Repaso</h1>
+    <p class="lead">Chuleta de fórmulas y preguntas de verdadero o falso para practicar.</p>
+  </div>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="Cierre" data-title="Chuleta de fórmulas">
+  <header class="s-head"><p class="kicker">cierre · para repasar</p><h2 class="s-title">Chuleta de fórmulas</h2></header>
+  <div class="s-body">
+    <table class="t m big chu">
+      <tr><th>tema</th><th>fórmula</th></tr>
+      <tr><td>afín</td><td>\([x'\,y'\,1]^T=A\,[x\,y\,1]^T\); \(BA\) = primero \(A\); se usa el mapeo inverso \(A^{-1}\)</td></tr>
+      <tr><td>interpolación</td><td>vecino 1 · bilineal 4 · bicúbica 16 vecinos; \(f=ax+by+cxy+d\)</td></tr>
+      <tr><td>negativo</td><td>\(s=L-1-r\) (<code>255 - im</code>, nunca <code>im - 255</code> en uint8)</td></tr>
+      <tr><td>logaritmo</td><td>\(s=c\log(1+r),\;c=\dfrac{L-1}{\log L}\)</td></tr>
+      <tr><td>gamma</td><td>\(s=c\,r^{\gamma}\) (\(r\in[0,1]\)); \(\gamma<1\) aclara, \(\gamma>1\) oscurece; inversa \(r^{1/\gamma}\)</td></tr>
+      <tr><td>lab 1</td><td>\(\text{dark}=255(r/255)^p\);  \(\text{bright}=255(r/255)^{1/p}\)</td></tr>
+      <tr><td>histograma</td><td>\(p(r_k)=n_k/MN\)</td></tr>
+      <tr><td>ecualización</td><td>\(s_k=\mathrm{round}\!\big(\tfrac{L-1}{MN}\sum_{j\le k}n_j\big)\); no plano y \(H(f(X))\le H(X)\)</td></tr>
+      <tr><td>código LUT</td><td><code>T = np.round(255*np.cumsum(h)/im.size).astype(np.uint8); T[im]</code></td></tr>
+    </table>
+  </div>
+  <aside class="notes">Una sola diapositiva con todo lo que hay que saber deducir. Si dominas la deducción de c en el logaritmo, la demostración de la ecualización y la equivalencia de dark y bright con la gamma, tienes cubierto el cálculo de esta lección.</aside>
+</section>
+
+<section class="slide" id="vf" data-fx="vc" data-step-ms="900" data-section="Cierre" data-title="Preguntas V/F de práctica">
+  <header class="s-head"><p class="kicker">cierre · practica</p><h2 class="s-title">Preguntas V/F</h2></header>
+  <div class="s-body vf">
+    <div data-seq="1"><span>La ecualización garantiza un histograma plano en imágenes digitales.</span><span class="a f" data-seq="2">FALSO</span><span class="why" data-seq="2">el redondeo fusiona niveles; queda más repartido</span></div>
+    <div data-seq="3"><span>El logaritmo comprime el rango alto de intensidades.</span><span class="a v" data-seq="4">VERDADERO</span><span class="why" data-seq="4">pendiente alta en los oscuros, baja en los claros</span></div>
+    <div data-seq="5"><span>Una gamma \(\gamma>1\) aclara la imagen.</span><span class="a f" data-seq="6">FALSO</span><span class="why" data-seq="6">\(r^\gamma\lt r\) en \((0,1)\): oscurece</span></div>
+    <div data-seq="7"><span>El forward mapping puede dejar huecos en la imagen de salida.</span><span class="a v" data-seq="8">VERDADERO</span><span class="why" data-seq="8">por eso se usa el inverso con interpolación</span></div>
+    <div data-seq="9"><span>La interpolación bilineal usa 4 vecinos.</span><span class="a v" data-seq="10">VERDADERO</span><span class="why" data-seq="10">los 4 más cercanos, con pesos por área</span></div>
+    <div data-seq="11"><span>La ecualización aumenta la entropía de la imagen.</span><span class="a f" data-seq="12">FALSO</span><span class="why" data-seq="12">\(H(f(X))\le H(X)\): fusionar niveles no añade información</span></div>
+    <div data-seq="13"><span>En <code>uint8</code>, <code>im - 255</code> da valores negativos.</span><span class="a f" data-seq="14">FALSO</span><span class="why" data-seq="14">envuelve módulo 256: \(10-255\to 11\)</span></div>
+  </div>
+  <aside class="notes">Tres verdaderas y cuatro falsas. Primero aparece la afirmación: piensa la respuesta antes de avanzar. En el examen real los matices importan: por ejemplo, la ecualización sí mejora el contraste visible, pero no garantiza uniformidad ni aumenta la entropía.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

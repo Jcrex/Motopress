@@ -1,0 +1,52 @@
+:root { --folio: "VC.LAB2 // "; }
+.shot { display: block; max-width: 100%; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); }
+.shot.c { margin: 0 auto; }
+.cap { font: 400 22px/1.35 var(--font-mono); color: var(--fg-3); margin: 0; }
+.s-body p.txt b, .s-body li b { color: var(--fg); font-weight: 600; }
+.pill { display: inline-block; padding: 2px 14px; border: var(--stroke) solid var(--line-2); border-radius: 999px; font: 500 22px var(--font-mono); color: var(--fg-2); }
+table.t td.num, table.t th.num { text-align: right; font-family: var(--font-mono); }
+.eqrow { display: grid; gap: 4px; }
+
+/* Tamaños mínimos (22 px) y código algo mayor que en vc-base */
+pre.code { font-size: 26px; }
+pre.code.sm { font-size: 24px; line-height: 1.42; }
+table.t th, .api th { font-size: 22px; }
+.tip b:first-child, .trap b:first-child, .exam b:first-child { font-size: 22px; }
+table.t.lg { font-size: 26px; }
+table.t.lg td, table.t.lg th { padding-top: 12px; padding-bottom: 12px; }
+
+/* Diagramas SVG propios */
+.dg { width: 100%; height: auto; display: block; overflow: visible; }
+.dg text { font-family: var(--font-mono); font-size: 22px; fill: var(--fg-2); }
+.dg .t-fg { fill: var(--fg); }
+.dg .t-ac { fill: var(--accent); }
+.dg .t-m { fill: var(--fg-3); }
+.dg .cell { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 1.5; }
+.dg .cell.ac { fill: var(--accent); fill-opacity: .35; stroke: var(--accent); }
+.dg .cell.wh { fill: var(--fg); }
+.dg .cell.bk { fill: var(--bg); stroke: var(--fg-3); }
+.dg .ln { stroke: var(--fg-3); stroke-width: 2.5; fill: none; }
+.dg .ar { stroke: var(--accent); stroke-width: 3; fill: none; }
+.dg .ah { fill: var(--accent); }
+.dg .seg-p { fill: var(--cat-2); fill-opacity: .55; }
+.dg .seg-s { fill: var(--cat-1); fill-opacity: .55; }
+.dg .seg-n { fill: var(--bg-3); stroke: var(--line-2); }
+
+/* Fila de matrices con operadores (E2) */
+.oprow { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.oprow .op { font: 500 46px var(--font-mono); color: var(--fg-2); }
+.oprow .lbl { font: 400 22px var(--font-mono); color: var(--fg-3); text-align: center; margin: 6px 0 0; }
+
+/* Ordenar la ventana (mediana) */
+.sortrow { display: flex; gap: 8px; }
+.sortrow span { flex: 1; text-align: center; padding: 10px 0; font: 600 26px var(--font-mono); color: var(--fg); background: var(--bg-3); border: var(--stroke) solid var(--line-2); border-radius: var(--radius); }
+.sortrow span.mid { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+.sortrow span.out { color: var(--err); border-color: var(--err); }
+
+/* V/F */
+.vf { display: grid; grid-template-columns: 1fr 680px; gap: 0 32px; align-items: center; font-size: 28px; line-height: 1.35; color: var(--fg-2); }
+.vf > div { padding: 14px 0; border-bottom: var(--stroke) solid var(--line); }
+.vf .a { font-size: 25px; }
+.vf .a b { font-family: var(--font-mono); margin-right: 10px; }
+.vf .a.v b { color: var(--ok); }
+.vf .a.f b { color: var(--err); }

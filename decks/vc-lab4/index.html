@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · Lab 4: bordes y contornos</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ======================= BLOQUE A · EL CÓDIGO DEL PROFESOR ======================= -->
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="9" data-section="Inicio" data-title="Lab 4: bordes y contornos">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · parcial</p>
+    <h1 class="s-title xl">Lab 4: bordes y contornos</h1>
+    <p class="lead">Sobel, Canny y Hough: cada función, cada parámetro y lo que devuelve, para escribirlo sin ordenador.</p>
+  </div>
+  <aside class="notes">Este deck recorre el lab 4 en el orden del enunciado. Primero el código del profesor (imports, doTests, testSobel), después los ejercicios de Sobel, Canny con su ejercicio 4.2, la transformada de Hough con sus fichas de API, y por último el HOG simplificado, los segmentos y una chuleta con tres ejercicios de examen resueltos. Todos los resultados que se ven son reales, calculados con las imágenes del curso (cuadros.png y einstein.pgm).</aside>
+</section>
+
+<section class="slide" id="imports" data-section="Código del profesor" data-title="Imports del lab 4">
+  <header class="s-head"><p class="kicker">p4.py · cabecera</p><h2 class="s-title">Qué se importa y de dónde</h2></header>
+  <div class="s-body vstack">
+    <table class="t md">
+      <tr><th>Línea del código</th><th>Qué aporta</th><th>Dónde se usa</th></tr>
+      <tr><td><code>from scipy.ndimage import sobel</code></td><td>derivada de Sobel por eje</td><td>testSobel</td></tr>
+      <tr><td><code>from skimage import feature</code></td><td><code>feature.canny</code>: detector de Canny</td><td>testCanny</td></tr>
+      <tr><td><code>from skimage.transform import hough_line, hough_line_peaks</code></td><td>acumulador de Hough y búsqueda de picos</td><td>testHough, findPeaks</td></tr>
+      <tr><td><code>from scipy import ndimage as ndi</code></td><td><code>ndi.rotate</code> (y <code>ndi.convolve</code> en el ej. 4.1)</td><td>bRotate</td></tr>
+      <tr><td><code>import numpy as np</code></td><td><code>np.hypot</code>, <code>np.arctan2</code>, <code>np.linspace</code>, <code>np.histogram</code></td><td>magnitud, HOG, ángulos</td></tr>
+      <tr><td><code>from PIL import Image</code></td><td>abrir la imagen y pasarla a gris con <code>.convert('L')</code></td><td>doTests</td></tr>
+    </table>
+    <div class="tip"><b>truco</b>Hay una línea comentada: <code>probabilistic_hough_line</code>. Es la pista del ejercicio 6 (segmentos en lugar de rectas infinitas).</div>
+  </div>
+  <aside class="notes">Para el examen conviene saber de qué módulo sale cada función: sobel y rotate son de scipy.ndimage; canny es de skimage.feature; hough_line y hough_line_peaks, de skimage.transform. Si se pide escribir una función a mano, el import correcto forma parte de la respuesta.</aside>
+</section>
+
+<section class="slide" id="dotests" data-fx="vc" data-section="Código del profesor" data-title="doTests: ruido y rotación">
+  <header class="s-head"><p class="kicker">p4.py · doTests</p><h2 class="s-title">Ruido, rotación y parámetros</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">if bRotate:
+    im = ndi.rotate(im, 15, mode='nearest')
+
+if bAddNoise:
+    im = im + np.random.normal(
+        loc=0, scale=5, size=im.shape)
+
+params['sigma'] = 5   # Canny y Hough</pre>
+      <div class="tip" data-seq="2"><b>orden</b>Primero se gira y luego se añade el ruido. Tras sumar el ruido, <code>im</code> pasa de <code>uint8</code> a <code>float64</code>.</div>
+      <div class="exam" data-seq="3"><b>tamaño tras girar</b>Con <code>reshape=True</code>, el lado pasa de 256 a \(\lceil 256(\cos\alpha+\sin\alpha)\rceil\): 314 con 15° y 350 con 30° (comprobado).</div>
+    </div>
+    <div class="api" data-seq="1">
+      <div class="sig">scipy.ndimage.rotate(input, angle, axes=(1,0), reshape=True, order=3, mode='constant', cval=0.0)</div>
+      <table>
+        <tr><th>parámetro</th><th>qué es</th></tr>
+        <tr><td>angle</td><td>grados; positivo = giro antihorario en pantalla</td></tr>
+        <tr><td>reshape</td><td>True (defecto): la salida crece para contener la imagen girada entera</td></tr>
+        <tr><td>order</td><td>orden de la spline (3 por defecto). 0 = vecino más próximo</td></tr>
+        <tr><td>mode</td><td>qué poner en el relleno: 'constant' (cval = 0, esquinas negras) o 'nearest' (repite el borde)</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">El ruido gaussiano de desviación típica 5 es pequeño frente al rango 0-255, pero para un detector de gradiente se nota mucho en las zonas planas. El ángulo de rotación 15 grados y el modo nearest evitan que aparezcan esquinas negras artificiales, que serían bordes falsos. La fórmula del tamaño sale de proyectar los dos lados del cuadrado rotado sobre cada eje: W por coseno de alfa más W por seno de alfa.</aside>
+</section>
+
+<section class="slide" id="sobel-ficha" data-fx="vc" data-section="Código del profesor" data-title="Ficha de scipy.ndimage.sobel">
+  <header class="s-head"><p class="kicker">testSobel · gx = sobel(im, 1)</p><h2 class="s-title">Ficha: sobel</h2></header>
+  <div class="s-body g21">
+    <div class="api">
+      <div class="sig">scipy.ndimage.sobel(input, axis=-1, output=None, mode='reflect', cval=0.0)</div>
+      <table>
+        <tr><th>parámetro</th><th>qué es</th></tr>
+        <tr><td>input</td><td>array 2D. Trampa: el resultado tiene su mismo dtype</td></tr>
+        <tr><td>axis</td><td><b>1</b>: deriva a lo largo de las columnas (en x) y marca bordes <b>verticales</b>. <b>0</b>: deriva en y y marca bordes <b>horizontales</b></td></tr>
+        <tr><td>mode</td><td>cómo se extiende la imagen en el borde (siguientes diapositivas)</td></tr>
+        <tr><td>cval</td><td>valor del relleno si mode='constant'</td></tr>
+        <tr><td>devuelve</td><td>derivada <b>con signo</b>: no es una magnitud</td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Sobel = derivada \([-1,0,1]\) en el eje elegido × suavizado \([1,2,1]\) en el otro:</p>
+      <div class="eq" data-seq="1">$$K_x=\begin{pmatrix}1\\2\\1\end{pmatrix}\begin{pmatrix}-1&0&1\end{pmatrix}=\begin{pmatrix}-1&0&1\\-2&0&2\\-1&0&1\end{pmatrix}$$</div>
+      <div class="trap" data-seq="2"><b>trampa</b>Con una imagen <code>uint8</code> el resultado también es <code>uint8</code>: los negativos se envuelven y el resultado se corrompe. Convierte antes: <code>im.astype(float)</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">El eje es el eje de derivación, no el eje del borde. Con axis igual a 1 derivamos a lo largo de las columnas, es decir, miramos cómo cambia el nivel de gris al movernos en horizontal, y eso responde a bordes verticales. El núcleo de Sobel es separable: el vector columna 1,2,1 suaviza y el vector fila menos uno, cero, uno deriva. En cuadros.png el máximo del resultado en float es 600 y el mínimo menos 600; si se hace con uint8 sale un máximo de 212 sin significado.</aside>
+</section>
+
+<section class="slide" id="sobel-gris" data-fx="vc" data-section="Código del profesor" data-title="Significado del nivel de gris">
+  <header class="s-head"><p class="kicker">ejercicio 1 · pregunta del enunciado</p><h2 class="s-title">El gris de Sobel</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><b>Gris medio = 0</b>: no hay cambio de intensidad en esa dirección.</p>
+      <p class="txt" data-seq="2"><b>Claro = positivo</b>: la intensidad <b>sube</b> al avanzar por el eje (de oscuro a claro).</p>
+      <p class="txt" data-seq="3"><b>Oscuro = negativo</b>: la intensidad <b>baja</b> al avanzar por el eje.</p>
+      <div class="exam" data-seq="4"><b>en el examen</b>El signo depende del sentido del eje: en <code>sobel(im, 1)</code> se avanza hacia la derecha, en <code>sobel(im, 0)</code> hacia abajo. Para ver «gris medio = 0» hay que mostrar con límites simétricos (<code>vmin=-m, vmax=m</code>).</div>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/sobel_cuadros.png" alt="cuadros, sobel eje 0 y eje 1" style="height:470px"><p class="cap">cuadros.png (resultado real, en float)</p></div>
+  </div>
+  <aside class="notes">En la figura, el borde izquierdo del rectángulo claro (oscuro a la izquierda y claro a la derecha) aparece blanco en sobel con eje 1, y el borde derecho aparece negro. En sobel con eje 0, el borde superior del rectángulo (oscuro arriba, claro abajo) es blanco y el inferior es negro. Los píxeles planos dan exactamente cero y se ven en gris medio.</aside>
+</section>
+
+<section class="slide" id="sobel-perfil" data-fx="vc" data-section="Código del profesor" data-title="Perfil de una fila">
+  <header class="s-head"><p class="kicker">cuadros.png · fila 128 · resultado real</p><h2 class="s-title">Un borde en 1D</h2></header>
+  <div class="s-body g21">
+    <div class="vstack" style="gap:6px">
+      <div class="fx plot-s" data-role="plot" data-x="0,256" data-y="0,240" data-yl="im" data-fns='[{"f":"x=>{const v=Math.floor(x);return v<32?50:v<64?100:v<112?200:v<192?150:v<224?100:50}","c":"fg-2"}]' style="height:300px"></div>
+      <div class="fx plot-s" data-role="plot" data-x="0,256" data-y="-400,400" data-xl="columna x (fila 128)" data-yl="gx" data-fns='[{"f":"x=>{const v=Math.floor(x);return (v==31||v==32)?200:(v==63||v==64)?400:(v==111||v==112||v==191||v==192||v==223||v==224)?-200:0}","c":"accent"}]' style="height:330px"></div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Arriba, los niveles de gris de la fila 128; abajo, <code>sobel(im, 1)</code> en esa fila.</p>
+      <p class="txt" data-seq="2"><b>Zona plana ⇒ 0.</b> Solo hay respuesta en los saltos, y ocupa <b>2 píxeles</b> (el núcleo mide 3).</p>
+      <p class="txt" data-seq="3"><b>100 → 200</b> (sube): <b>+400</b>. <b>200 → 150</b> (baja): <b>−200</b>.</p>
+      <div class="exam" data-seq="4"><b>regla</b>\(g_x = 4\,\Delta\): el salto por la suma de la columna \([1,2,1]\). Por eso un salto de 50 da ±200.</div>
+    </div>
+  </div>
+  <aside class="notes">Una fila de cuadros.png es una función escalonada: 50, 100, 200, 150, 100 y 50. La derivada de Sobel en x es cero en las zonas planas y solo responde en los saltos. Cada salto produce dos píxeles con el mismo valor, porque la diferencia [-1, 0, 1] ve el escalón desde las dos posiciones vecinas. El valor es cuatro veces el salto: la columna de suavizado [1, 2, 1] suma 4 y la diferencia horizontal es el propio salto. Subir de 100 a 200 da +400 y bajar de 200 a 150 da -200. Valores comprobados con scipy sobre la imagen real.</aside>
+</section>
+
+<section class="slide" id="sobel-nucleo" data-fx="vc" data-section="Código del profesor" data-title="El núcleo exacto de sobel">
+  <header class="s-head"><p class="kicker">comprobado con convolve y correlate</p><h2 class="s-title">sobel(im, 1) es una correlación</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[0,0,0,10,10,10],[0,0,0,10,10,10],[0,0,0,10,10,10],[0,0,0,10,10,10]]' data-k='[[-1,0,1],[-2,0,2],[-1,0,1]]' data-mode="corr" data-pad="zero" data-dec="0" style="height:400px"></div>
+    <div class="g2">
+      <div class="eq sm" data-seq="1">$$\text{sobel}(f,1)=f\star K_x=f*K_x^{\,180^\circ}=-\,(f*K_x)$$</div>
+      <div class="exam" data-seq="2"><b>comprobado en Python</b><code>np.abs(sobel(f,1) - correlate(f,Kx)).max()</code> = 0; con <code>convolve(f,Kx)</code> es el signo contrario (diferencia 1200 en cuadros). La última columna (−30) es un efecto del relleno con ceros.</div>
+    </div>
+  </div>
+  <aside class="notes">Sobel de scipy no gira el núcleo: es una correlación con el núcleo menos uno, cero, uno por filas. Por eso, si se usa convolve con el mismo núcleo, el resultado sale con el signo cambiado. Para obtener lo mismo con convolve hay que girar el núcleo 180 grados, o sea usar uno, cero, menos uno. En el ejemplo animado: un escalón de 0 a 10 produce 40 a ambos lados del escalón, porque la suma de pesos de las tres filas es 1+2+1 = 4 y la diferencia horizontal es 10.</aside>
+</section>
+
+<!-- ======================= BLOQUE B · EJERCICIOS DE SOBEL ======================= -->
+
+<section class="slide is-plain divider" id="div-sobel" data-fx="backdrop" data-seed="11" data-section="Sobel" data-title="Bloque B: ejercicios de Sobel">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b · ejercicio 1 y 4.1</p>
+    <h1 class="s-title xl">Ejercicios de Sobel</h1>
+    <p class="lead">gx, gy y magnitud; binarizar; el ruido; el parámetro mode y Sobel escrito con convolve.</p>
+  </div>
+  <aside class="notes">Segundo bloque: los ejercicios que el enunciado pide hacer con Sobel. Todos parten de gx = sobel(im, 1) y gy = sobel(im, 0) en coma flotante.</aside>
+</section>
+
+<section class="slide" id="grad-cuadros" data-fx="vc" data-section="Sobel" data-title="Gradiente en x, en y y magnitud">
+  <header class="s-head"><p class="kicker">ejercicio 1 · testSobel ampliado</p><h2 class="s-title">gx, gy y magnitud</h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">def testSobel(im, params=None):
+    im = im.astype(float)
+    gx = sobel(im, 1)            # bordes verticales
+    gy = sobel(im, 0)            # bordes horizontales
+    mag = np.hypot(gx, gy)       # = np.sqrt(gx**2 + gy**2)
+    return [gx, gy, mag]</pre>
+    <div class="imgcol" data-seq="2"><img class="shot" src="assets/grad_cuadros.png" alt="gradientes de cuadros" style="height:340px"><p class="cap">cuadros.png: en gx solo se ven líneas verticales; en gy, horizontales</p></div>
+  </div>
+  <aside class="notes">La pregunta del enunciado era si se adivina la dirección en que se aplicó el gradiente solo viendo la imagen. Sí: un gradiente en x responde a bordes verticales, así que solo aparecen líneas verticales; el gradiente en y solo deja líneas horizontales. La magnitud las une todas y es siempre positiva.</aside>
+</section>
+
+<section class="slide" id="grad-einstein" data-section="Sobel" data-title="Lo mismo con einstein.pgm">
+  <header class="s-head"><p class="kicker">ejercicio 1 · dirección del gradiente</p><h2 class="s-title">¿Se adivina la dirección?</h2></header>
+  <div class="s-body vstack">
+    <div class="imgcol"><img class="shot" src="assets/grad_einstein.png" alt="gradientes de einstein" style="height:360px"><p class="cap">einstein.pgm (el enunciado usa lena, que no está en la carpeta del lab)</p></div>
+    <p class="txt"><b>Sí.</b> En <code>gx</code> destacan las estructuras verticales (contorno de la cara, cuello de la camisa); en <code>gy</code>, las horizontales (cejas, boca, hombros). La magnitud <code>hypot(gx, gy)</code> las reúne: no tiene signo, así que ya no se sabe hacia dónde sube la intensidad.</p>
+  </div>
+  <aside class="notes">Con texturas naturales la respuesta sigue siendo sí: el gradiente en x resalta lo vertical y el gradiente en y lo horizontal. La imagen lena que menciona el enunciado no está en las imágenes del lab; einstein sirve igual para la comparación.</aside>
+</section>
+
+<section class="slide" id="hypot-atan2" data-fx="vc" data-section="Sobel" data-title="Fichas: np.hypot y np.arctan2">
+  <header class="s-head"><p class="kicker">NumPy · módulo y ángulo</p><h2 class="s-title">Fichas: hypot y arctan2</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <svg class="diag" viewBox="0 0 560 470" data-seq="1" style="height:410px;width:auto" aria-label="vector gradiente">
+        <defs><marker id="l4ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="var(--accent)"/></marker></defs>
+        <line class="ax" x1="60" y1="70" x2="530" y2="70"/><text x="470" y="52">x →</text>
+        <line class="ax" x1="60" y1="70" x2="60" y2="450"/><text x="74" y="440">y ↓ (filas)</text>
+        <line class="edge" x1="161" y1="433" x2="419" y2="89"/><text x="410" y="150" style="fill:var(--cat-3)">borde</text>
+        <line class="cmp" x1="60" y1="70" x2="380" y2="70"/><line class="cmp" x1="380" y1="70" x2="380" y2="310"/>
+        <text x="200" y="58" style="fill:var(--cat-2)">gx</text><text x="394" y="200" style="fill:var(--cat-2)">gy</text>
+        <line class="vec" x1="60" y1="70" x2="374" y2="306" marker-end="url(#l4ah)"/>
+        <path class="arc" d="M150,70 A90,90 0 0 1 132,124"/><text x="160" y="114" style="fill:var(--cat-4)">θ</text>
+        <text x="196" y="232" style="fill:var(--accent)">|g|</text>
+      </svg>
+      <p class="cap" data-seq="1">con y hacia abajo, θ &gt; 0 gira en sentido horario en pantalla. El borde es ⟂ al gradiente.</p>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="2">
+        <div class="sig">np.hypot(x1, x2)</div>
+        <table>
+          <tr><td>devuelve</td><td>\(\sqrt{x_1^2+x_2^2}\) elemento a elemento, siempre ≥ 0</td></tr>
+          <tr><td>ventaja</td><td>igual que <code>np.sqrt(gx**2+gy**2)</code>, sin desbordar</td></tr>
+        </table>
+      </div>
+      <div class="api" data-seq="3">
+        <div class="sig">np.arctan2(x1, x2)   # (y, x)</div>
+        <table>
+          <tr><td>x1, x2</td><td>primero la <b>y</b>, luego la <b>x</b>: <code>np.arctan2(gy, gx)</code></td></tr>
+          <tr><td>devuelve</td><td>radianes en \((-\pi,\pi]\), con el cuadrante correcto</td></tr>
+          <tr><td>caso nulo</td><td><code>arctan2(0, 0) = 0</code>: los planos caen en 0</td></tr>
+        </table>
+      </div>
+      <div class="trap" data-seq="4"><b>trampa</b><code>np.arctan(gy/gx)</code> divide por cero si <code>gx = 0</code> y solo da \((-\pi/2,\pi/2)\): pierde el sentido. Usa <code>arctan2(gy, gx)</code>; para grados, <code>np.rad2deg</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Estas dos funciones convierten el par (gx, gy) a coordenadas polares: el módulo es la intensidad del borde y el ángulo es la dirección del gradiente, perpendicular al borde. El orden y primero, x después, es el error más frecuente al escribirlo a mano.</aside>
+</section>
+
+<section class="slide" id="binarizar-cota" data-fx="vc" data-section="Sobel" data-title="Cota de |gx|+|gy|">
+  <header class="s-head"><p class="kicker">ejercicio 1 · aproximación de la magnitud</p><h2 class="s-title">|gx|+|gy| frente a hypot</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <div class="deriv">
+        <div data-seq="1"><span>\((|a|+|b|)^2=a^2+b^2+2|a||b|\)</span><span class="why">≥ a²+b²: nunca es menor</span></div>
+        <div data-seq="2"><span>\(2|a||b|\le a^2+b^2\)</span><span class="why">porque (|a|−|b|)² ≥ 0</span></div>
+        <div data-seq="3"><span>\((|a|+|b|)^2\le 2\,(a^2+b^2)\)</span><span class="why">⇒ como mucho √2 veces</span></div>
+      </div>
+      <div class="eq" data-seq="4">$$\frac{|g_x|+|g_y|}{|g|}=|\cos\varphi|+|\sin\varphi|$$</div>
+      <div class="exam" data-seq="5"><b>conclusión</b>Iguales en bordes alineados con los ejes (φ = 0° o 90°); la suma es √2 ≈ 1,41 veces mayor en las diagonales (φ = 45°).</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,90" data-y="0.8,1.6" data-xl="φ (grados)" data-yl="(|gx|+|gy|) / |g|" data-legend="br" data-fns='[{"f":"x=>Math.abs(Math.cos(x*Math.PI/180))+Math.abs(Math.sin(x*Math.PI/180))","label":"|cos φ|+|sin φ|"},{"f":"x=>1","c":"fg-3","dash":"6 8"}]' data-pts='[[45,1.4142,"√2"]]' style="height:560px"></div>
+  </div>
+  <aside class="notes">Demostración de que la suma de valores absolutos acota la magnitud por arriba y por abajo. Elevando al cuadrado, (|a|+|b|)^2 = a^2 + b^2 + 2|a||b|, que es mayor o igual que a^2+b^2: la suma nunca es menor que la magnitud. Por otro lado, (|a|-|b|)^2 >= 0 implica 2|a||b| <= a^2+b^2, así que (|a|+|b|)^2 <= 2(a^2+b^2) y la suma es como mucho raíz de dos veces la magnitud. Escribiendo el gradiente en polares, el cociente es |cos φ| + |sin φ|, que vale 1 en los ejes y raíz de dos a 45 grados. La gráfica lo muestra.</aside>
+</section>
+
+<section class="slide" id="binarizar" data-fx="vc" data-section="Sobel" data-title="Binarizar la magnitud">
+  <header class="s-head"><p class="kicker">ejercicio 1 · mapa binario de bordes</p><h2 class="s-title">Binarizar la magnitud</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+<pre class="code" data-seq="1">mag = np.hypot(gx, gy)
+ap  = np.abs(gx) + np.abs(gy)
+edges1 = mag &gt; t * mag.max()
+edges2 = ap  &gt; t * mag.max()</pre>
+      <p class="txt" data-seq="2">Con el <b>mismo umbral</b> (t = 0,2 × máx. de la magnitud real en einstein): <b>27 234</b> píxeles con la magnitud real y <b>35 572</b> con la suma de absolutos, con 8 338 distintos.</p>
+      <div class="tip" data-seq="3"><b>dónde difieren</b>En los bordes oblicuos (pelo, arrugas), donde la suma infla la magnitud hasta √2.</div>
+    </div>
+    <div class="imgcol" data-seq="2"><img class="shot" src="assets/binar.png" alt="binarización" style="height:440px"><p class="cap">einstein.pgm, mismo umbral absoluto</p></div>
+  </div>
+  <aside class="notes">La aproximación es siempre mayor o igual que la magnitud real (diapositiva anterior), así que con el mismo umbral absoluto marca más píxeles, sobre todo en bordes oblicuos. Si cada magnitud se umbraliza con su propio máximo el resultado es casi igual (26 222 frente a 27 234 píxeles), porque el máximo de la aproximación también crece.</aside>
+</section>
+
+<section class="slide" id="ruido-sobel" data-fx="vc" data-section="Sobel" data-title="Sobel con y sin ruido">
+  <header class="s-head"><p class="kicker">ejercicio 1 · bAddNoise</p><h2 class="s-title">Sobel no filtra el ruido</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <p class="txt">Umbral 0,05 × máx.: <b>2 004</b> píxeles de borde sin ruido y <b>12 310</b> con ruido gaussiano de σ = 5, casi todos <b>falsos bordes</b> en zonas planas.</p>
+      <div class="eq sm" data-seq="1">$$\sigma_{g}=\sigma\sqrt{\textstyle\sum k_{ij}^2}=5\sqrt{12}\approx 17{,}3$$</div>
+      <p class="txt">En una zona plana, \(g_x\) y \(g_y\) son ruido de desviación 17,3 y la magnitud sigue una Rayleigh con mediana \(\approx1{,}18\cdot17{,}3\approx20\) (medida: 20,9), un valor que ya supera pronto un umbral de 32.</p>
+      <div class="tip"><b>idea</b>Por eso Canny empieza con una gaussiana: Sobel solo suaviza con [1, 2, 1].</div>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/ruido.png" alt="cuadros con y sin ruido" style="height:560px"><p class="cap">cuadros.png, resultado real</p></div>
+  </div>
+  <aside class="notes">Sobel es una derivada y las derivadas amplifican el ruido de alta frecuencia. La suma de cuadrados del núcleo es 1+4+1+1+4+1 = 12, así que cada componente del gradiente tiene desviación 5 por raíz de 12. Un umbral del 5 por ciento del máximo, unos 32, lo superan alrededor del 18 por ciento de los píxeles planos, y eso son unos 12 mil de 65 mil.</aside>
+</section>
+
+<section class="slide" id="sobel-mode" data-section="Sobel" data-title="El parámetro mode de sobel()">
+  <header class="s-head"><p class="kicker">ejercicio 1 · cómo se extiende la imagen</p><h2 class="s-title">mode de sobel()</h2></header>
+  <div class="s-body vstack">
+    <table class="t md">
+      <tr><th>mode</th><th>extensión de [a b c d]</th><th>con [1 2 3 4]</th><th>qué hace</th></tr>
+      <tr><td><code>'reflect'</code> (defecto)</td><td>d c b a | a b c d | d c b a</td><td>4 3 2 1 | 1 2 3 4 | 4 3 2 1</td><td>refleja repitiendo el píxel de borde</td></tr>
+      <tr><td><code>'constant'</code></td><td>k k k k | a b c d | k k k k</td><td>0 0 0 0 | 1 2 3 4 | 0 0 0 0</td><td>rellena con <code>cval</code> (0 por defecto)</td></tr>
+      <tr><td><code>'nearest'</code></td><td>a a a a | a b c d | d d d d</td><td>1 1 1 1 | 1 2 3 4 | 4 4 4 4</td><td>repite el píxel de borde</td></tr>
+      <tr><td><code>'mirror'</code></td><td>d c b | a b c d | c b a</td><td>4 3 2 | 1 2 3 4 | 3 2 1</td><td>refleja sin repetir el borde</td></tr>
+      <tr><td><code>'wrap'</code></td><td>a b c d | a b c d | a b c d</td><td>1 2 3 4 | 1 2 3 4 | 1 2 3 4</td><td>periódica (como la DFT)</td></tr>
+    </table>
+    <div class="exam"><b>efecto en Sobel</b>En una imagen plana de valor 100: con 'reflect', 'nearest', 'mirror' y 'wrap' el gradiente del borde es 0; con 'constant' sale ±400, un falso borde alrededor de toda la imagen (comprobado).</div>
+  </div>
+  <aside class="notes">No hay que analizar los efectos, solo saber qué hace cada modo. Reflect es el defecto de scipy, mirror es parecido pero no duplica el píxel de borde. Wrap supone que la imagen es periódica, igual que la transformada de Fourier discreta. Las versiones grid-constant, grid-mirror y grid-wrap existen en scipy con matices en la interpolación, pero en filtros lineales coinciden con las anteriores.</aside>
+</section>
+
+<section class="slide" id="ej41" data-fx="vc" data-section="Sobel" data-title="Ejercicio 4.1: Sobel por convolución">
+  <header class="s-head"><p class="kicker">ejercicio 4.1 · convolve frente a sobel</p><h2 class="s-title">Sobel con convolve</h2></header>
+  <div class="s-body g21">
+<pre class="code" data-seq="1" style="font-size:26px">kx = np.array([[-1, 0, 1],
+               [-2, 0, 2],
+               [-1, 0, 1]])
+f = im.astype(float)
+a = sobel(f, 1)
+b = convolve(f, kx)               # scipy.ndimage
+np.abs(a - b).max()               # 1200.0
+np.abs(a + b).max()               # 0.0
+np.abs(a - convolve(f, kx[::-1, ::-1])).max()   # 0.0
+sobel(im, 1).dtype                # uint8</pre>
+    <div class="vstack">
+      <table class="t md" data-seq="2">
+        <tr><th>comparación (cuadros)</th><th>máx. |dif.|</th></tr>
+        <tr><td>sobel vs correlate(Kx)</td><td class="ok">0: igual</td></tr>
+        <tr><td>sobel vs convolve(Kx)</td><td class="warn">1200: signo</td></tr>
+        <tr><td>sobel vs convolve(Kx girado)</td><td class="ok">0: igual</td></tr>
+        <tr><td>sobel(uint8) vs sobel(float)</td><td class="err">768: desborda</td></tr>
+      </table>
+      <div class="exam" data-seq="3"><b>respuesta</b>Visualmente coinciden salvo por el contraste invertido. Numéricamente, con <code>float</code> son idénticos o de signo opuesto; con <code>uint8</code>, no.</div>
+    </div>
+  </div>
+  <aside class="notes">La respuesta a la pregunta del enunciado: visualmente los resultados coinciden, aunque con convolve el signo sale cambiado. Numéricamente, si se trabaja en coma flotante la diferencia es exactamente cero tras girar el núcleo o cambiar el signo. Con uint8 hay desbordamiento: los valores negativos y los mayores que 255 se envuelven y los dos resultados dejan de coincidir.</aside>
+</section>
+
+<!-- ======================= BLOQUE C · CANNY ======================= -->
+
+<section class="slide is-plain divider" id="div-canny" data-fx="backdrop" data-seed="13" data-section="Canny" data-title="Bloque C: Canny">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque c · sección 2 y ejercicio 4.2</p>
+    <h1 class="s-title xl">Canny</h1>
+    <p class="lead">feature.canny, el papel de <span class="nc">σ</span>, los dos umbrales de la histéresis y el emparejamiento de la figura 1.</p>
+  </div>
+  <aside class="notes">Tercer bloque: el detector de Canny de skimage. Primero la ficha, luego el efecto de sigma con y sin ruido, la histéresis y el ejercicio 4.2.</aside>
+</section>
+
+<section class="slide" id="canny-ficha" data-fx="vc" data-section="Canny" data-title="Ficha de feature.canny">
+  <header class="s-head"><p class="kicker">testCanny</p><h2 class="s-title">Ficha: feature.canny</h2></header>
+  <div class="s-body g21">
+    <div class="api">
+      <div class="sig">skimage.feature.canny(image, sigma=1.0, low_threshold=None, high_threshold=None, mask=None, use_quantiles=False)</div>
+      <table>
+        <tr><td>image</td><td>array 2D en gris (no admite enteros de 64 bits)</td></tr>
+        <tr><td>sigma</td><td>σ de la gaussiana inicial; mayor ⇒ menos detalle y menos ruido</td></tr>
+        <tr><td>low_threshold</td><td>T<sub>low</sub> de la histéresis; en el código, <code>0.2*255</code></td></tr>
+        <tr><td>high_threshold</td><td>T<sub>high</sub>; en el código, <code>0.25*255</code></td></tr>
+        <tr><td>use_quantiles</td><td>False: umbrales en la escala de la imagen. True: fracciones 0-1 del histograma del gradiente</td></tr>
+        <tr><td>devuelve</td><td>array <b>booleano</b> del mismo tamaño (True = borde)</td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Las 4 etapas:</p>
+      <ul class="pts">
+        <li data-seq="1">suavizado gaussiano (σ)</li>
+        <li data-seq="2">gradiente: módulo y dirección</li>
+        <li data-seq="3">supresión de no máximos (bordes de 1 píxel)</li>
+        <li data-seq="4">umbralización por histéresis</li>
+      </ul>
+      <div class="trap" data-seq="5"><b>trampa</b>Los umbrales se dividen por el máximo del dtype: en <code>uint8</code> son 51 y 63,75 sobre 255; en una imagen float en [0, 1] serían absolutos (0,2 y 0,25). Con <code>None</code> valen 0,1 y 0,2 de esa escala.</div>
+    </div>
+  </div>
+  <aside class="notes">Canny devuelve un array booleano, por eso hough_line lo acepta directamente como imagen binaria. En skimage los umbrales se dividen internamente por el máximo del tipo de dato: con una imagen uint8 los valores 51 y 63,75 equivalen a 0,2 y 0,25 en la escala de cero a uno, y con una imagen float en [0,255] el efecto es el mismo porque la imagen no se reescala. En el ejercicio 4.2, la imagen está en [0,1] y los umbrales 0,1 y 0,2 son absolutos en esa escala.</aside>
+</section>
+
+<section class="slide" id="canny-sigma" data-section="Canny" data-title="¿Mismo σ con y sin ruido?">
+  <header class="s-head"><p class="kicker">sección 2 del enunciado · sigma</p><h2 class="s-title">Sigma 1, 3 y 5 en cuadros</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <p class="txt"><b>No, no es el mismo σ.</b></p>
+      <ul class="pts">
+        <li>σ = 1: encuentra los 4 contornos (1 520 px), pero con ruido el borde se vuelve irregular.</li>
+        <li>σ = 3 y 5: bordes más suaves y esquinas redondeadas; se pierden los rectángulos tenues (779 y 709 px).</li>
+        <li>Con ruido hay que subir σ: la gaussiana promedia el ruido y estabiliza el borde.</li>
+      </ul>
+      <div class="exam"><b>compromiso</b>σ grande: menos ruido y menos falsos bordes, pero peor localización y pérdida de detalle. En el ejercicio 4.2 se ve con ruido más fuerte.</div>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/canny_cuadros.png" alt="canny en cuadros" style="height:560px"><p class="cap">umbrales del código (51 y 63,75). Fila superior: limpia; inferior: ruido σ = 5</p></div>
+  </div>
+  <aside class="notes">Con ruido gaussiano de desviación 5 sobre una imagen de contraste 150, el ruido es débil, así que en este caso la diferencia entre limpio y con ruido es sutil para σ = 1 y casi nula para σ mayor. El efecto claro de que el σ ha de crecer con el ruido aparece en el ejercicio 4.2, con la imagen de la figura 1. También se ve que con los umbrales fijos 51 y 63,75, al aumentar σ el gradiente de los rectángulos de poco contraste cae por debajo de T_low y desaparecen.</aside>
+</section>
+
+<section class="slide" id="canny-einstein" data-section="Canny" data-title="Canny en einstein.pgm">
+  <header class="s-head"><p class="kicker">sección 2 del enunciado · imagen con textura</p><h2 class="s-title">Sigma y detalle en einstein</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <table class="t sm">
+        <tr><th>sigma</th><th>limpia</th><th>con ruido</th></tr>
+        <tr><td>1</td><td>20 447 px</td><td>20 877 px</td></tr>
+        <tr><td>3</td><td>4 309 px</td><td>4 366 px</td></tr>
+        <tr><td>5</td><td>1 658 px</td><td>1 663 px</td></tr>
+      </table>
+      <p class="txt">El número de bordes cae de golpe con σ: de 20 mil a menos de 2 mil píxeles. El pelo, que es textura fina, desaparece primero; quedan el contorno de la cara y los hombros.</p>
+      <div class="tip"><b>regla</b>Elige σ según la escala de lo que buscas: bordes finos ⇒ σ pequeño; contornos de objetos ⇒ σ grande.</div>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/canny_einstein.png" alt="canny en einstein" style="height:560px"><p class="cap">einstein.pgm, mismos umbrales. Arriba: limpia; abajo: ruido σ = 5</p></div>
+  </div>
+  <aside class="notes">Aquí el ruido de desviación 5 casi no cambia el resultado porque la imagen ya tiene mucha textura y contraste. Lo que domina es el efecto de σ: cada vez que se sube, el detector deja de ver estructuras más finas.</aside>
+</section>
+
+<section class="slide" id="canny-histeresis" data-fx="vc" data-section="Canny" data-title="Histéresis en 1D">
+  <header class="s-head"><p class="kicker">sección 2 del enunciado · cómo decide la histéresis</p><h2 class="s-title">Histéresis en 1D</h2></header>
+  <div class="s-body g21">
+    <div class="fx" data-role="plot" data-x="0,20" data-y="-0.2,0.8" data-legend="br" data-xl="posición a lo largo del contorno (de ejemplo)" data-yl="magnitud tras NMS" data-fns='[{"f":"x=>0.42+0.3*Math.exp(-((x-4)**2)/3)-0.3*Math.exp(-((x-11)**2)/1.0)+0.06*Math.sin(1.3*x)","label":"magnitud","c":"accent"},{"f":"x=>0.6","label":"T_high = 0,6","c":"err","dash":"10 8"},{"f":"x=>0.3","label":"T_low = 0,3","c":"warn","dash":"10 8"}]' data-pts='[[4.3,0.672,"semilla"],[11,0.179,"corte"]]' style="height:600px"></div>
+    <div class="vstack">
+      <div class="exam" data-seq="1"><b>tramo A · x de 0 a 10</b>Supera T<sub>high</sub> cerca de x = 4 (semilla) y no baja de T<sub>low</sub>: <b>se conserva entero</b>, aunque baje hasta 0,36.</div>
+      <div class="trap" data-seq="2"><b>corte · x ≈ 11</b>Cae por debajo de T<sub>low</sub>: la cadena se rompe.</div>
+      <div class="tip" data-seq="3"><b>tramo B · x de 12 a 20</b>Siempre entre los dos umbrales, pero <b>sin semilla</b>: se descarta.</div>
+      <p class="txt" data-seq="4">Con un solo umbral de 0,6 quedaría solo x ≈ 3,2–5,5: el borde saldría a trozos.</p>
+    </div>
+  </div>
+  <aside class="notes">Esta curva es de ejemplo: representa la magnitud del gradiente, ya tras la supresión de no máximos, a lo largo de un contorno. La histéresis recorre el contorno: el tramo A tiene un punto por encima de T_high, que actúa de semilla, y todos sus píxeles conectados que superan T_low se aceptan, aunque estén por debajo de T_high. En x alrededor de 11 la magnitud cae por debajo de T_low y la cadena se corta. El tramo B nunca alcanza T_high, así que no tiene semilla y se descarta entero, aunque esté por encima de T_low. Con un único umbral alto el contorno quedaría reducido a un trozo corto; con un único umbral bajo se aceptaría también el tramo B.</aside>
+</section>
+
+<section class="slide" id="canny-umbrales" data-fx="vc" data-section="Canny" data-title="Los dos umbrales de Canny">
+  <header class="s-head"><p class="kicker">sección 2 del enunciado · histéresis</p><h2 class="s-title">Los umbrales T_low y T_high</h2></header>
+  <div class="s-body vstack">
+    <div class="imgcol"><img class="shot" src="assets/umbrales.png" alt="umbrales de canny" style="height:370px"><p class="cap">einstein.pgm, σ = 2. De izquierda a derecha: 12 606, 6 163, 13 053 y 7 560 píxeles</p></div>
+    <div class="g3">
+      <div class="exam" data-seq="1"><b>T ≥ T_high</b>borde seguro (semilla).</div>
+      <div class="tip" data-seq="2"><b>T_low ≤ T &lt; T_high</b>borde solo si está conectado a una semilla.</div>
+      <div class="trap" data-seq="3"><b>T &lt; T_low</b>se descarta.</div>
+    </div>
+    <p class="txt" data-seq="4">Subir T<sub>high</sub> (20, 60 → 20, 120): <b>menos semillas</b> y menos bordes (12 606 → 6 163). Bajar T<sub>low</sub> (20 → 5): los bordes se <b>alargan</b> más (13 053). Con T<sub>low</sub> = T<sub>high</sub> no hay histéresis y los bordes se fragmentan (7 560).</p>
+  </div>
+  <aside class="notes">La histéresis evita dos defectos de un umbral único: un umbral alto parte los bordes en trozos, y un umbral bajo deja pasar mucho ruido. Con dos umbrales, las semillas fuertes deciden qué bordes existen y los píxeles débiles solo se aceptan si siguen una cadena que empieza en una semilla. Los números salen de aplicar canny con sigma 2 a einstein.</aside>
+</section>
+
+<section class="slide" id="ej42" data-section="Canny" data-title="Ejercicio 4.2: el experimento">
+  <header class="s-head"><p class="kicker">ejercicio 4.2 · tabla 1 y figura 1</p><h2 class="s-title">Reproducimos la figura 1</h2></header>
+  <div class="s-body vstack">
+    <div class="imgcol"><img class="shot" src="assets/ej42.png" alt="los cuatro resultados de Canny" style="height:390px"><p class="cap">imagen sintética 128×128 en [0, 1] (cuadrado borroso + ruido), de ejemplo; no es la del enunciado</p></div>
+    <table class="t sm">
+      <tr><th></th><th>a</th><th>b</th><th>c</th><th>d</th></tr>
+      <tr><td>σ, T<sub>1</sub>, T<sub>2</sub></td><td>1; 0,1; 0,2</td><td>1; 0,4; 0,6</td><td>3; 0,1; 0,2</td><td>3; 0,01; 0,02</td></tr>
+      <tr><td>píxeles de borde</td><td>841</td><td>290</td><td>232</td><td>1 311</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Como el ejercicio pide responder sin código, aquí se reproduce el experimento solo para comprobar el razonamiento. La imagen del enunciado es un cuadrado borroso con ruido; generamos una equivalente en 128 por 128 con valores en cero a uno y aplicamos canny con las cuatro combinaciones de la tabla 1. Los recuentos de píxeles son de esta imagen sintética.</aside>
+</section>
+
+<section class="slide" id="ej42-resp" data-fx="vc" data-section="Canny" data-title="Ejercicio 4.2: la respuesta">
+  <header class="s-head"><p class="kicker">ejercicio 4.2 · emparejamiento razonado</p><h2 class="s-title">1 = c, 2 = a, 3 = b, 4 = d</h2></header>
+  <div class="s-body vstack">
+    <table class="t md">
+      <tr><th>salida</th><th>combinación</th><th>argumento</th></tr>
+      <tr data-seq="1"><td><b>1</b></td><td><b>c</b>: σ = 3; 0,1; 0,2</td><td>contorno limpio y de esquinas redondeadas, sin ruido: σ grande filtra el ruido y los umbrales medios dejan solo el borde fuerte</td></tr>
+      <tr data-seq="2"><td><b>2</b></td><td><b>a</b>: σ = 1; 0,1; 0,2</td><td>muchos fragmentos finos de ruido por todo el fondo: σ pequeño no lo filtra y los umbrales medios aceptan parte de él</td></tr>
+      <tr data-seq="3"><td><b>3</b></td><td><b>b</b>: σ = 1; 0,4; 0,6</td><td>solo borde del cuadrado, irregular y entrecortado: los umbrales altos eliminan casi todo el ruido pero σ = 1 deja el contorno rugoso</td></tr>
+      <tr data-seq="4"><td><b>4</b></td><td><b>d</b>: σ = 3; 0,01; 0,02</td><td>manchas largas y suaves (σ = 3) por todas partes, incluso dentro del cuadrado: umbrales casi nulos aceptan cualquier máximo local</td></tr>
+    </table>
+    <div class="exam" data-seq="5"><b>hilo del razonamiento</b>σ controla el <b>aspecto</b> (fino y rugoso frente a suave y redondeado); los umbrales controlan la <b>cantidad</b> (altos: pocos bordes; muy bajos: muchos, ruido incluido). Orden de cantidad: d &gt; a &gt; b &gt; c.</div>
+  </div>
+  <aside class="notes">Las claves para emparejar sin código: primero se separa por el aspecto del contorno, fino e irregular con sigma uno, suave y redondeado con sigma tres; después por la cantidad de bordes, determinada por los umbrales. La combinación d tiene los umbrales más bajos y por tanto produce más bordes; la b tiene los más altos y deja solo lo más fuerte. La combinación c es la única que da un contorno limpio. Validado reproduciendo el experimento con una imagen sintética similar a la del enunciado.</aside>
+</section>
+
+<section class="slide" id="canny-errores" data-fx="vc" data-section="Canny" data-title="¿Sigma 0 o T_low > T_high?">
+  <header class="s-head"><p class="kicker">pregunta de examen probable</p><h2 class="s-title">Sigma 0 y umbrales cruzados</h2></header>
+  <div class="s-body vstack">
+    <table class="t md">
+      <tr><th>llamada</th><th>qué ocurre (comprobado en skimage 0.26)</th></tr>
+      <tr data-seq="1"><td><code>canny(im, sigma=0, ...)</code></td><td class="warn">funciona: la gaussiana no suaviza nada y salen muchos bordes de ruido</td></tr>
+      <tr data-seq="2"><td><code>canny(im, sigma=-1, ...)</code></td><td class="err">ValueError: «Sigma values less than zero are not valid»</td></tr>
+      <tr data-seq="3"><td><code>low_threshold=100, high_threshold=50</code></td><td class="err">ValueError: «low_threshold should be lower then high_threshold» (la errata «then» es de la biblioteca)</td></tr>
+      <tr data-seq="4"><td><code>low_threshold == high_threshold</code></td><td class="warn">permitido: sin histéresis, los bordes se fragmentan</td></tr>
+      <tr data-seq="5"><td><code>low_threshold=None, high_threshold=None</code></td><td class="warn">0,1 y 0,2 de la escala del dtype: en una imagen float en [0, 255] pasa casi todo</td></tr>
+    </table>
+    <div class="exam" data-seq="6"><b>por qué</b>La histéresis necesita T<sub>low</sub> ≤ T<sub>high</sub>: «semilla» es lo que supera T<sub>high</sub>, y «continuación», lo que supera T<sub>low</sub>. Si T<sub>low</sub> &gt; T<sub>high</sub>, toda semilla sería a la vez menor que T<sub>low</sub>: no tiene sentido.</div>
+  </div>
+  <aside class="notes">Con sigma cero no hay error, aunque el detector se vuelve muy ruidoso. Lo que sí lanza ValueError es sigma negativo y low_threshold mayor que high_threshold. El mensaje de skimage dice then en lugar de than, es un error de la propia biblioteca. Si ambos umbrales se dejan en None, el resultado depende del tipo de dato de la imagen.</aside>
+</section>
+
+<!-- ======================= BLOQUE D · HOUGH ======================= -->
+
+<section class="slide is-plain divider" id="div-hough" data-fx="backdrop" data-seed="17" data-section="Hough" data-title="Bloque D: Hough">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque d · sección 3 y ejercicios 3 y 5</p>
+    <h1 class="s-title xl">Transformada de Hough</h1>
+    <p class="lead">hough_line, el acumulador H, hough_line_peaks, el efecto de girar la imagen y cómo dibujar las rectas.</p>
+  </div>
+  <aside class="notes">Cuarto bloque: de los bordes binarios de Canny a las rectas. Cada píxel de borde vota por todas las rectas que pasan por él y los picos del acumulador son las rectas de la imagen.</aside>
+</section>
+
+<section class="slide" id="hough-ficha" data-fx="vc" data-section="Hough" data-title="Ficha de hough_line">
+  <header class="s-head"><p class="kicker">testHough · pregunta 1 del enunciado</p><h2 class="s-title">Ficha: hough_line</h2></header>
+  <div class="s-body g21">
+    <div class="api">
+      <div class="sig">skimage.transform.hough_line(image, theta=None)  →  (H, thetas, rhos)</div>
+      <table>
+        <tr><td>image</td><td>imagen <b>binaria</b> 2D (los bordes de Canny); lo no nulo vota</td></tr>
+        <tr><td>theta</td><td>ángulos en radianes. Defecto: 180 entre −π/2 y π/2. El lab pasa <code>np.linspace(-np.pi/2, np.pi/2, 200)</code></td></tr>
+        <tr><td>H</td><td>acumulador, enteros, forma <code>(len(rhos), len(thetas))</code></td></tr>
+        <tr><td>thetas</td><td>los ángulos usados</td></tr>
+        <tr><td>rhos</td><td>distancias en píxeles, de −diagonal a +diagonal, paso 1</td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Cada píxel de borde vota por todas las rectas que pasan por él:</p>
+      <div class="eq" data-seq="1">$$x\cos\theta+y\sin\theta=\rho$$</div>
+      <p class="txt" data-seq="2">con x = columna e y = fila. Se llama como el código del profesor:</p>
+<pre class="code" data-seq="2">H, thetas, rhos = hough_line(edges,
+    np.linspace(-np.pi/2, np.pi/2, 200))</pre>
+    </div>
+  </div>
+  <aside class="notes">La transformada de Hough necesita bordes ya detectados, por eso se aplica Canny primero. La entrada puede ser cualquier array donde lo distinto de cero sea un píxel de borde. Se usan ángulos entre menos 90 y 90 grados porque la recta con theta + 180 es la misma que la de theta con rho cambiado de signo, así que rho puede ser negativo.</aside>
+</section>
+
+<section class="slide" id="hough-sinus" data-fx="vc" data-section="Hough" data-title="Tres puntos, tres sinusoides">
+  <header class="s-head"><p class="kicker">de la imagen al espacio (<span class="nc">θ</span>, <span class="nc">ρ</span>) · de ejemplo</p><h2 class="s-title">Puntos alineados se cortan</h2></header>
+  <div class="s-body g21">
+    <div class="pk-wrap">
+    <div class="fx" data-role="plot" data-x="-90,90" data-y="-100,100" data-xl="θ (grados)" data-yl="ρ (píxeles)" data-legend="br" data-fns='[{"f":"x=>20*Math.cos(x*Math.PI/180)+80*Math.sin(x*Math.PI/180)","label":"(20, 80)"},{"f":"x=>50*Math.cos(x*Math.PI/180)+50*Math.sin(x*Math.PI/180)","label":"(50, 50)"},{"f":"x=>80*Math.cos(x*Math.PI/180)+20*Math.sin(x*Math.PI/180)","label":"(80, 20)"}]' data-pts='[[45,70.71]]' style="height:600px"></div>
+      <span class="pk-lab">(45°, 70,7)</span>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Cada punto \((x, y)\) de borde vota por la curva</p>
+      <div class="eq" data-seq="1">$$\rho(\theta)=x\cos\theta+y\sin\theta$$</div>
+      <p class="txt" data-seq="2">Los tres puntos están en la recta \(x+y=100\).</p>
+      <div class="exam" data-seq="3"><b>el pico</b>En \(\theta=45^\circ\), \(\rho=100/\sqrt2\approx70{,}7\) se cortan las tres curvas. Esa celda de H recibe 3 votos y es la recta.</div>
+    </div>
+  </div>
+  <aside class="notes">Este es el fundamento de la transformada. Un punto de la imagen pertenece a infinitas rectas, una por cada ángulo theta, y su distancia rho al origen es x por coseno de theta más y por seno de theta: una sinusoide en el plano theta-rho. Los tres puntos de ejemplo están sobre la recta x + y = 100, cuya normal forma 45 grados con el eje x y que está a distancia 100 entre raíz de dos, unos 70,7 píxeles, del origen. Por eso las tres sinusoides pasan por ese mismo punto. En una imagen real, con cientos de píxeles alineados, ese cruce se convierte en un pico del acumulador.</aside>
+</section>
+
+<section class="slide" id="hough-tamano" data-fx="vc" data-section="Hough" data-title="Tamaño del acumulador">
+  <header class="s-head"><p class="kicker">pregunta 2 del enunciado · variable H</p><h2 class="s-title">¿Qué tamaño tiene H?</h2></header>
+  <div class="s-body vstack">
+    <div class="vstack">
+      <div class="deriv" style="font-size:36px;gap:14px">
+        <div data-seq="1"><span>$$|\rho|=|x\cos\theta+y\sin\theta|\le\sqrt{x^2+y^2}\le D$$</span><span class="why">Cauchy-Schwarz: ρ no supera la diagonal</span></div>
+        <div data-seq="2"><span>$$D=\lceil\sqrt{256^2+256^2}\rceil=\lceil362{,}04\rceil=363$$</span><span class="why">cuadros.png mide 256×256</span></div>
+        <div data-seq="3"><span>$$\text{len(rhos)}=2D+1=727$$</span><span class="why">de −363 a 363 con paso 1</span></div>
+      </div>
+      <div class="exam" data-seq="4"><b>respuesta</b><code>H.shape = (727, 200)</code>: 727 distancias × 200 ángulos. La variable es <code>H</code> en <code>testHough</code>.</div>
+    </div>
+<pre class="code" data-seq="4" style="font-size:26px"># salida real de testHough: angles: 200, distances: 727
+rho[...] [-363. -362. -361. -360. -359.]  [ 359.  360.  361.  362.  363.]</pre>
+  </div>
+  <aside class="notes">Una recta en el plano de la imagen se describe por su distancia al origen, rho, y el ángulo de su normal, theta. Como cualquier punto de la imagen está a distancia como máximo igual a la diagonal del origen, rho queda acotado por la diagonal. Con paso de un píxel, el número de valores es el doble de la diagonal redondeada hacia arriba más uno, el cero. Lo que imprime el código del profesor confirma estos números.</aside>
+</section>
+
+<section class="slide" id="hough-ejes" data-fx="vc" data-section="Hough" data-title="Ejes y valores del acumulador">
+  <header class="s-head"><p class="kicker">pregunta 3 del enunciado · figura mostrada</p><h2 class="s-title">Ejes y rasgos de H</h2></header>
+  <div class="s-body g12">
+    <div class="imgcol"><img class="shot" src="assets/hough_H.png" alt="espacio de Hough de cuadros" style="height:470px"><p class="cap">np.log(H + 1) de cuadros (σ = 5)</p></div>
+    <div class="vstack">
+      <ul class="pts">
+        <li data-seq="1"><b>Horizontal</b>: θ, de −90° a 90° (200 columnas). <b>Vertical</b>: ρ, de −363 a 363 px.</li>
+        <li data-seq="2"><b>Cada celda</b> = número de píxeles de borde sobre la recta \(x\cos\theta+y\sin\theta=\rho\) (votos). Máximo aquí: 104.</li>
+        <li data-seq="3"><b>Se muestra \(\log(H+1)\)</b>: el 90 % de las celdas vale 4 o menos y unos pocos picos llegan a 104.</li>
+      </ul>
+      <div class="eq sm" data-seq="4">$$\rho=x\cos\theta+y\sin\theta=\sqrt{x^2+y^2}\,\cos(\theta-\varphi)$$</div>
+      <p class="txt" data-seq="4"><b>Sinusoides</b>: cada píxel traza una. <b>Picos</b>: donde se cruzan muchas (una recta). <b>Mariposas</b>: los votos se reparten alrededor del pico cuando el borde no es perfectamente recto.</p>
+    </div>
+  </div>
+  <aside class="notes">Un punto de la imagen con coordenadas x, y corresponde a todas las rectas que pasan por él: en el espacio theta, rho es la sinusoide rho igual a la raíz de x cuadrado más y cuadrado por el coseno de theta menos fi, donde fi es el ángulo del punto. Varios puntos alineados en una recta tienen sinusoides que se cortan en un mismo punto theta, rho: ese es el pico. Como los bordes reales no son perfectos, los votos se esparcen en una zona alrededor del pico y se ve la forma de mariposa. La escala logarítmica comprime el rango dinámico entre cero y cien.</aside>
+</section>
+
+<section class="slide" id="hough-peaks-ficha" data-fx="vc" data-section="Hough" data-title="Ficha de hough_line_peaks">
+  <header class="s-head"><p class="kicker">findPeaks · pregunta 3 del enunciado</p><h2 class="s-title">Ficha: hough_line_peaks</h2></header>
+  <div class="s-body g21">
+    <div class="api">
+      <div class="sig">hough_line_peaks(hspace, angles, dists, min_distance=9, min_angle=10, threshold=None, num_peaks=inf)</div>
+      <table>
+        <tr><td>hspace, angles, dists</td><td>lo que devuelve <code>hough_line</code>: <code>H, thetas, rhos</code></td></tr>
+        <tr><td>min_distance</td><td>separación mínima entre picos en <b>celdas de ρ</b> (aquí 15 ⇒ 15 px)</td></tr>
+        <tr><td>min_angle</td><td>separación mínima en <b>celdas de θ</b> (aquí 20 ⇒ unos 18°)</td></tr>
+        <tr><td>threshold</td><td>valor mínimo del pico; defecto 0,5·máx. Aquí <code>0.15*np.max(H)</code></td></tr>
+        <tr><td>num_peaks</td><td>máximo de picos; el código usa <code>np.inf</code></td></tr>
+        <tr><td>devuelve</td><td><b>tupla</b> <code>(valores, ángulos, distancias)</code></td></tr>
+      </table>
+    </div>
+    <div class="vstack">
+<pre class="code sm" data-seq="1">v, ang, dist = hough_line_peaks(
+    H, thetas, rhos, num_peaks=np.inf,
+    threshold=0.15 * np.max(H),
+    min_angle=20, min_distance=15)</pre>
+      <div class="tip" data-seq="2"><b>cómo funciona</b>Supresión de no máximos en H con filtros de máximo de tamaño <code>min_distance</code> y <code>min_angle</code>: los vecinos de un pico mayor se descartan.</div>
+      <div class="exam" data-seq="3"><b>¿de qué dependen los valores altos?</b>De la longitud de la recta y de lo alineados que estén sus píxeles de borde: más píxeles sobre la misma (θ, ρ) = más votos.</div>
+    </div>
+  </div>
+  <aside class="notes">Los parámetros min_distance y min_angle son tamaños de ventana del filtro de máximo en índices del acumulador, no en píxeles ni grados; con 200 ángulos repartidos en 180 grados, cada celda de theta son unos 0,9 grados, así que 20 celdas son 18 grados. El pico mayor de cuadros vale 104 y corresponde al lado largo del rectángulo claro; los lados más cortos dan picos algo menores.</aside>
+</section>
+
+<section class="slide" id="hough-peaks-draw" data-fx="vc" data-section="Hough" data-title="displayHoughPeaks y los picos">
+  <header class="s-head"><p class="kicker">visualPercepUtils · pregunta 4 del enunciado</p><h2 class="s-title">Dibujar los picos sobre H</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code sm">slope = nThetas / rangeThetas   # columnas por radián
+plt.imshow(h, cmap='jet')
+plt.plot(slope*(angle - theta[0]) + 1,
+         dist - rho[0],
+         'rs', markersize=0.1*peak)</pre>
+      <ul class="pts">
+        <li data-seq="1"><b>Columna</b> = \((\theta-\theta_0)\cdot\text{slope}\): de ángulo a índice.</li>
+        <li data-seq="2"><b>Fila</b> = \(\rho-\rho_0\) (paso 1, \(\rho_0=-363\)).</li>
+        <li data-seq="3"><b>Tamaño</b> del marcador ∝ valor del pico.</li>
+      </ul>
+      <table class="t sm">
+        <tr><th>valor</th><th>ángulo</th><th>distancia</th></tr>
+        <tr><td>104</td><td>−0,5°</td><td>62</td></tr>
+        <tr><td>88</td><td>90°</td><td>223</td></tr>
+        <tr><td>88</td><td>90°</td><td>32</td></tr>
+        <tr><td>65</td><td>0,5°</td><td>161</td></tr>
+      </table>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/hough_peaks.png" alt="picos en H" style="height:540px"><p class="cap">7 picos (primeros 4 en la tabla)</p></div>
+  </div>
+  <aside class="notes">La función imprime por la salida estándar cada pico con su ángulo en grados y su distancia, y los dibuja como cuadrados rojos sobre el acumulador. Para pasar de ángulo a columna se multiplica por el número de columnas por radián; para pasar de distancia a fila basta restar el primer valor de rho, que es menos la diagonal. Los picos de theta cercano a cero con rho 62 y 161 son los lados verticales del rectángulo claro, y los de theta 90 grados con rho 32 y 223, los lados horizontales. Theta de 90 y de menos 90 son la misma orientación con rho de signo opuesto.</aside>
+</section>
+
+<section class="slide" id="hough-rotacion" data-section="Hough" data-title="Ejercicio 3: rotación y picos">
+  <header class="s-head"><p class="kicker">ejercicio 3 · bRotate</p><h2 class="s-title">Rotar la imagen y los picos</h2></header>
+  <div class="s-body vstack">
+    <div class="imgcol"><img class="shot" src="assets/rot.png" alt="cuadros rotados con las rectas" style="height:290px"><p class="cap">sin ruido; σ = 5; rectas detectadas en rojo</p></div>
+    <table class="t sm">
+      <tr><th>giro</th><th>tamaño</th><th>picos</th><th>ángulos de los picos principales</th></tr>
+      <tr><td>0°</td><td>256×256</td><td>7</td><td>≈ 0° y 90°</td></tr>
+      <tr><td>15°</td><td>314×314</td><td>5</td><td>−14,9° y 75,5° (= 90° − 15°)</td></tr>
+      <tr><td>30°</td><td>350×350</td><td>6</td><td>−30,3° y 60,2° (= 90° − 30°)</td></tr>
+    </table>
+    <p class="txt">Con <code>ndi.rotate(im, α)</code>, cada ángulo pasa de θ a <b>θ − α</b> (signo comprobado; eje y hacia abajo). El nº de picos cambia: la imagen crece (<code>reshape</code>) y los lados giran, así que el borde se escalona y reparte sus votos.</p>
+  </div>
+  <aside class="notes">Una rotación de la imagen gira todas las rectas, y la normal de cada recta gira el mismo ángulo, así que theta cambia en alfa, con el signo que impone el convenio de ejes: aquí el eje y va hacia abajo y los datos muestran theta menos alfa. Rho cambia además porque el centro de rotación es el centro de la imagen y no el origen. El número de picos varía porque tras rotar los lados ya no coinciden con la rejilla de píxeles y el borde se escalona. Si se rota con relleno constante, las esquinas negras añaden bordes nuevos a 45 grados; por eso el código usa mode nearest.</aside>
+</section>
+
+<section class="slide" id="displaylines-code" data-fx="vc" data-section="Hough" data-title="Ejercicio 5: displayLines">
+  <header class="s-head"><p class="kicker">ejercicio 5 · código completo</p><h2 class="s-title">displayLines(im, thetas, rhos)</h2></header>
+  <div class="s-body g21">
+<pre class="code sm">def displayLines(im, thetas, rhos):
+    Hh, Ww = im.shape[:2]
+    plt.imshow(im, cmap='gray')
+    for t, r in zip(thetas, rhos):
+        if abs(np.sin(t)) &gt; 1e-6:     # no vertical
+            x1, x2 = 0, Ww
+            y1 = (r - x1*np.cos(t)) / np.sin(t)
+            y2 = (r - x2*np.cos(t)) / np.sin(t)
+        else:                          # vertical
+            x1 = x2 = r / np.cos(t)
+            y1, y2 = 0, Hh
+        plt.plot((x1, x2), (y1, y2), '-r')
+    plt.xlim(0, Ww); plt.ylim(Hh, 0)
+    plt.axis('off')</pre>
+    <div class="vstack">
+      <div class="deriv">
+        <div data-seq="1"><span>$$x\cos\theta+y\sin\theta=\rho$$</span><span class="why">ecuación de la recta</span></div>
+        <div data-seq="2"><span>$$y=\frac{\rho-x\cos\theta}{\sin\theta}$$</span><span class="why">si sen θ ≠ 0, con x = 0 y x = W</span></div>
+        <div data-seq="3"><span>$$x=\frac{\rho}{\cos\theta}$$</span><span class="why">si sen θ = 0: vertical</span></div>
+      </div>
+      <div class="trap" data-seq="4"><b>convenio</b>En skimage <b>x = columna</b> e <b>y = fila</b>; <code>plt.plot</code> recibe primero las dos x y luego las dos y. Con <code>imshow</code> el eje y va hacia abajo, de ahí <code>ylim(Hh, 0)</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Para dibujar una recta solo hacen falta dos puntos. Se toman los bordes izquierdo y derecho de la imagen, x igual a cero y x igual a W, y se despeja y de la ecuación. Si el seno de theta es cero, la recta es vertical y la ecuación se reduce a x por coseno de theta igual a rho, de donde x es rho entre coseno de theta. Se fijan los límites de los ejes para que las rectas, que son infinitas, no cambien el marco de la imagen. Esta función está en el archivo solucion_p4.py y está probada.</aside>
+</section>
+
+<section class="slide" id="displaylines-res" data-section="Hough" data-title="Resultado de displayLines">
+  <header class="s-head"><p class="kicker">ejercicio 5 · resultado real</p><h2 class="s-title">Rectas sobre cuadros</h2></header>
+  <div class="s-body g2">
+    <div class="imgcol"><img class="shot" src="assets/lines.png" alt="rectas de Hough sobre cuadros" style="height:560px"><p class="cap">7 picos de H ⇒ 7 rectas</p></div>
+    <div class="vstack">
+      <p class="txt">Los dos picos de θ ≈ 0° (ρ = 62 y 161) son las rectas verticales de los lados del rectángulo claro, y los de θ = 90° (ρ = 32 y 223), las horizontales.</p>
+      <p class="txt">Las rectas son <b>infinitas</b>: cruzan toda la imagen aunque el borde real solo ocupe un tramo.</p>
+      <p class="txt">Los picos menores (26, 23 y 22 votos) salen de los lados escalonados de los rectángulos pequeños y son ligeras desviaciones de las rectas principales.</p>
+      <div class="exam"><b>llamada</b><code>displayLines(im, peaks_thetas, peaks_rhos)</code> con lo que devuelve <code>hough_line_peaks</code> (ángulos y distancias, en ese orden).</div>
+    </div>
+  </div>
+  <aside class="notes">Se pasa a displayLines el segundo y el tercer elemento de la tupla que devuelve hough_line_peaks, no el primero, que son los valores de los picos. En la figura, las cuatro rectas principales enmarcan el rectángulo claro; los rectángulos pequeños, de poco contraste, apenas aportan bordes con sigma cinco.</aside>
+</section>
+
+<!-- ======================= BLOQUE E · HOG, SEGMENTOS Y CIERRE ======================= -->
+
+<section class="slide is-plain divider" id="div-hog" data-fx="backdrop" data-seed="19" data-section="HOG y cierre" data-title="Bloque E: HOG y cierre">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque e · ejercicios 4 y 6 y repaso</p>
+    <h1 class="s-title xl">HOG, segmentos y examen</h1>
+    <p class="lead">Histograma de orientaciones, de rectas a segmentos, tres ejercicios resueltos, verdadero o falso y la chuleta.</p>
+  </div>
+  <aside class="notes">Último bloque: los dos ejercicios que quedan (HOG simplificado y segmentos) y el repaso para el examen escrito.</aside>
+</section>
+
+<section class="slide" id="hog" data-fx="vc" data-section="HOG y cierre" data-title="Ejercicio 4: HOG simplificado">
+  <header class="s-head"><p class="kicker">ejercicio 4 · HOG(im, nbins)</p><h2 class="s-title">Histograma de orientaciones</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+<pre class="code" data-seq="1">def HOG(im, nbins):
+    im = im.astype(float)
+    gx = sobel(im, 1)
+    gy = sobel(im, 0)
+    mag = np.hypot(gx, gy)
+    ang = np.arctan2(gy, gx)
+    h, _ = np.histogram(ang, bins=nbins,
+        range=(-np.pi, np.pi), weights=mag)
+    return h</pre>
+      <p class="txt" data-seq="3"><b>Sin pesos</b> cada píxel cuenta 1: en cuadros, 63 532 de 65 536 píxeles son planos (\(g=0\)), <code>arctan2(0,0)=0</code> y casi todo cae en la barra de 0°. <b>Con pesos</b> = magnitud, solo cuentan los bordes.</p>
+    </div>
+    <div class="vstack">
+      <div class="fx hogp" data-role="plot" data-x="-180,180" data-y="0,1" data-xl="ángulo (grados), con pesos" data-seq="2" data-bars='[0.004,0.007,0.004,0.001,0.009,0.001,0,0.005,0,0.799,0.003,0,0,0.005,0,0,0.007,0.004,1,0.007,0,0,0.005,0,0,0.003,0,0.799,0.005,0,0.001,0.009,0.001,0.004,0.007,0.985]' style="height:298px"></div>
+      <div class="fx hogp" data-role="plot" data-x="-180,180" data-y="0,1" data-xl="ángulo (grados), sin pesos" data-seq="3" data-bars='[0,0,0,0,0,0,0,0,0,0.007,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0.007,0,0,0,0,0,0,0,0.009]' style="height:298px"></div>
+    </div>
+  </div>
+  <aside class="notes">El HOG simplificado es un histograma de las orientaciones del gradiente. Con 36 barras de 10 grados y ponderando por la magnitud, cuadros tiene picos en menos 90, 0, 90 y 180 grados, que corresponden a los bordes horizontales y verticales (el gradiente es perpendicular al borde). Sin ponderar, el 97 por ciento de los píxeles son planos, tienen gradiente cero y arctan2 de cero, cero vale cero, así que se acumulan todos en la barra del ángulo cero y ocultan los bordes. Los valores se han normalizado por el máximo para dibujarlos.</aside>
+</section>
+
+<section class="slide" id="segmentos" data-fx="vc" data-section="HOG y cierre" data-title="Ejercicio 6: segmentos">
+  <header class="s-head"><p class="kicker">ejercicio 6 · avanzado</p><h2 class="s-title">De rectas a segmentos</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><b>Idea 1.</b> Recorrer la recta \((\theta,\rho)\) píxel a píxel sobre el mapa de bordes y quedarse con los tramos de píxeles de borde, tolerando huecos pequeños (<code>gap</code>) y descartando los tramos cortos.</p>
+      <p class="txt" data-seq="2"><b>Idea 2.</b> Usar la versión probabilística de Hough, que ya devuelve segmentos:</p>
+<pre class="code" data-seq="2">segs = probabilistic_hough_line(
+    edges, threshold=5,
+    line_length=50, line_gap=5)
+# lista de ((x0, y0), (x1, y1))</pre>
+      <p class="txt" data-seq="3">Con cuadros salen 7 segmentos, sobre todo los lados largos del rectángulo claro.</p>
+    </div>
+    <div class="imgcol"><img class="shot" src="assets/segmentos.png" alt="rectas frente a segmentos" style="height:500px"><p class="cap">izquierda: rectas infinitas; derecha: segmentos</p></div>
+  </div>
+  <aside class="notes">La transformada de Hough clásica solo dice qué rectas hay, no dónde empiezan y acaban. Para obtener segmentos se puede recorrer cada recta y mirar dónde hay borde, o usar probabilistic_hough_line de skimage, que muestrea píxeles de borde al azar y devuelve directamente los extremos de cada segmento. Sus parámetros son threshold (votos mínimos), line_length (longitud mínima) y line_gap (hueco máximo que se tolera dentro de un segmento).</aside>
+</section>
+
+<section class="slide" id="examen1" data-fx="vc" data-section="HOG y cierre" data-title="Examen: edges_sobel y HOG">
+  <header class="s-head"><p class="kicker">tipo examen · ejercicios 1 y 2 con solución</p><h2 class="s-title">edges_sobel y orientation_hist</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt"><b>1.</b> Escribe <code>edges_sobel(im, t)</code>: mapa binario de bordes con la magnitud del gradiente de Sobel y umbral relativo <code>t</code> (0 a 1).</p>
+<pre class="code sm" data-seq="1">def edges_sobel(im, t):
+    im = im.astype(float)
+    gx = sobel(im, 1)
+    gy = sobel(im, 0)
+    mag = np.hypot(gx, gy)
+    return mag &gt; t * mag.max()</pre>
+      <div class="trap" data-seq="2"><b>fallo típico</b>Olvidar <code>astype(float)</code> con una imagen <code>uint8</code>.</div>
+    </div>
+    <div class="vstack">
+      <p class="txt"><b>2.</b> Escribe <code>orientation_hist(im, n)</code>: histograma de <code>n</code> bins de las orientaciones del gradiente, ponderado por la magnitud.</p>
+<pre class="code sm" data-seq="3">def orientation_hist(im, n):
+    im = im.astype(float)
+    gx = sobel(im, 1)
+    gy = sobel(im, 0)
+    mag = np.hypot(gx, gy)
+    ang = np.arctan2(gy, gx)
+    h, _ = np.histogram(ang, bins=n,
+        range=(-np.pi, np.pi), weights=mag)
+    return h</pre>
+      <div class="trap" data-seq="4"><b>fallo típico</b><code>arctan2(gx, gy)</code> al revés, o no pasar <code>range</code> ni <code>weights</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Los dos ejercicios usan la misma preparación: pasar a float, calcular gx y gy con sobel y obtener el módulo. En el primero se umbraliza respecto al máximo; en el segundo se calcula el ángulo con arctan2 y se acumula en un histograma ponderado por el módulo. Ambas funciones están probadas en solucion_p4.py.</aside>
+</section>
+
+<section class="slide" id="examen2" data-fx="vc" data-section="HOG y cierre" data-title="Examen: ¿cuántas rectas hay?">
+  <header class="s-head"><p class="kicker">tipo examen · ejercicio 3 con solución</p><h2 class="s-title">¿Cuántas rectas hay?</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt"><b>3.</b> Dado un mapa binario de bordes <code>edges</code>, devuelve cuántas rectas detecta Hough con al menos la mitad de los votos del pico máximo.</p>
+<pre class="code" data-seq="1">def n_lines(edges, frac=0.5):
+    th = np.linspace(-np.pi/2, np.pi/2, 180,
+                     endpoint=False)
+    H, thetas, rhos = hough_line(edges, th)
+    v, a, d = hough_line_peaks(
+        H, thetas, rhos,
+        threshold=frac * H.max(),
+        min_angle=10, min_distance=10)
+    return len(v)</pre>
+    </div>
+    <div class="vstack">
+      <div class="exam" data-seq="2"><b>comprobado</b>Un contorno rectangular de 64×64 (4 lados) da <code>n_lines = 4</code>: dos picos en θ = −90° (horizontales, ρ = −10 y −50: con sen θ = −1, ρ = −y) y dos en θ = 0° (verticales, ρ = 10 y 53).</div>
+      <div class="tip" data-seq="3"><b>truco</b>La respuesta es la <b>longitud</b> de la primera salida: <code>len(v)</code>. Los lados paralelos comparten θ y difieren en ρ.</div>
+      <div class="trap" data-seq="4"><b>fallo típico</b>Devolver <code>H.max()</code> (votos) en lugar de <code>len(v)</code> (rectas), o no pasar <code>threshold</code> y quedarse con el defecto de 0,5·máx.</div>
+    </div>
+  </div>
+  <aside class="notes">El número de rectas es el número de picos del acumulador que superan un umbral. En un rectángulo hay cuatro rectas, dos pares de paralelas: los pares comparten theta y se diferencian en rho. En la prueba con un contorno de 64 por 64 se obtienen exactamente cuatro picos. Con theta igual a menos 90 grados, rho vale menos y, así que sale negativo; lo importante al razonar a mano es contar picos distintos.</aside>
+</section>
+
+<section class="slide" id="vf1" data-fx="vc" data-section="HOG y cierre" data-title="Verdadero o falso (1)">
+  <header class="s-head"><p class="kicker">tipo examen · tapa la columna derecha</p><h2 class="s-title">Verdadero o falso (1)</h2></header>
+  <div class="s-body">
+    <table class="t vf">
+      <tr><th>afirmación</th><th>respuesta</th></tr>
+      <tr><td data-seq="1"><code>sobel(im, 1)</code> resalta los bordes horizontales.</td><td class="err ans" data-seq="2">Falso: deriva en x ⇒ bordes verticales</td></tr>
+      <tr><td data-seq="3">Con una imagen <code>uint8</code>, <code>sobel</code> devuelve bien los valores negativos.</td><td class="err ans" data-seq="4">Falso: mismo dtype, se envuelven</td></tr>
+      <tr><td data-seq="5"><code>convolve(im, Kx)</code> da exactamente lo mismo que <code>sobel(im, 1)</code>.</td><td class="err ans" data-seq="6">Falso: signo opuesto (sobel correlaciona)</td></tr>
+      <tr><td data-seq="7">\(|g_x|+|g_y|\) nunca es menor que \(\sqrt{g_x^2+g_y^2}\).</td><td class="ok ans" data-seq="8">Verdadero: hasta √2 mayor</td></tr>
+      <tr><td data-seq="9">En Canny, subir <span class="nc">σ</span> aumenta el número de bordes detectados.</td><td class="err ans" data-seq="10">Falso: lo reduce (menos detalle y ruido)</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Primera tanda de verdadero o falso sobre Sobel y Canny. La clave de cada una: el eje de sobel es el eje de derivación, no el del borde; sobel conserva el tipo de dato de la entrada; sobel de scipy es una correlación, así que con convolve sale el signo cambiado; la suma de valores absolutos acota por arriba a la magnitud con un factor entre 1 y raíz de dos; y un sigma mayor suaviza más y deja menos bordes (en einstein, de unos 20 mil píxeles con sigma 1 a menos de 2 mil con sigma 5).</aside>
+</section>
+
+<section class="slide" id="vf2" data-fx="vc" data-section="HOG y cierre" data-title="Verdadero o falso (2)">
+  <header class="s-head"><p class="kicker">tipo examen · tapa la columna derecha</p><h2 class="s-title">Verdadero o falso (2)</h2></header>
+  <div class="s-body">
+    <table class="t vf">
+      <tr><th>afirmación</th><th>respuesta</th></tr>
+      <tr><td data-seq="1">Un píxel con magnitud entre T<sub>low</sub> y T<sub>high</sub> siempre es borde.</td><td class="err ans" data-seq="2">Falso: solo si está unido a una semilla</td></tr>
+      <tr><td data-seq="3"><code>hough_line</code> espera una imagen binaria de bordes, no la imagen en gris.</td><td class="ok ans" data-seq="4">Verdadero: lo no nulo vota</td></tr>
+      <tr><td data-seq="5">El tamaño de <code>H</code> depende del número de píxeles de borde.</td><td class="err ans" data-seq="6">Falso: de la diagonal y de len(theta)</td></tr>
+      <tr><td data-seq="7"><code>hough_line_peaks</code> devuelve <code>(ángulos, distancias)</code>.</td><td class="err ans" data-seq="8">Falso: (valores, ángulos, distancias)</td></tr>
+      <tr><td data-seq="9">Girar la imagen α grados desplaza los picos de H en θ.</td><td class="ok ans" data-seq="10">Verdadero: θ pasa a θ − α (y ρ cambia)</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Segunda tanda, sobre la histéresis y Hough. Un píxel intermedio solo se acepta si una cadena de píxeles por encima de T_low lo une a una semilla por encima de T_high. hough_line trata como voto todo lo que no es cero, por eso se le pasa la salida booleana de Canny. La forma de H es (2 por la diagonal redondeada más 1) por el número de ángulos, independiente del contenido. hough_line_peaks devuelve tres arrays y el primero son los votos. Y al girar la imagen con ndi.rotate, los ángulos de los picos se desplazan en menos alfa, como se vio con 15 y 30 grados.</aside>
+</section>
+
+<section class="slide" id="chuleta" data-section="HOG y cierre" data-title="Chuleta del lab 4">
+  <header class="s-head"><p class="kicker">resumen para repasar</p><h2 class="s-title">Chuleta: funciones del lab</h2></header>
+  <div class="s-body">
+    <table class="t md">
+      <tr><th>función</th><th>parámetros clave</th><th>devuelve</th></tr>
+      <tr><td><code>scipy.ndimage.sobel</code></td><td>input, axis (1 = x, 0 = y), mode='reflect'</td><td>derivada con signo, mismo dtype que la entrada</td></tr>
+      <tr><td><code>skimage.feature.canny</code></td><td>sigma, low_threshold, high_threshold, use_quantiles</td><td>array booleano de bordes</td></tr>
+      <tr><td><code>transform.hough_line</code></td><td>image binaria, theta (rad)</td><td><code>(H, thetas, rhos)</code>; H de forma (nρ, nθ)</td></tr>
+      <tr><td><code>transform.hough_line_peaks</code></td><td>H, thetas, rhos, threshold, min_angle, min_distance, num_peaks</td><td><code>(valores, ángulos, distancias)</code></td></tr>
+      <tr><td><code>ndi.rotate</code></td><td>input, angle (grados), reshape=True, mode</td><td>imagen girada (más grande con reshape)</td></tr>
+      <tr><td><code>np.hypot</code> / <code>np.arctan2</code></td><td>(gx, gy) / <b>(gy, gx)</b></td><td>módulo ≥ 0 / ángulo en (−π, π]</td></tr>
+      <tr><td><code>np.histogram</code></td><td>a, bins, range, weights</td><td><code>(cuentas, bordes)</code></td></tr>
+      <tr><td><code>probabilistic_hough_line</code></td><td>image, threshold, line_length, line_gap</td><td>lista de segmentos ((x0,y0),(x1,y1))</td></tr>
+    </table>
+    <p class="txt" style="margin-top:18px;font-size:28px">Recta de Hough: \(x\cos\theta+y\sin\theta=\rho\)&emsp;|&emsp;\(\text{len(rhos)}=2\lceil D\rceil+1\)&emsp;|&emsp;rotar α ⇒ θ pasa a θ − α</p>
+  </div>
+  <aside class="notes">Esta tabla reúne todo lo que hay que saber de memoria. Los tres tipos devueltos que más se confunden: sobel devuelve una derivada con signo, canny devuelve un booleano, y hough_line_peaks devuelve una tupla de tres arrays.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

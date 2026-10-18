@@ -1,0 +1,94 @@
+:root { --folio: "VC.T1 // "; }
+
+/* Figuras */
+.imgrow { display: flex; gap: 28px; align-items: flex-start; justify-content: center; }
+figure.im { margin: 0; display: grid; gap: 10px; justify-items: center; }
+figure.im img { display: block; height: 340px; width: auto; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); image-rendering: auto; }
+figure.im.pix img { image-rendering: pixelated; }
+figure.im.s img { height: 260px; }
+figure.im.xs img { height: 200px; }
+figure.im.l img { height: 420px; }
+figure.im figcaption { font: 400 22px/1.3 var(--font-mono); color: var(--fg-2); text-align: center; }
+figure.im figcaption b { color: var(--accent); font-weight: 600; }
+
+/* Diagramas de flujo */
+.flow { display: flex; align-items: center; justify-content: center; gap: 22px; }
+.flow .box { padding: 18px 28px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); font-size: 28px; color: var(--fg); text-align: center; }
+.flow .box.t { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.flow .arr { font: 600 40px var(--font-mono); color: var(--accent); }
+.card { padding: 20px 26px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius-lg); background: var(--bg-2); display: grid; gap: 10px; align-content: start; }
+.card h3 { margin: 0; font: 600 26px var(--font-display); color: var(--accent); }
+.card p { margin: 0; font-size: 24px; line-height: 1.4; color: var(--fg-2); }
+.card.c2 h3 { color: var(--cat-2); } .card.c3 h3 { color: var(--cat-3); }
+
+.pl { height: 300px; }
+.mini { font: 400 22px/1.4 var(--font-mono); color: var(--fg-3); }
+.tf-list { display: grid; gap: 14px; }
+.tf-list > div { padding: 16px 24px; border: var(--stroke) solid var(--line-2); border-left: 6px solid var(--accent); border-radius: var(--radius); font-size: 26px; color: var(--fg-2); display: grid; grid-template-columns: 90px 1fr; align-items: center; }
+.tf-list .n { font: 600 28px var(--font-mono); color: var(--accent); }
+.tf-list .q { grid-column: 2; }
+.vf { display: grid; gap: 14px; }
+.vf > div { display: grid; grid-template-columns: 1fr 150px 1fr; gap: 24px; align-items: center; padding: 12px 22px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); font-size: 24px; color: var(--fg-2); }
+.vf .a { font: 600 24px var(--font-mono); }
+.vf .a.v { color: var(--ok); } .vf .a.f { color: var(--err); }
+.vf .why { font-size: 22px; color: var(--fg-3); }
+table.t td .katex, table.t th .katex { font-size: 1em; }
+table.t.m td { padding: 6px 14px; vertical-align: middle; }
+
+/* Las notas del orador no se ven en la diapositiva (se abren con la tecla N) */
+.slide aside.notes { display: none; }
+/* Las fórmulas en cabeceras y kickers no se pasan a mayúsculas */
+.katex { text-transform: none; }
+
+/* Leyendas HTML de los gráficos (los colores siguen el orden cat-1…cat-6 del gráfico) */
+.leg { display: flex; flex-wrap: wrap; gap: 8px 28px; font: 400 22px var(--font-mono); color: var(--fg-2); justify-content: center; }
+.leg i { display: inline-block; width: 34px; height: 5px; margin-right: 10px; vertical-align: middle; border-radius: 3px; }
+table.t.big td { font-size: 30px; padding: 14px 18px; }
+table.t.big td .katex { font-size: 1.08em; }
+
+/* ---- Pase de revisión: tamaños de lectura ---- */
+.tip, .trap, .exam { font-size: 26px; }
+table.t { font-size: 26px; }
+.api table { font-size: 25px; }
+p.txt { font-size: 27px; }
+ul.pts { font-size: 27px; }
+.card h3 { font-size: 30px; }
+.card p { font-size: 26px; }
+.flow .box { font-size: 30px; }
+.tf-list > div { font-size: 28px; }
+.vf > div { font-size: 26px; grid-template-columns: 1fr 170px 1fr; }
+.vf .why { font-size: 24px; }
+figure.im figcaption { font-size: 23px; }
+.mini { font-size: 23px; }
+.leg { font-size: 23px; }
+
+/* Iconos SVG de las tres familias */
+.card svg.ico { width: 100%; height: 150px; display: block; }
+.card svg.ico text { font: 400 22px var(--font-mono); fill: var(--fg-3); }
+
+/* Separadores de bloque */
+.divider .cover-body .blk { font: 600 26px var(--font-mono); color: var(--accent); letter-spacing: .12em; }
+
+/* Ejemplo de entropía */
+.ent-ex { display: grid; gap: 8px; }
+.ico .cell { fill: var(--bg-3); stroke: var(--line-2); stroke-width: 2; }
+.ico .on1 { fill: var(--accent); }
+.ico .on2 { fill: var(--cat-2); opacity: .75; }
+.ico .on3 { fill: none; stroke: var(--cat-3); stroke-width: 4; }
+.ico .arw { stroke: var(--fg-3); stroke-width: 3; fill: none; }
+figure.im.m img { height: 360px; }
+figure.im.b img { height: 400px; }
+.deriv.nw > * { grid-template-columns: 1fr 300px; }
+table.t.mid td { font-size: 28px; padding: 9px 18px; }
+table.t.chu td { font-size: 27px; padding: 11px 18px; }
+table.t.chu td code { font-size: 24px; }
+figure.im.n img { height: 320px; }
+.card svg.ico { height: 200px; }
+.divider .cover-body .s-title { margin-top: 18px; }
+table.t.mid td { font-size: 30px; padding: 12px 18px; }
+/* bilineal: filas de la derivación más compactas para que los avisos queden sobre y≈940 */
+#bilineal .deriv { gap: 0; }
+#bilineal .deriv .katex-display { margin: 12px 0; }
+#eq-continua .deriv .katex-display { margin: 14px 0; }
+#eq-discreta .tf-list { gap: 10px; }
+#eq-discreta .tf-list > div { padding: 10px 24px; }

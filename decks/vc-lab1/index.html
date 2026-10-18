@@ -1,0 +1,938 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · Lab 1 · Realce y NumPy</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="6" data-section="Inicio" data-title="Lab 1">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lab 1</p>
+    <h1 class="s-title xl">Lab 1: realce y NumPy</h1>
+    <p class="lead">Escribir de memoria, con NumPy y PIL, cada función del laboratorio.</p>
+  </div>
+  <aside class="notes">Este deck cubre la práctica 1: aclarar y oscurecer con potencias, ecualización del histograma y seis ejercicios de NumPy. El objetivo no es ejecutar el código sino saber escribirlo en papel: por eso cada función tiene su ficha con firma, parámetros, valor devuelto, dtype y trampa típica.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-a" data-fx="backdrop" data-seed="11" data-section="A · Repaso NumPy" data-title="Bloque A">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque a · repaso para el examen</p>
+    <h1 class="s-title xl">Python y NumPy</h1>
+    <p class="lead">dtype, indexación, broadcasting, copias, axis y vectorizar.</p>
+  </div>
+</section>
+
+<section class="slide" id="que-pide" data-fx="vc" data-section="A · Repaso NumPy" data-title="Qué pide el lab">
+  <header class="s-head"><p class="kicker">panorama · qué cae en el examen</p><h2 class="s-title">Qué pide el lab</h2></header>
+  <div class="s-body vstack">
+  <svg class="dg" viewBox="0 0 1664 150" data-seq="1" aria-label="mapa del lab: código del profesor y ejercicios E1 a E6">
+    <rect class="box acc" x="2" y="6" width="560" height="136" rx="4"/>
+    <text class="h" x="26" y="50">código del profesor</text>
+    <text x="26" y="90">darkenImg · brightenImg</text>
+    <text x="26" y="126">histeq · visualPercepUtils</text>
+    <line class="ln acc" x1="572" y1="74" x2="630" y2="74"/><polygon points="630,62 652,74 630,86" fill="var(--accent)"/>
+    <rect class="box" x="662" y="6" width="1000" height="136" rx="4"/>
+    <text class="h" x="686" y="50">ejercicios E1–E6</text>
+    <text x="686" y="90">E1 chuleta · E2 saveImg · E3 color</text>
+    <text x="686" y="126">E4 checkBoardImg · E5 multiHist · E6 expTransf</text>
+  </svg>
+  <div class="g21">
+    <table class="t" data-seq="2">
+      <tr><th>Habilidad</th><th>Pregunta típica</th></tr>
+      <tr><td>vectorizar</td><td>reescribir un doble bucle sin bucles</td></tr>
+      <tr><td>indexación</td><td>recortar, submuestrear, máscaras, LUT</td></tr>
+      <tr><td>broadcasting</td><td>¿se puede sumar (10×8) con (8×1)?</td></tr>
+      <tr><td>copias</td><td>¿la función modifica la entrada?</td></tr>
+      <tr><td>axis</td><td>¿qué se suma, filas o columnas?</td></tr>
+    </table>
+    <div class="vstack">
+      <div class="exam" data-seq="3"><b>en el examen</b>Funciones a mano: <code>np.clip</code>, <code>np.where</code>, <code>np.interp</code>, <code>np.histogram</code>… con la firma correcta y el dtype bajo control.</div>
+      <div class="tip" data-seq="4"><b>método</b>Primero la fórmula en [0, 255]; luego, una línea de NumPy por símbolo.</div>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">La práctica tiene dos partes: el código del profesor (darkenImg, brightenImg, histeq) y seis ejercicios. Todo gira alrededor de cinco ideas de NumPy. Las preguntas de verdadero o falso del examen suelen tocar justo estas: broadcasting, copias y axis.</aside>
+</section>
+
+<section class="slide" id="pil" data-fx="vc" data-section="A · Repaso NumPy" data-title="Cargar y guardar con PIL">
+  <header class="s-head"><p class="kicker">entrada y salida de imágenes</p><h2 class="s-title">Cargar y guardar con PIL</h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">from PIL import Image
+im  = np.array(Image.open('iglesia.pgm').convert('L'))      # (H, W) uint8
+rgb = np.array(Image.open('peppers.ppm').convert('RGB'))    # (H, W, 3) uint8
+Image.fromarray(im.astype(np.uint8)).save('salida.pgm')</pre>
+    <div class="api" data-seq="2">
+      <table>
+        <tr><th>Llamada</th><th>Qué hace</th><th>Trampa</th></tr>
+        <tr><td>Image.open(f)</td><td>abre el fichero (aún no es un array)</td><td>devuelve un objeto Image, no un ndarray</td></tr>
+        <tr><td>.convert('L')</td><td>gris de 8 bits; 'RGB' = 3 bandas</td><td>sin convert, una PPM queda en color</td></tr>
+        <tr><td>np.array(img)</td><td>Image → ndarray, dtype uint8</td><td>forma (H, W) o (H, W, 3): filas primero</td></tr>
+        <tr><td>Image.fromarray(a)</td><td>ndarray → Image</td><td>con float da basura: antes <code>astype(np.uint8)</code></td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">'L' significa luminancia: un byte por píxel. 'RGB' son tres bytes. La imagen de NumPy tiene forma alto por ancho (filas, columnas), al revés que el size de PIL, que es (ancho, alto). Al guardar, fromarray con un float sin convertir produce una imagen corrupta o un error; hay que recortar a [0,255] y pasar a uint8.</aside>
+</section>
+
+<section class="slide" id="dtype" data-fx="vc" data-section="A · Repaso NumPy" data-title="dtype y desbordamiento">
+  <header class="s-head"><p class="kicker">uint8 es aritmética módulo 256</p><h2 class="s-title">dtype y desbordamiento</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">a = np.array([250], dtype=np.uint8)
+a + 10                  # array([4], dtype=uint8)
+a.astype(float) + 10    # array([260.])
+
+im ** 2 / 255           # ✗ im**2 desborda en uint8
+im ** 2.0 / 255         # ✓ float desde el principio</pre>
+      <div class="eq" data-seq="2">$$250 + 10 = 260 \equiv 4 \pmod{256}$$</div>
+      <div class="trap" data-seq="4"><b>trampa</b>No hay error ni aviso: los valores se «dan la vuelta» y la imagen sale con manchas.</div>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-seq="2" data-x="0,255" data-y="0,360" data-xl="r (uint8)" data-yl="r + 100" data-fns='[{"f":"x=>x+100","label":"float: r + 100","c":"fg-3","dash":"10 8"},{"f":"x=>(Math.floor(x)+100)%256","label":"uint8: mod 256","c":"err"}]' style="min-height:0;height:330px"></div>
+      <table class="t sm" data-seq="3">
+        <tr><th>dtype</th><th>rango</th><th>uso</th></tr>
+        <tr><td class="m">uint8</td><td>0 … 255</td><td>leer y guardar</td></tr>
+        <tr><td class="m">float64</td><td>≈ 15 cifras</td><td>cálculos intermedios</td></tr>
+        <tr><td class="m">bool</td><td>False / True</td><td>máscaras (<code>im &gt; 128</code>)</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">El truco es siempre el mismo: convertir a float antes de operar y, al guardar, np.clip(x, 0, 255).astype(np.uint8). En el código del profesor, darkenImg usa float(p) precisamente para evitar im ** 2 en uint8: 100 al cuadrado es 10000, que módulo 256 da 16, y la imagen saldría llena de ruido. La solución probada de esta trampa es trampa_uint8(): con float el rango es 0 a 255, sin él los valores se mezclan.</aside>
+</section>
+
+<section class="slide" id="prod" data-fx="vc" data-section="A · Repaso NumPy" data-title="* frente a @">
+  <header class="s-head"><p class="kicker">elemento a elemento o producto matricial</p><h2 class="s-title">* frente a @</h2></header>
+  <div class="s-body vstack">
+  <div class="g4">
+    <div class="vstack"><p class="txt"><code>a</code></p><div class="vc-heat" data-m='[[1,2],[3,4]]' data-dec="0" style="height:330px"></div></div>
+    <div class="vstack"><p class="txt"><code>b</code></p><div class="vc-heat" data-m='[[5,6],[7,8]]' data-dec="0" style="height:330px"></div></div>
+    <div class="vstack" data-seq="1"><p class="txt"><code>a * b</code> elemento a elemento</p><div class="vc-heat" data-m='[[5,12],[21,32]]' data-dec="0" style="height:330px"></div>
+      <div class="eq sm">\( 1\cdot5,\;2\cdot6,\;3\cdot7,\;4\cdot8 \)</div></div>
+    <div class="vstack" data-seq="2"><p class="txt"><code>a @ b</code> producto matricial</p><div class="vc-heat" data-m='[[19,22],[43,50]]' data-dec="0" style="height:330px"></div>
+      <div class="eq sm">\( c_{ij}=\sum_k a_{ik}b_{kj} \)</div></div>
+  </div>
+  <div class="exam" data-seq="3"><b>en el lab</b>«¿<code>a*b</code> es el producto matricial?» No: es elemento a elemento. El matricial es <code>a @ b</code> o <code>np.dot(a, b)</code>.</div>
+  </div>
+  <aside class="notes">El enunciado del lab pregunta exactamente esto: ¿a*b es el producto matricial o el elemento a elemento? Es elemento a elemento. El producto matricial es a @ b o np.dot(a, b). Cálculo a mano: arriba izquierda 1·5+2·7 = 19; arriba derecha 1·6+2·8 = 22; abajo izquierda 3·5+4·7 = 43; abajo derecha 3·6+4·8 = 50. En el examen, una máscara se multiplica con * (nunca con @).</aside>
+</section>
+
+<section class="slide" id="indexacion" data-fx="vc" data-section="A · Repaso NumPy" data-title="Indexación y slicing">
+  <header class="s-head"><p class="kicker">recortar, submuestrear, filtrar, tabular</p><h2 class="s-title">Indexación y slicing</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">A = np.arange(16).reshape(4, 4)
+A[1:3, 0:2]    # [[4, 5], [8, 9]]    recorte
+A[::2, ::2]    # [[0, 2], [8, 10]]   submuestreo
+A[:, 0]        # [0, 4, 8, 12]       columna 0
+rgb[:, :, 0]   # banda R: forma (H, W)</pre>
+<pre class="code sm" data-seq="2">B = A.copy(); B[B &gt; 10] = 99    # máscara booleana
+T = np.array([255, 170, 85, 0])  # LUT de 4 niveles
+im = np.array([[0, 2], [3, 1]])
+T[im]          # [[255, 85], [0, 170]]</pre>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[0,1,2,3],[4,5,6,7],[8,9,10,11],[12,13,14,15]]' data-dec="0" style="height:300px"></div>
+      <p class="cap">A (matriz de ejemplo)</p>
+      <div class="tip" data-seq="3"><b>LUT</b><code>T[im]</code> usa cada píxel como índice de T: aplica la transformación a toda la imagen a la vez.</div>
+    </div>
+  </div>
+  <aside class="notes">El slicing es inicio:fin:paso con el fin excluido. Recuerda: primer índice filas, segundo columnas. La máscara booleana im > 128 da un array de True/False de la misma forma y, usada como índice, selecciona (o asigna a) esos píxeles. La indexación con un array de enteros, T[im], es la forma vectorizada de aplicar una tabla de consulta (LUT): es lo que se usa en transfImage.</aside>
+</section>
+
+<section class="slide" id="broadcasting" data-fx="vc" data-section="A · Repaso NumPy" data-title="Broadcasting: reglas">
+  <header class="s-head"><p class="kicker">¿(10×8) + (8×1)?</p><h2 class="s-title">Broadcasting: reglas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><span class="step-n">1</span>Se alinean las formas por la <b>derecha</b>.</p>
+      <p class="txt" data-seq="2"><span class="step-n">2</span>Cada par de dimensiones debe ser <b>igual</b>, o una de las dos debe valer <b>1</b> (y se estira).</p>
+      <p class="txt" data-seq="3"><span class="step-n">3</span>Si a una forma le faltan dimensiones por la izquierda, se rellenan con 1: <code>(8,)</code> → <code>(1, 8)</code>.</p>
+      <div class="trap" data-seq="5"><b>respuesta</b>(10, 8) + (8, 1) <b>no</b> se puede: la última pareja vale (8 con 1), pero la primera es 10 frente a 8. Con (1, 8) o con (8,) sí.</div>
+    </div>
+    <svg class="dg" viewBox="0 0 800 420" data-seq="4" aria-label="alineación de formas por la derecha">
+      <text class="h" x="40" y="36">(10,8) + (8,1)</text>
+      <rect class="box" x="60" y="66" width="110" height="60"/><text class="h" x="115" y="106" text-anchor="middle">10</text>
+      <rect class="box" x="190" y="66" width="110" height="60"/><text class="h" x="245" y="106" text-anchor="middle">8</text>
+      <rect class="box err" x="60" y="140" width="110" height="60"/><text class="h" x="115" y="180" text-anchor="middle">8</text>
+      <rect class="box ok" x="190" y="140" width="110" height="60"/><text class="h" x="245" y="180" text-anchor="middle">1</text>
+      <text class="err" x="115" y="250" text-anchor="middle">10≠8</text>
+      <text class="ok" x="245" y="250" text-anchor="middle">estira</text>
+      <text class="err" x="40" y="310">✗ ValueError</text>
+      <text class="h" x="460" y="36">(10,8) + (1,8)</text>
+      <rect class="box" x="480" y="66" width="110" height="60"/><text class="h" x="535" y="106" text-anchor="middle">10</text>
+      <rect class="box" x="610" y="66" width="110" height="60"/><text class="h" x="665" y="106" text-anchor="middle">8</text>
+      <rect class="box ok" x="480" y="140" width="110" height="60"/><text class="h" x="535" y="180" text-anchor="middle">1</text>
+      <rect class="box ok" x="610" y="140" width="110" height="60"/><text class="h" x="665" y="180" text-anchor="middle">8</text>
+      <text class="ok" x="535" y="250" text-anchor="middle">estira</text>
+      <text class="ok" x="665" y="250" text-anchor="middle">8=8</text>
+      <text class="ok" x="460" y="310">✓ → (10,8)</text>
+      <line class="ln" x1="40" y1="350" x2="760" y2="350"/>
+      <text class="s" x="40" y="395">se compara columna a columna, desde la derecha</text>
+    </svg>
+  </div>
+  <aside class="notes">Las formas se escriben una debajo de otra, alineadas por la derecha, y se comparan pareja a pareja. Una pareja es compatible si los dos números son iguales o si uno vale 1: el 1 se «estira» copiando los datos virtualmente. Con (10,8) y (8,1): la pareja de la derecha es 8 y 1, compatible; la de la izquierda es 10 y 8, incompatible. NumPy lanza ValueError. Con (1,8) ambas parejas son compatibles y el resultado es (10,8).</aside>
+</section>
+
+<section class="slide" id="broadcasting-casos" data-fx="vc" data-section="A · Repaso NumPy" data-title="Broadcasting: casos">
+  <header class="s-head"><p class="kicker">comprobado en python</p><h2 class="s-title">Broadcasting: casos</h2></header>
+  <div class="s-body g2">
+    <table class="t" data-seq="1">
+      <tr><th>(10,8) +</th><th>resultado</th></tr>
+      <tr><td class="m">5 (escalar)</td><td class="ok">ok → (10,8)</td></tr>
+      <tr><td class="m">(8,) → (1,8)</td><td class="ok">ok → (10,8)</td></tr>
+      <tr><td class="m">(1,8)</td><td class="ok">ok → (10,8)</td></tr>
+      <tr><td class="m">(10,1)</td><td class="ok">ok → (10,8)</td></tr>
+      <tr><td class="m">(8,1)</td><td class="err">error: 10 ≠ 8</td></tr>
+      <tr><td class="m">(10,)</td><td class="err">error: 8 ≠ 10</td></tr>
+    </table>
+    <div class="vstack">
+<pre class="code sm" data-seq="2">np.zeros((10,8)) + np.ones((8,1))
+# ValueError: operands could not be
+#   broadcast together with shapes (10,8) (8,1)</pre>
+<pre class="code sm" data-seq="3">c = np.arange(3)[:, None]*10 + np.arange(4)
+# (3,1) + (4,) → (3,4)
+# [[ 0,  1,  2,  3],
+#  [10, 11, 12, 13],
+#  [20, 21, 22, 23]]</pre>
+      <div class="tip" data-seq="4"><b>truco</b><code>x[:, None]</code> convierte un vector (n,) en columna (n, 1).</div>
+    </div>
+  </div>
+  <aside class="notes">Comprobado en Python: np.zeros((10,8)) + np.ones((8,1)) lanza ValueError: operands could not be broadcast together with shapes (10,8) (8,1). En cambio (8,) se interpreta como (1,8), y (10,1) es una columna que se copia a lo largo de las 8 columnas. Ojo con (10,): se alinea por la derecha con el 8 y falla. El ejemplo de la derecha es el «producto exterior»: una columna más una fila da una matriz completa sin bucles. El precio del broadcasting es algo de memoria temporal; el beneficio, evitar bucles.</aside>
+</section>
+
+<section class="slide" id="copia" data-fx="vc" data-section="A · Repaso NumPy" data-title="Copia frente a referencia">
+  <header class="s-head"><p class="kicker">¿quién modifica a quién?</p><h2 class="s-title">Copia frente a referencia</h2></header>
+  <div class="s-body vstack">
+  <div class="g2">
+<pre class="code sm" data-seq="1">b = im            # mismo array (alias)
+b[0, 0] = 0       # ¡cambia también im!
+
+c = im.copy()     # copia real
+v = im[1:3]       # vista: comparte memoria
+v[:] = 0          # modifica im
+
+np.shares_memory(im, b)   # True
+np.shares_memory(im, c)   # False</pre>
+    <div class="vstack">
+      <table class="t sm" data-seq="2">
+        <tr><th>Operación</th><th>¿Comparte?</th></tr>
+        <tr><td class="m">b = a</td><td class="err">sí (alias)</td></tr>
+        <tr><td class="m">a[1:3], a[:, 0]</td><td class="err">sí (vista)</td></tr>
+        <tr><td class="m">a.copy(), a.astype(float)</td><td class="ok">no</td></tr>
+        <tr><td class="m">a[a &gt; 0], a[[0, 1]]</td><td class="ok">no (copia)</td></tr>
+      </table>
+      <div class="exam" data-seq="3"><b>examen · ej. 5</b><code>add_TLA_noise</code> asigna <code>im[...] = ...</code>: modifica la imagen de entrada. <code>remove_TLA_noise</code> hace <code>np.copy</code> primero.</div>
+    </div>
+  </div>
+  <svg class="dg" viewBox="0 0 1664 140" data-seq="4" aria-label="alias y vista comparten los datos; la copia tiene los suyos">
+    <text class="h" x="10" y="52">im</text><text class="h" x="10" y="112">b</text>
+    <line class="ln acc" x1="60" y1="44" x2="150" y2="62"/><line class="ln acc" x1="60" y1="104" x2="150" y2="86"/>
+    <rect class="box acc" x="160" y="14" width="700" height="112" rx="4"/>
+    <rect class="box" x="420" y="30" width="220" height="80" rx="2" stroke-dasharray="8 6"/>
+    <text x="190" y="80">datos</text><text class="a" x="530" y="80" text-anchor="middle">v = im[1:3]</text>
+    <text class="s" x="680" y="80">vista</text>
+    <text class="h" x="960" y="80">c</text>
+    <line class="ln" x1="990" y1="72" x2="1060" y2="72"/>
+    <rect class="box ok" x="1070" y="14" width="590" height="112" rx="4"/>
+    <text x="1100" y="80">otros datos: im.copy()</text>
+  </svg>
+  </div>
+  <aside class="notes">En Python asignar no copia: b = im hace que b y im sean el mismo objeto. El slicing devuelve una vista, no una copia; la indexación con máscaras o listas sí copia. En el parcial de ejemplo, add_TLA_noise escribe sobre im y devuelve la misma imagen contaminada, así que el llamador pierde la original; remove_TLA_noise usa np.copy para no estropear su entrada.</aside>
+</section>
+
+<section class="slide" id="axis" data-fx="vc" data-section="A · Repaso NumPy" data-title="El parámetro axis">
+  <header class="s-head"><p class="kicker">la dimensión que desaparece</p><h2 class="s-title">El parámetro axis</h2></header>
+  <div class="s-body vstack">
+  <div class="g3">
+    <div class="vstack"><p class="txt"><code>M</code>, forma (2, 3)</p><div class="vc-heat" data-m='[[1,2,3],[4,5,6]]' data-dec="0" style="height:260px"></div>
+      <p class="txt">axis = la dimensión que <b>desaparece</b></p></div>
+    <div class="vstack" data-seq="1"><p class="txt"><code>M.sum(axis=0)</code> → (3,)</p><div class="vc-heat" data-m='[[5,7,9]]' data-dec="0" style="height:120px"></div>
+      <p class="txt">una suma <b>por columna</b></p></div>
+    <div class="vstack" data-seq="2"><p class="txt"><code>M.sum(axis=1)</code> → (2,)</p><div class="vc-heat" data-m='[[6],[15]]' data-dec="0" style="height:200px"></div>
+      <p class="txt">una suma <b>por fila</b></p></div>
+  </div>
+  <div class="g2">
+    <div class="tip" data-seq="3"><b>color</b><code>rgb.mean(axis=2)</code>: (H, W, 3) → (H, W). Promedia las tres bandas (no es la luminancia ponderada de <code>convert('L')</code>).</div>
+    <div class="trap" data-seq="4"><b>sin axis</b><code>M.sum()</code> aplana el array y devuelve un escalar: 21.</div>
+  </div>
+  </div>
+  <aside class="notes">Regla: la dimensión indicada en axis es la que desaparece. axis=0 colapsa las filas y deja un valor por columna (1+4, 2+5, 3+6). axis=1 colapsa las columnas y deja un valor por fila (1+2+3, 4+5+6). Con imágenes de color de forma (H, W, 3), im.mean(axis=2) promedia las tres bandas y da (H, W): es un gris sencillo, no la luminancia ponderada de convert('L'). Si no se pasa axis, la función opera sobre el array aplanado y devuelve un escalar: es la trampa del enunciado.</aside>
+</section>
+
+<section class="slide" id="vectorizar" data-fx="vc" data-section="A · Repaso NumPy" data-title="Vectorizar frente a bucles">
+  <header class="s-head"><p class="kicker">medido en la iglesia (663×412)</p><h2 class="s-title">Vectorizar frente a bucles</h2></header>
+  <div class="s-body g21">
+<pre class="code sm" data-seq="1">def brighten_loop(im, p=2):         # ✗ bucles
+    out = np.zeros(im.shape)
+    for i in range(im.shape[0]):
+        for j in range(im.shape[1]):
+            out[i, j] = (255.0**(p-1) * im[i, j]) ** (1/p)
+    return out
+
+def brightenImg(im, p=2):           # ✓ una línea
+    return np.power(255.0**(p-1) * im, 1. / p)</pre>
+    <div class="vstack" data-seq="2">
+      <div class="big-num">≈ 500×</div>
+      <div class="tbar"><span>bucle</span><div class="b" style="width:100%"></div></div>
+      <div class="tbar"><span>NumPy</span><div class="b np"></div></div>
+      <p class="txt">0,37 s frente a 0,7 ms (barras a escala). Mismo resultado: <code>np.allclose</code> = True.</p>
+      <div class="tip" data-seq="3"><b>por qué</b>El bucle se interpreta elemento a elemento en Python; NumPy ejecuta el bucle en C sobre memoria contigua.</div>
+    </div>
+  </div>
+  <aside class="notes">Medición real con tiempos() de la solución: media de 5 ejecuciones, 0,366 s el bucle y 0,00071 s la versión vectorizada, un factor de unas 517 veces en esta máquina; el valor exacto depende del ordenador, pero el orden de magnitud (cientos de veces) es el que cuenta. El enunciado habla de «una o más órdenes de magnitud». Además el código vectorizado es más corto y legible.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="12" data-section="B · Código del profesor" data-title="Bloque B">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b · p1.py y visualPercepUtils.py</p>
+    <h1 class="s-title xl">El código del profesor</h1>
+    <p class="lead">darkenImg, brightenImg e histeq, línea a línea.</p>
+  </div>
+</section>
+
+<section class="slide" id="darken" data-fx="vc" data-section="B · Código del profesor" data-title="darkenImg">
+  <header class="s-head"><p class="kicker">oscurecer con una potencia</p><h2 class="s-title"><span class="nc">darkenImg(im, p=2)</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code">def darkenImg(im, p=2):
+    return (im ** float(p)) / (255 ** (p - 1))</pre>
+      <div class="deriv">
+        <div data-seq="1"><span>$$T(r)=255\left(\tfrac{r}{255}\right)^{p}$$</span><span class="why">r en [0,1], potencia, reescalado</span></div>
+        <div data-seq="2"><span>$$=255\,\frac{r^{p}}{255^{p}}$$</span><span class="why">(a/b)ᵖ = aᵖ/bᵖ</span></div>
+        <div data-seq="3"><span>$$=\frac{r^{p}}{255^{\,p-1}}$$</span><span class="why">255/255ᵖ = 255¹⁻ᵖ</span></div>
+      </div>
+      <div class="trap" data-seq="4"><b>float(p)</b>Con <code>p</code> entero, <code>uint8 ** 2</code> sigue en uint8 y desborda.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,255" data-y="0,300" data-xl="r (entrada)" data-yl="s (salida)" data-fns='[{"f":"x=>Math.pow(x,2)/255","label":"p = 2"},{"f":"x=>Math.pow(x,3)/65025","label":"p = 3"},{"f":"x=>x","label":"identidad"}]' style="height:580px"></div>
+  </div>
+  <aside class="notes">Como 0 ≤ r/255 ≤ 1, elevar a p > 1 achica los valores: la imagen se oscurece, y más cuanto mayor es p. Los extremos no cambian: T(0)=0 y T(255)=255. Ejemplo con p = 2 y r = 100: 100² / 255 = 39,2. Por qué float(p): si p es un entero y la imagen es uint8, im ** 2 se calcula en uint8 y desborda antes de dividir. En 255 ** (p-1) no hay problema porque 255 es un entero de Python, que no desborda.</aside>
+</section>
+
+<section class="slide" id="brighten" data-fx="vc" data-section="B · Código del profesor" data-title="brightenImg">
+  <header class="s-head"><p class="kicker">aclarar con la raíz p-ésima</p><h2 class="s-title"><span class="nc">brightenImg(im, p=2)</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code">def brightenImg(im, p=2):
+    return np.power(255.0 ** (p - 1) * im, 1. / p)</pre>
+      <div class="deriv">
+        <div data-seq="1"><span>$$\left(255^{p-1}\,r\right)^{1/p}$$</span><span class="why">lo que calcula el código</span></div>
+        <div data-seq="2"><span>$$=255^{\frac{p-1}{p}}\,r^{1/p}$$</span><span class="why">(ab)ᶜ = aᶜbᶜ</span></div>
+        <div data-seq="3"><span>$$=255\left(\tfrac{r}{255}\right)^{1/p}$$</span><span class="why">(p−1)/p = 1 − 1/p</span></div>
+      </div>
+      <div class="trap" data-seq="4"><b>np.power, no math.pow</b><code>math.pow</code> solo admite escalares: con un array da <code>TypeError</code>.</div>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="2"><div class="sig">np.power(x1, x2)</div><table>
+        <tr><td>x1</td><td>base (array o escalar)</td></tr>
+        <tr><td>x2</td><td>exponente, con broadcasting</td></tr>
+        <tr><td>→</td><td>array float64 de la forma de x1</td></tr></table></div>
+      <div class="fx" data-role="plot" data-x="0,255" data-y="0,300" data-xl="r" data-yl="s" data-fns='[{"f":"x=>255*Math.pow(x/255,0.5)","label":"p = 2"},{"f":"x=>x","label":"identidad"}]' style="min-height:0;height:370px"></div>
+    </div>
+  </div>
+  <aside class="notes">Con exponente 1/p < 1 los valores normalizados suben: la imagen se aclara. np.power es la versión vectorizada de x ** y: trabaja elemento a elemento sobre todo el array y admite broadcasting. math.pow es solo para escalares. Aquí 255.0 ** (p-1) es un float, así que el producto con la imagen ya sale en float64 y no hay desbordamiento.</aside>
+</section>
+
+<section class="slide" id="inversa" data-fx="vc" data-section="B · Código del profesor" data-title="Una es la inversa de la otra">
+  <header class="s-head"><p class="kicker">componer ambas funciones</p><h2 class="s-title">Una es la inversa de la otra</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="deriv">
+        <div data-seq="1"><span>$$B(D(r))=255\left(\frac{D(r)}{255}\right)^{1/p}$$</span><span class="why">definición de B</span></div>
+        <div data-seq="2"><span>$$=255\left(\left(\tfrac{r}{255}\right)^{p}\right)^{1/p}$$</span><span class="why">D(r)/255 = (r/255)ᵖ</span></div>
+        <div data-seq="3"><span>$$=255\cdot\frac{r}{255}=r$$</span><span class="why">(xᵖ)^(1/p) = x</span></div>
+      </div>
+      <div class="exam" data-seq="4"><b>comprobación</b>r = 100, p = 2: D = 100²/255 = 39,2157; B = √(255·39,2157) = √10000 = 100. En peppers el error máximo de ida y vuelta es ≈ 0.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,255" data-y="0,300" data-xl="r" data-yl="s" data-fns='[{"f":"x=>Math.pow(x,2)/255","label":"darken p=2"},{"f":"x=>255*Math.pow(x/255,0.5)","label":"brighten p=2"},{"f":"x=>x","label":"identidad"}]' style="height:560px"></div>
+  </div>
+  <aside class="notes">Las dos curvas son simétricas respecto a la diagonal: eso es lo que significa ser funciones inversas. Se usa al probar el ejercicio 3: oscurecer con darkenImg y aclarar con brightenImg debe devolver la imagen original salvo errores de redondeo en coma flotante.</aside>
+</section>
+
+<section class="slide" id="histeq-codigo" data-fx="vc" data-section="B · Código del profesor" data-title="histeq línea a línea">
+  <header class="s-head"><p class="kicker">ecualización del histograma</p><h2 class="s-title"><span class="nc">histeq, línea a línea</span></h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">def histeq(im, nbins=256):
+    imhist, bins = np.histogram(im.flatten(), list(range(nbins)))
+    cdf = imhist.cumsum()               # histograma acumulado
+    factor = 255 / cdf[-1]              # cdf[-1] = nº de píxeles
+    im2 = np.interp(im.flatten(), bins[:-1], factor * cdf)
+    return im2.reshape(im.shape), cdf</pre>
+    <div class="g2">
+      <table class="t sm">
+        <tr><th>Línea</th><th>Qué obtiene</th></tr>
+        <tr data-seq="2"><td class="m">np.histogram</td><td>h(l): nº de píxeles con nivel l</td></tr>
+        <tr data-seq="3"><td class="m">cumsum</td><td>cdf(l): píxeles con nivel ≤ l</td></tr>
+        <tr data-seq="4"><td class="m">factor * cdf</td><td>T(l), ya en [0, 255]</td></tr>
+        <tr data-seq="5"><td class="m">np.interp</td><td>T evaluada en cada píxel</td></tr>
+        <tr data-seq="6"><td class="m">reshape</td><td>vuelve a (H, W)</td></tr>
+      </table>
+    <div class="vstack">
+      <div class="eq big" data-seq="4">$$T(l)=255\,\frac{\mathrm{cdf}(l)}{N}$$</div>
+      <p class="txt" data-seq="4"><code>factor * cdf</code> es la T(l) escalada a [0, 255]; <code>np.interp</code> la evalúa en cada píxel.</p>
+      <div class="exam" data-seq="7"><b>idea</b>Los niveles se reparten según la probabilidad acumulada: los más frecuentes se «separan» más.</div>
+    </div>
+  </div>
+  </div>
+  <aside class="notes">Línea por línea. Uno: np.histogram cuenta cuántos píxeles hay en cada nivel. Dos: cumsum acumula esos conteos, de modo que cdf[l] es el número de píxeles con nivel menor o igual que l. Tres: el último valor de cdf es el número total de píxeles N. Cuatro: factor multiplicado por cdf vale 255 por la CDF normalizada, que es la función de transformación T. Cinco: np.interp evalúa esa tabla en el nivel de cada píxel. Seis: reshape devuelve la forma original porque trabajamos con la imagen aplanada. Recuerda la errata: la ecualización no aumenta la entropía, la deja igual o la reduce un poco.</aside>
+</section>
+
+<section class="slide" id="histeq-hist" data-fx="vc" data-section="B · Código del profesor" data-title="np.histogram y cumsum">
+  <header class="s-head"><p class="kicker">fichas de función</p><h2 class="s-title"><span class="nc">np.histogram y cumsum</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+    <div class="api" data-seq="1"><div class="sig">np.histogram(a, bins)</div><table>
+      <tr><td>a</td><td>array 1D (<code>im.flatten()</code>)</td></tr>
+      <tr><td>bins</td><td>nº de cajas, o la lista de <b>bordes</b></td></tr>
+      <tr><td>→ hist</td><td>conteos, longitud nbins</td></tr>
+      <tr><td>→ bin_edges</td><td>bordes, longitud nbins + 1</td></tr></table></div>
+    <div class="fx" data-role="plot" data-seq="2" data-x="0,4" data-y="0,8" data-xl="cajas 0…3 · h = [2, 3, 1, 2] (de ejemplo)" data-legend="tl" data-bars='[2,3,1,2]' data-fns='[{"f":"x=>[2,5,6,8][Math.min(3,Math.floor(x))]","label":"cumsum","c":"accent-3"}]' style="min-height:0;height:290px"></div>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="2"><div class="sig">a.cumsum()</div><table>
+        <tr><td>→</td><td>suma acumulada, misma longitud</td></tr>
+        <tr><td>ej.</td><td><code>[2,3,1,2].cumsum()</code> = <code>[2,5,6,8]</code></td></tr></table></div>
+      <div class="trap" data-seq="3"><b>sutileza</b><code>list(range(256))</code> son 256 bordes = <b>255 cajas</b>. La última, [254, 255], incluye ambos extremos: 254 y 255 caen juntos.</div>
+    </div>
+  </div>
+  <aside class="notes">np.histogram devuelve dos arrays: los conteos y los bordes de las cajas; los bordes tienen un elemento más que los conteos. Si bins es un entero, son cajas iguales entre el mínimo y el máximo de los datos; si es una lista, son los bordes. Todas las cajas son semiabiertas [a,b) salvo la última, que es cerrada [a,b]. Con 256 bordes de 0 a 255 hay 255 cajas, y los niveles 254 y 255 se cuentan juntos. Es una pequeña imprecisión del código del profesor: lo correcto sería bins=np.arange(257), con 256 cajas. Por eso en la ecualización los niveles 254 y 255 acaban con el mismo valor de salida, 255.</aside>
+</section>
+
+<section class="slide" id="histeq-interp" data-fx="vc" data-section="B · Código del profesor" data-title="np.interp y reshape">
+  <header class="s-head"><p class="kicker">fichas de función · interpolación lineal</p><h2 class="s-title"><span class="nc">np.interp y reshape</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="api" data-seq="1"><div class="sig">np.interp(x, xp, fp)</div><table>
+        <tr><td>x</td><td>puntos donde evaluar (array)</td></tr>
+        <tr><td>xp</td><td>abscisas <b>crecientes</b></td></tr>
+        <tr><td>fp</td><td>valores en xp (misma longitud)</td></tr>
+        <tr><td>→</td><td>float64; fuera de rango, extremos</td></tr></table></div>
+<pre class="code sm" data-seq="2">xp = [0, 1, 2, 3]; fp = [0, 10, 40, 40]
+np.interp(1.5, xp, fp)  # 10 + 0.5·(40−10) = 25.0
+np.interp(5, xp, fp)    # 40.0 (extremo)
+a.reshape(im.shape)     # vuelve a (H, W)</pre>
+    </div>
+    <div class="fx" data-role="plot" data-seq="3" data-x="0,4" data-y="0,48" data-xl="x" data-yl="np.interp(x, xp, fp)" data-legend="br" data-pts='[[0,0],[1,10],[2,40],[3,40],[1.5,25,"(1.5, 25)"]]' data-fns='[{"f":"x=>x<=1?10*x:(x<=2?10+30*(x-1):40)","label":"tramos rectos"}]' style="min-height:0;height:560px"></div>
+  </div>
+  <aside class="notes">np.interp hace interpolación lineal por tramos: dada la tabla (xp, fp), une los puntos con segmentos rectos y evalúa en x. Para x = 1,5, que está entre 1 y 2, se avanza la mitad del segmento: 10 + 0,5·(40 − 10) = 25. Fuera del rango devuelve el valor del extremo (40 para x = 5). En histeq, xp son los niveles de gris 0..254 y fp es 255·CDF: cada píxel recibe su valor transformado. reshape no copia los datos: solo cambia la forma.</aside>
+</section>
+
+<section class="slide" id="histeq-mano" data-fx="vc" data-section="B · Código del profesor" data-title="Ecualizar a mano">
+  <header class="s-head"><p class="kicker">ejemplo numérico · de ejemplo, N = 8 píxeles</p><h2 class="s-title">Ecualizar a mano</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t">
+        <tr><th>l</th><th>h(l)</th><th>cdf(l)</th><th>T(l) = 255·cdf/8</th></tr>
+        <tr data-seq="1"><td>0</td><td>2</td><td>2</td><td>63,75</td></tr>
+        <tr data-seq="2"><td>1</td><td>3</td><td>5</td><td>159,38</td></tr>
+        <tr data-seq="3"><td>2</td><td>1</td><td>6</td><td>191,25</td></tr>
+        <tr data-seq="4"><td>3</td><td>2</td><td>8</td><td>255</td></tr>
+      </table>
+      <div class="deriv" data-seq="2">
+        <div><span>$$T(1)=255\cdot\frac{2+3}{8}=159{,}375$$</span><span class="why">cdf(1) = h(0) + h(1)</span></div>
+      </div>
+      <div class="exam" data-seq="5"><b>siempre</b>El último nivel va a 255, porque cdf(último) = N.</div>
+    </div>
+    <div class="fx" data-role="plot" data-seq="5" data-x="0,4" data-y="0,255" data-xl="nivel l (cajas 0…3)" data-yl="T(l)" data-bars='[63.75,159.375,191.25,255]' style="min-height:0;height:540px"></div>
+  </div>
+  <aside class="notes">Ejemplo de mano, con cuatro niveles y ocho píxeles (datos de ejemplo). Histograma 2, 3, 1, 2. La CDF acumula: 2, 5, 6, 8. T(l) = 255·cdf/8 da 63,75; 159,375; 191,25 y 255. Fíjate en que T crece más donde el histograma es alto (de l = 0 a l = 1 sube 95,6 porque h(1) = 3): los niveles frecuentes se separan. El último nivel siempre va a 255.</aside>
+</section>
+
+<section class="slide" id="res-iglesia" data-fx="vc" data-section="B · Código del profesor" data-title="Resultado: iglesia">
+  <header class="s-head"><p class="kicker">resultado real · iglesia.pgm</p><h2 class="s-title">Resultado: iglesia</h2></header>
+  <div class="s-body fig"><img src="assets/heq_iglesia.png" alt="iglesia antes y después de ecualizar, con histogramas y CDF"><p class="cap">Rango 38–255 → casi todo el rango; entropía 5,975 → 5,918 bits.</p></div>
+  <aside class="notes">La iglesia ya ocupa casi todo el rango, así que la ecualización cambia sobre todo el reparto de contraste. La pendiente de la CDF es la altura del histograma: donde el histograma es alto, T sube rápido y separa esos niveles. La entropía no aumenta: 5,975 antes y 5,918 después, porque la transformación es una función de los niveles (puede fundir niveles, nunca crear información).</aside>
+</section>
+
+<section class="slide" id="res-huesos" data-fx="vc" data-section="B · Código del profesor" data-title="Resultado: huesos">
+  <header class="s-head"><p class="kicker">resultado real · huesos.pgm</p><h2 class="s-title">Resultado: huesos</h2></header>
+  <div class="s-body fig"><img src="assets/heq_huesos.png" alt="huesos antes y después de ecualizar"><p class="cap">Rango 0–93 → 0–255: ganancia de contraste enorme; entropía 5,254 → 5,204 (no aumenta).</p></div>
+  <aside class="notes">Este es el caso de manual: una radiografía muy oscura, con niveles solo entre 0 y 93. La ecualización los estira hasta 255. Fíjate en el histograma ecualizado: no es plano, es un peine, porque los niveles originales son discretos y solo se pueden desplazar, no repartir. Y la entropía no sube (5,254 a 5,204), contra lo que dicen los apuntes.</aside>
+</section>
+
+<section class="slide" id="res-cabeza" data-fx="vc" data-section="B · Código del profesor" data-title="Resultado: cabeza">
+  <header class="s-head"><p class="kicker">resultado real · cabeza.pgm</p><h2 class="s-title">Resultado: cabeza</h2></header>
+  <div class="s-body fig"><img src="assets/heq_cabeza.png" alt="cabeza antes y después de ecualizar"><p class="cap">Fondo negro dominante: la CDF salta al inicio y el mínimo ecualizado sube a ≈ 48. Entropía 6,481 → 6,286.</p></div>
+  <aside class="notes">Aquí el fondo negro concentra muchísimos píxeles en el nivel 0, por lo que cdf(0) ya es grande y T(0) ≈ 48: el negro deja de ser negro. Es un efecto conocido de la ecualización global. La entropía baja de 6,481 a 6,286, otra confirmación de que ecualizar no aumenta la entropía.</aside>
+</section>
+
+<section class="slide" id="vpu" data-fx="vc" data-section="B · Código del profesor" data-title="visualPercepUtils">
+  <header class="s-head"><p class="kicker">funciones de visualización del profesor</p><h2 class="s-title"><span class="nc">visualPercepUtils</span></h2></header>
+  <div class="s-body vstack">
+    <table class="t sm" data-seq="1">
+      <tr><th>Función</th><th>Qué hace</th></tr>
+      <tr><td class="m">showInGrid(imgs, m, n, title, subtitles)</td><td>cuadrícula de imágenes (o curvas 1D)</td></tr>
+      <tr><td class="m">showImgsPlusHists(im, im2, title)</td><td>im, im2 y sus dos histogramas</td></tr>
+      <tr><td class="m">histImg(im)</td><td><code>np.histogram(im.flatten(), 256)[0]</code></td></tr>
+      <tr><td class="m">showPlusInfo(data, title)</td><td><code>plt.plot(data)</code>, p. ej. la CDF</td></tr>
+      <tr><td class="m">showInFigs(imgs, title)</td><td>una figura por imagen</td></tr>
+    </table>
+<pre class="code sm" data-seq="2">fig = plt.figure(figsize=(m, n)); plt.gray()
+ax = fig.add_subplot(m, n, i)     # i-ésima celda, empieza en 1
+plt.imshow(img)                   # img 2D: se muestra con cmap gris
+plt.show(block=True)              # espera a cerrar la ventana</pre>
+  </div>
+  <aside class="notes">showInGrid crea una figura, fija el mapa de color gris con plt.gray(), y para cada imagen añade un subplot: add_subplot(m, n, i) significa m filas, n columnas y la celda número i, contando desde 1. imshow dibuja la matriz. plt.show(block=True) bloquea el programa hasta que se cierra la ventana, para ver cada resultado antes de seguir.</aside>
+</section>
+
+<section class="slide" id="vpu-trampas" data-fx="vc" data-section="B · Código del profesor" data-title="Trampas al mostrar">
+  <header class="s-head"><p class="kicker">lo que no se ve a simple vista</p><h2 class="s-title">Trampas al mostrar</h2></header>
+  <div class="s-body g2">
+    <div class="trap" data-seq="1"><b>imshow normaliza</b>Sin <code>vmin=0, vmax=255</code>, <code>imshow</code> estira el mínimo y el máximo de <i>cada</i> imagen a todo el rango de grises. Dos imágenes de brillo distinto pueden verse igual.</div>
+    <div class="trap" data-seq="2"><b>histImg y el rango</b><code>np.histogram(x, 256)</code> divide el intervalo [mínimo, máximo] de los datos en 256 cajas, no los niveles 0…255. Con <code>huesos</code> (0–93) cada caja mide ≈ 0,36 niveles: salen huecos.</div>
+    <div class="tip" data-seq="3"><b>cómo evitarlo</b><code>np.histogram(im, bins=256, range=(0, 256))</code> o <code>np.bincount(im.ravel(), minlength=256)</code>.</div>
+    <div class="exam" data-seq="4"><b>examen</b>«Calcula el histograma de una imagen uint8»: <code>np.bincount(im.ravel(), minlength=256)</code> es la forma más corta y exacta.</div>
+  </div>
+  <aside class="notes">Dos observaciones sobre el código del profesor. Primera: imshow con una matriz 2D normaliza automáticamente al rango de los datos, por eso al comparar original y oscurecida puede parecer que no ha cambiado nada: conviene fijar vmin y vmax. Segunda: histImg usa np.histogram con 256 cajas y sin range, así que las cajas dependen del mínimo y del máximo de la imagen. Para una imagen que usa todo el rango no importa; para huesos sí. El histograma exacto por nivel es bincount.</aside>
+</section>
+
+<section class="slide" id="dotests" data-fx="vc" data-section="B · Código del profesor" data-title="doTests y eval">
+  <header class="s-head"><p class="kicker">patrón del profesor</p><h2 class="s-title"><span class="nc">doTests y eval</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">tests = ['testHistEq', 'testBrightenImg', ...]
+for imfile in files:
+    im = np.array(Image.open(imfile).convert('L'))
+    for test in tests:
+        out = eval(test)(im)      # nombre → función
+        im2 = out[0]</pre>
+      <p class="txt" data-seq="2"><code>eval('testHistEq')</code> evalúa el texto como código Python y devuelve la función; <code>(im)</code> la llama.</p>
+    </div>
+    <div class="vstack" data-seq="3">
+<pre class="code sm">TESTS = {'testHistEq': testHistEq,
+         'testBrightenImg': testBrightenImg}
+out = TESTS[test](im)             # ✓ diccionario
+
+out = globals()[test](im)         # ✓ sin diccionario</pre>
+      <div class="trap"><b>eval</b>Ejecuta cualquier cadena: peligroso si el texto viene de fuera. Un diccionario nombre → función es más seguro y explícito.</div>
+    </div>
+  </div>
+  <aside class="notes">El profesor guarda los nombres de las pruebas en una lista de cadenas y las convierte en funciones con eval. Funciona, pero eval ejecuta código arbitrario. Dos alternativas: un diccionario que asocie el nombre con la función, o globals()[nombre], que busca el nombre en el espacio global del módulo. Cada test devuelve una lista: el primer elemento es la imagen resultante, y si hay un segundo (la CDF) se muestra aparte con showPlusInfo.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="13" data-section="C · Ejercicios resueltos" data-title="Bloque C">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque c · ejercicios 2 a 6</p>
+    <h1 class="s-title xl">Ejercicios resueltos</h1>
+    <p class="lead">Enunciado, idea, código de la solución y resultado real.</p>
+  </div>
+</section>
+
+<section class="slide" id="e2-saveimg" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E2 saveImg">
+  <header class="s-head"><p class="kicker">ejercicio 2 · una sola línea para guardar</p><h2 class="s-title">E2 · <span class="nc">saveImg</span></h2></header>
+  <div class="s-body vstack">
+<pre class="code sm" data-seq="1"># antes: 4 líneas dentro de doTests
+dirname, basename = os.path.dirname(imfile), os.path.basename(imfile)
+fname, fext = os.path.splitext(basename)
+pil_im = Image.fromarray(im2.astype(np.uint8))
+pil_im.save(path_output + '//' + fname + suffixFiles[test] + fext)</pre>
+    <div class="g21">
+<pre class="code sm" data-seq="2">def saveImg(im, path, name, suffix='', ext='.pgm'):
+    out = np.clip(im, 0, 255).astype(np.uint8)
+    Image.fromarray(out).save(
+        os.path.join(path, name + suffix + ext))
+
+saveImg(im2, path_output, fname, suffixFiles[test], fext)</pre>
+      <div class="api" data-seq="3"><div class="sig">módulo os.path</div><table>
+        <tr><td>join(a, b)</td><td>une con el separador</td></tr>
+        <tr><td>splitext(p)</td><td><code>('imgs/iglesia', '.pgm')</code></td></tr>
+        <tr><td>basename(p)</td><td><code>'iglesia.pgm'</code></td></tr>
+        <tr><td>dirname(p)</td><td><code>'imgs'</code></td></tr></table></div>
+    </div>
+  </div>
+  <aside class="notes">Parámetros elegidos: la imagen, la carpeta de salida, el nombre base, un sufijo opcional (_heq, _br, _dk) y la extensión. Se añade np.clip antes del astype para que un resultado en float fuera de [0,255] no se desborde. os.path.join evita escribir el separador a mano. En p1.py de los alumnos ya viene una versión con (im, path, suffix) que usa el nombre de la carpeta como nombre de fichero; la nuestra es más general.</aside>
+</section>
+
+<section class="slide" id="e3-color" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E3 imágenes en color">
+  <header class="s-head"><p class="kicker">ejercicio 3 · generalizar a color</p><h2 class="s-title">E3 · imágenes en color</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">im = np.array(Image.open('peppers.ppm').convert('RGB'))
+dk = darkenImg(im, 2)      # ya funciona: elemento a elemento
+br = brightenImg(dk, 2)    # deshace el oscurecido
+
+def perBand(f, im, *args):          # banda a banda
+    if im.ndim == 2:
+        return f(im, *args)
+    return np.dstack([f(im[..., k], *args)
+                      for k in range(im.shape[2])])
+
+np.allclose(br, perBand(brightenImg, dk, 2))   # True</pre>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="2">La fórmula actúa píxel a píxel y por banda de forma independiente: la forma (H, W, 3) no importa.</p>
+      <table class="t sm" data-seq="3">
+        <tr><th>Función</th><th>¿Bucle por bandas?</th></tr>
+        <tr><td class="m">np.power, +, *</td><td class="ok">no hace falta</td></tr>
+        <tr><td class="m">np.histogram</td><td class="warn">sí (aplana todo)</td></tr>
+        <tr><td class="m">histeq</td><td class="warn">sí: una CDF por banda</td></tr>
+      </table>
+    </div>
+  </div>
+  <aside class="notes">Hay dos soluciones válidas. La directa: como darkenImg y brightenImg son operaciones elemento a elemento, funcionan tal cual con un array (H, W, 3). La explícita: un bucle sobre im.shape[2] que aplica la función a cada banda y apila con np.dstack. El bucle es imprescindible cuando la función no es elemento a elemento, como np.histogram (que aplana todo) o histeq, que calcularía una única CDF mezclando las tres bandas. Ojo: ecualizar cada banda por separado cambia los colores.</aside>
+</section>
+
+<section class="slide" id="e3-res" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E3 resultado real">
+  <header class="s-head"><p class="kicker">resultado real · peppers.ppm</p><h2 class="s-title">E3 · resultado real</h2></header>
+  <div class="s-body fig"><img src="assets/peppers.png" alt="peppers original, oscurecida y aclarada"><p class="cap">Ida y vuelta: el error máximo es ≈ 0 (solo redondeo de coma flotante).</p></div>
+</section>
+
+<section class="slide" id="e4-tablero" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E4 checkBoardImg">
+  <header class="s-head"><p class="kicker">ejercicio 4 · tablero de ajedrez</p><h2 class="s-title">E4 · <span class="nc">checkBoardImg</span></h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def checkBoardImg(im, m, n):        # m × n celdas
+    i, j = np.indices(im.shape[:2]) # fila, columna
+    ci = i * m // im.shape[0]       # celda 0…m−1
+    cj = j * n // im.shape[1]       # celda 0…n−1
+    inv = (ci + cj) % 2 == 1        # alternas
+    return np.where(inv, 255 - im, im)</pre>
+      <div class="eq sm" data-seq="2">$$\text{invertir si }(c_i + c_j)\bmod 2 = 1$$</div>
+      <p class="txt" data-seq="3">Celdas vecinas difieren en 1 en <i>c<sub>i</sub></i> o en <i>c<sub>j</sub></i>: su suma cambia de paridad. Es el patrón del ajedrez.</p>
+    </div>
+    <div class="vstack" data-seq="2">
+      <div class="vc-heat" data-m='[[0,1,0,1],[1,0,1,0],[0,1,0,1],[1,0,1,0]]' data-dec="0" style="height:420px"></div>
+      <p class="cap">(c<sub>i</sub> + c<sub>j</sub>) mod 2 para m = n = 4: 1 = celda invertida</p>
+    </div>
+  </div>
+  <aside class="notes">Cada píxel (i, j) pertenece a la celda (i·m // alto, j·n // ancho). Con alto 663 y m = 4, la fila 165 está en la celda 0 y la 166 en la 1: la división entera reparte bien aunque 663 no sea múltiplo de 4. La versión con alto de celda ch = alto // m daría un resto sin cubrir. Se invierte la celda si la suma de índices es impar. np.where(cond, x, y) elige x donde cond es verdadera e y donde es falsa, sin bucles.</aside>
+</section>
+
+<section class="slide" id="e4-fichas" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="np.indices y np.where">
+  <header class="s-head"><p class="kicker">fichas de función · mini ejemplos</p><h2 class="s-title"><span class="nc">np.indices y np.where</span></h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="api" data-seq="1"><div class="sig">np.indices(dimensions)</div><table>
+        <tr><td>dimensions</td><td>tupla de forma, p. ej. <code>(H, W)</code></td></tr>
+        <tr><td>→</td><td>array (2, H, W): <code>i</code> = fila, <code>j</code> = columna</td></tr></table></div>
+<pre class="code sm" data-seq="2">i, j = np.indices((2, 3))
+# i = [[0,0,0],[1,1,1]]    j = [[0,1,2],[0,1,2]]</pre>
+    </div>
+    <div class="vstack">
+      <div class="api" data-seq="3"><div class="sig">np.where(cond, x, y)</div><table>
+        <tr><td>cond</td><td>máscara booleana</td></tr>
+        <tr><td>x, y</td><td>valores (arrays o escalares), con broadcasting</td></tr>
+        <tr><td>→</td><td>x donde cond, y en el resto</td></tr></table></div>
+<pre class="code sm" data-seq="4">im = np.array([[10, 200], [128, 127]])
+np.where(im &gt;= 128, 255, 0)   # [[0,255],[255,0]]</pre>
+    </div>
+  </div>
+  <aside class="notes">np.indices devuelve dos matrices con las coordenadas de cada posición: es lo que np.meshgrid daría con indexing='ij'. np.where con tres argumentos es el «si–entonces–si no» vectorizado. Con un solo argumento devuelve las posiciones de los True, que es otra función distinta.</aside>
+</section>
+
+<section class="slide" id="e4-res" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E4 resultado real">
+  <header class="s-head"><p class="kicker">resultado real · iglesia.pgm</p><h2 class="s-title">E4 · resultado real</h2></header>
+  <div class="s-body fig tall"><img src="assets/tablero.png" alt="tablero 4x4 y 5x3 sobre la iglesia"><p class="cap">Fig. 1 del enunciado: celdas 4×4 y 5×3.</p></div>
+</section>
+
+<section class="slide" id="e5-formula" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E5 número de histogramas">
+  <header class="s-head"><p class="kicker">ejercicio 5 · árbol de cuadrantes</p><h2 class="s-title">E5 · cuántos histogramas</h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$\text{nivel } l:\; 2^l\times 2^l = 4^l$$</span><span class="why">cada nivel parte cada bloque en 4</span></div>
+      <div data-seq="2"><span>$$N(n)=\sum_{l=0}^{n-1}4^l$$</span><span class="why">niveles 0 … n−1</span></div>
+      <div data-seq="3"><span>$$=\frac{4^{n}-1}{4-1}=\frac{4^n-1}{3}$$</span><span class="why">serie geométrica: Σrˡ = (rⁿ−1)/(r−1)</span></div>
+      <div data-seq="4"><span>$$n=1,2,3:\;1,\;5,\;21$$</span><span class="why">(4−1)/3, (16−1)/3, (64−1)/3</span></div>
+    </div>
+    <div class="vstack">
+      <svg class="dg" viewBox="0 0 760 300" data-seq="1" aria-label="niveles del árbol de cuadrantes: 1, 4 y 16 bloques">
+        <rect class="cell" x="2" y="2" width="200" height="200"/>
+        <rect class="cell" x="280" y="2" width="200" height="200"/>
+        <line class="ln acc" x1="380" y1="2" x2="380" y2="202"/><line class="ln acc" x1="280" y1="102" x2="480" y2="102"/>
+        <rect class="cell" x="558" y="2" width="200" height="200"/>
+        <line class="ln acc" x1="608" y1="2" x2="608" y2="202"/><line class="ln acc" x1="658" y1="2" x2="658" y2="202"/><line class="ln acc" x1="708" y1="2" x2="708" y2="202"/>
+        <line class="ln acc" x1="558" y1="52" x2="758" y2="52"/><line class="ln acc" x1="558" y1="102" x2="758" y2="102"/><line class="ln acc" x1="558" y1="152" x2="758" y2="152"/>
+        <text class="h" x="102" y="250" text-anchor="middle">l = 0</text><text class="a" x="102" y="290" text-anchor="middle">1</text>
+        <text class="h" x="380" y="250" text-anchor="middle">l = 1</text><text class="a" x="380" y="290" text-anchor="middle">4</text>
+        <text class="h" x="658" y="250" text-anchor="middle">l = 2</text><text class="a" x="658" y="290" text-anchor="middle">16</text>
+      </svg>
+      <div class="exam" data-seq="3"><b>prueba rápida</b>Si S = 1 + r + … + rⁿ⁻¹, entonces rS − S = rⁿ − 1, y de ahí S = (rⁿ − 1)/(r − 1).</div>
+    </div>
+  </div>
+  <aside class="notes">El nivel 0 es la imagen completa: 1 histograma. El nivel 1 son los cuatro cuadrantes: 4. El nivel 2, dieciséis bloques. En total, la suma de una serie geométrica de razón 4: (4^n − 1)/3. Demostración de la suma: multiplicamos S por la razón y restamos; casi todos los términos se cancelan y queda rS − S = rⁿ − 1.</aside>
+</section>
+
+<section class="slide" id="e5-codigo" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E5 multiHist">
+  <header class="s-head"><p class="kicker">ejercicio 5 · código y comprobación</p><h2 class="s-title">E5 · <span class="nc">multiHist</span></h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def multiHist(im, n, bins=256):
+    hists = []
+    for l in range(n):          # 4^l bloques
+        k = 2 ** l
+        rs = np.linspace(0, im.shape[0], k + 1).astype(int)
+        cs = np.linspace(0, im.shape[1], k + 1).astype(int)
+        for i in range(k):
+            for j in range(k):
+                blk = im[rs[i]:rs[i+1], cs[j]:cs[j+1]]
+                hists.append(np.histogram(blk, bins)[0])
+    return hists</pre>
+      <div class="trap" data-seq="3"><b>bordes</b><code>np.array_split</code> reparte el resto al revés y no reproduce los números del PDF; <code>linspace(...).astype(int)</code> sí.</div>
+    </div>
+    <div class="vstack" data-seq="2">
+<pre class="code sm">multiHist(iglesia, 2, 3)
+[25837, 53944, 193375]   # nivel 0
+[ 1811,  3782,  62593]   # arriba izq.
+[ 3835,  7701,  56650]   # arriba der.
+[ 9006, 19530,  39856]   # abajo izq.
+[10921, 21955,  35516]   # abajo der.</pre>
+      <p class="cap">coincide con el enunciado; suma de la fila 1 = 273 156 = 663·412</p>
+    </div>
+  </div>
+  <aside class="notes">Un bucle por niveles, y dentro, dos bucles que recorren los bloques. Los límites de los bloques se calculan con linspace: para 663 filas y k = 2 da 0, 331 y 663. Los resultados con 3 cajas coinciden con los números del enunciado, y la primera fila suma 273156, que son todos los píxeles de la imagen. Detalle: con un entero en bins, np.histogram usa el mínimo y el máximo de cada bloque, así que las cajas no son comparables entre bloques; para ello habría que fijar range=(0, 256).</aside>
+</section>
+
+<section class="slide" id="e6-deriv" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E6 expTransf: a y b">
+  <header class="s-head"><p class="kicker">ejercicio 6 · transformación exponencial</p><h2 class="s-title">E6 · <span class="nc">expTransf</span></h2></header>
+  <div class="s-body g2">
+    <div class="deriv">
+      <div data-seq="1"><span>$$T(l_0)=l_0,\quad T(l_1)=l_1$$</span><span class="why">el rango no cambia</span></div>
+      <div data-seq="2"><span>$$a\,(g_1-g_0)=l_1-l_0$$</span><span class="why">restar; g = e^(−αl²)</span></div>
+      <div data-seq="3"><span>$$a=\frac{l_1-l_0}{g_1-g_0}$$</span><span class="why">α &gt; 0 ⇒ g decrece ⇒ a &lt; 0</span></div>
+      <div data-seq="4"><span>$$b=l_0-a\,g_0$$</span><span class="why">de T(l₀) = l₀</span></div>
+    </div>
+<pre class="code sm" data-seq="3">def expTransf(alpha, n, l0, l1, bInc=True):
+    l = np.linspace(l0, l1, n)
+    g = np.exp(-alpha * l**2)
+    a = (l1 - l0) / (g[-1] - g[0])
+    b = l0 - a * g[0]
+    T = a * g + b            # creciente
+    return T if bInc else T[::-1]</pre>
+  </div>
+  <aside class="notes">Comprobado contra el PDF: la potencia es l al cuadrado, T(l) = a e^{-α l²} + b. Imponemos T(l0) = l0 y T(l1) = l1. Restando las dos ecuaciones sale a por la diferencia g1 menos g0 igual a l1 menos l0; despejamos a y después b. Como α > 0, g es decreciente, así que a es negativa y T resulta creciente. Para la versión decreciente basta dar la vuelta al array: T[::-1]. np.linspace(a, b, n) genera n valores igualmente espaciados incluyendo ambos extremos.</aside>
+</section>
+
+<section class="slide" id="e6-plot" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E6 curvas según alfa">
+  <header class="s-head"><p class="kicker">ejercicio 6 · rango de 0 a 255</p><h2 class="s-title">E6 · curvas según alfa</h2></header>
+  <div class="s-body g21">
+    <div class="fx" data-role="plot" data-legend="br" data-x="0,255" data-y="0,300" data-xl="l (entrada)" data-yl="T(l)" data-fns='[{"f":"x=>{const g=t=>Math.exp(-0.00002*t*t);return 255*(g(x)-g(0))/(g(255)-g(0))}","label":"α = 2·10⁻⁵"},{"f":"x=>{const g=t=>Math.exp(-0.0001*t*t);return 255*(g(x)-g(0))/(g(255)-g(0))}","label":"α = 10⁻⁴"},{"f":"x=>{const g=t=>Math.exp(-0.0005*t*t);return 255*(g(x)-g(0))/(g(255)-g(0))}","label":"α = 5·10⁻⁴"}]' style="height:580px"></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">α pequeño ⇒ casi la identidad. α grande ⇒ T sube muy deprisa y satura: <b>aclara</b> las sombras.</p>
+      <p class="txt" data-seq="2"><code>bInc=False</code> da la curva invertida: de l₁ a l₀.</p>
+      <div class="tip" data-seq="3"><b>comprobar</b><code>f[0] == l0</code> y <code>f[-1] == l1</code> con <code>np.isclose</code>.</div>
+      <div class="fx" data-role="plot" data-seq="2" data-x="0,255" data-y="0,255" data-xl="l (α = 10⁻⁴)" data-fns='[{"f":"x=>{const g=t=>Math.exp(-0.0001*t*t);return 255*(g(x)-g(0))/(g(255)-g(0))}","c":"accent"},{"f":"x=>{const g=t=>Math.exp(-0.0001*t*t);return 255*(g(255-x)-g(0))/(g(255)-g(0))}","c":"accent-3"}]' style="min-height:0;height:300px"></div>
+      <p class="cap">azul: <code>bInc=True</code> · naranja: <code>bInc=False</code> (T[::-1])</p>
+    </div>
+  </div>
+  <aside class="notes">Para α pequeño, e^{-α l²} es casi lineal en el rango y la curva se parece a la diagonal. Al crecer α, la exponencial cae enseguida a cero y T(l) ≈ 255(1 − e^{−α l²}): sube muy rápido al principio, así que los niveles oscuros se aclaran mucho y los claros se comprimen.</aside>
+</section>
+
+<section class="slide" id="e6-transf" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="transfImage">
+  <header class="s-head"><p class="kicker">aplicar una tabla (LUT) a una imagen</p><h2 class="s-title"><span class="nc">transfImage(im, f)</span></h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">def transfImage(im, f, l0=0, l1=255):     # f = LUT de n valores
+    return np.interp(im, np.linspace(l0, l1, len(f)), f)   # o f[im]</pre>
+    <div class="g2">
+      <table class="t" data-seq="2">
+        <tr><th></th><th>f[im]</th><th>np.interp</th></tr>
+        <tr><td>im entera</td><td class="ok">sí</td><td class="ok">sí</td></tr>
+        <tr><td>len(f) ≠ 256</td><td class="err">no</td><td class="ok">sí</td></tr>
+        <tr><td>im float</td><td class="err">no</td><td class="ok">sí</td></tr>
+      </table>
+      <div class="vstack" data-seq="3">
+        <p class="txt"><code>T = [255, 170, 85, 0]</code> (de ejemplo)</p>
+        <div class="g2">
+          <div class="vstack"><p class="cap">im</p><div class="vc-heat" data-m='[[0,2],[3,1]]' data-dec="0" style="height:160px"></div></div>
+          <div class="vstack"><p class="cap">T[im]</p><div class="vc-heat" data-m='[[255,85],[0,170]]' data-dec="0" style="height:160px"></div></div>
+        </div>
+        <div class="tip"><b>idea</b>Cada píxel se usa como <b>índice</b> de la tabla: <code>T[0] = 255</code>, <code>T[2] = 85</code>… una sola operación para toda la imagen.</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Una transformación de niveles de gris es una tabla: para cada nivel de entrada, un nivel de salida. f[im] indexa la tabla con los propios píxeles, pero exige que im sea entera y que f tenga un elemento por nivel (256). np.interp es más general: admite imágenes float y tablas de otra longitud, porque interpola. Con la tabla de 256 elementos ambas dan lo mismo (comprobado con np.allclose).</aside>
+</section>
+
+<section class="slide" id="e6-res" data-fx="vc" data-section="C · Ejercicios resueltos" data-title="E6 resultado real">
+  <header class="s-head"><p class="kicker">resultado real · iglesia.pgm, <span class="nc">α = 10⁻⁴</span></p><h2 class="s-title">E6 · resultado real</h2></header>
+  <div class="s-body fig tall"><img src="assets/exp_iglesia.png" alt="iglesia con expTransf creciente y decreciente"><p class="cap"><code>transfImage(im, expTransf(1e-4, 256, 0, 255, bInc))</code>: la creciente aclara las sombras; la decreciente invierte los niveles.</p></div>
+  <aside class="notes">Con α = 10⁻⁴, la tabla creciente vale 161 en el nivel 100: los oscuros suben mucho, por eso la iglesia sale casi blanca. La decreciente recorre la misma curva al revés, de 255 a 0, y produce una especie de negativo con contraste no lineal.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="14" data-section="D · Cierre" data-title="Bloque D">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque d · ejercicio 1 y repaso final</p>
+    <h1 class="s-title xl">Chuleta y examen</h1>
+    <p class="lead">Todas las funciones del lab, la plantilla y preguntas tipo examen.</p>
+  </div>
+</section>
+
+<section class="slide" id="chuleta-1" data-fx="vc" data-section="D · Cierre" data-title="E1 chuleta: NumPy (I)">
+  <header class="s-head"><p class="kicker">ejercicio 1 · resumen por categorías</p><h2 class="s-title">NumPy I: crear y mover</h2></header>
+  <div class="s-body">
+    <table class="t">
+      <tr><th>Función</th><th>Uso en una línea</th></tr>
+      <tr><td class="m">np.zeros((H, W))</td><td>matriz de ceros (float64); <code>np.ones</code> de unos</td></tr>
+      <tr><td class="m">np.arange(n)</td><td>0, 1, …, n−1 (el final no entra)</td></tr>
+      <tr><td class="m">np.linspace(a, b, n)</td><td>n valores equiespaciados, con a y b incluidos</td></tr>
+      <tr><td class="m">np.indices((H, W))</td><td>coordenadas (fila, columna) de cada píxel</td></tr>
+      <tr><td class="m">a.reshape(s) / a.flatten()</td><td>cambia la forma (vista) / aplana (copia)</td></tr>
+      <tr><td class="m">a.copy() / a.astype(t)</td><td>copia real / copia con otro dtype</td></tr>
+      <tr><td class="m">np.dstack(lista)</td><td>apila (H, W) en (H, W, k): une bandas</td></tr>
+      <tr><td class="m">a.shape, a.ndim, a.dtype</td><td>forma, nº de dimensiones, tipo</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide" id="chuleta-2" data-fx="vc" data-section="D · Cierre" data-title="E1 chuleta: NumPy (II)">
+  <header class="s-head"><p class="kicker">ejercicio 1 · resumen por categorías</p><h2 class="s-title">NumPy II: calcular</h2></header>
+  <div class="s-body">
+    <table class="t">
+      <tr><th>Función</th><th>Uso en una línea</th></tr>
+      <tr><td class="m">np.clip(x, 0, 255)</td><td>recorta al intervalo; antes de <code>astype(np.uint8)</code></td></tr>
+      <tr><td class="m">np.where(c, x, y)</td><td>x donde c es cierta, y donde no</td></tr>
+      <tr><td class="m">np.power(x, e)</td><td>x ** e elemento a elemento</td></tr>
+      <tr><td class="m">np.interp(x, xp, fp)</td><td>interpolación lineal en una tabla</td></tr>
+      <tr><td class="m">np.histogram(a, bins)</td><td>(conteos, bordes); bordes = nbins + 1</td></tr>
+      <tr><td class="m">np.bincount(a, minlength=256)</td><td>histograma exacto de enteros ≥ 0</td></tr>
+      <tr><td class="m">a.cumsum()</td><td>suma acumulada (CDF)</td></tr>
+      <tr><td class="m">a.sum / mean / min / max(axis)</td><td>reducción; axis es la dimensión que desaparece</td></tr>
+      <tr><td class="m">np.allclose(a, b)</td><td>¿iguales salvo error de redondeo?</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide" id="chuleta-3" data-fx="vc" data-section="D · Cierre" data-title="E1 chuleta: PIL, plt, os">
+  <header class="s-head"><p class="kicker">ejercicio 1 · resumen por categorías</p><h2 class="s-title">PIL, Matplotlib, os</h2></header>
+  <div class="s-body">
+    <table class="t">
+      <tr><th>Categoría</th><th>Función</th><th>Uso en una línea</th></tr>
+      <tr><td>PIL</td><td class="m">Image.open(f).convert('L')</td><td>abrir y pasar a gris de 8 bits</td></tr>
+      <tr><td>PIL</td><td class="m">Image.fromarray(a).save(f)</td><td>guardar un array uint8</td></tr>
+      <tr><td>plt</td><td class="m">plt.figure(figsize=(w, h))</td><td>nueva figura</td></tr>
+      <tr><td>plt</td><td class="m">fig.add_subplot(m, n, i)</td><td>celda i de una rejilla m × n</td></tr>
+      <tr><td>plt</td><td class="m">plt.imshow(im, cmap='gray')</td><td>mostrar una matriz como imagen</td></tr>
+      <tr><td>plt</td><td class="m">plt.plot(y); plt.show()</td><td>curva 1D; mostrar la ventana</td></tr>
+      <tr><td>os</td><td class="m">os.path.join / splitext / basename</td><td>construir y trocear rutas</td></tr>
+      <tr><td>glob</td><td class="m">glob.glob(carpeta + '/*.pgm')</td><td>lista de ficheros que cumplen el patrón</td></tr>
+    </table>
+  </div>
+</section>
+
+<section class="slide" id="plantilla" data-fx="vc" data-section="D · Cierre" data-title="Plantilla para el examen">
+  <header class="s-head"><p class="kicker">cuatro pasos siempre</p><h2 class="s-title">Plantilla para el examen</h2></header>
+  <div class="s-body vstack">
+  <div class="g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><span class="step-n">1</span>Convertir a <b>float</b>.</p>
+      <p class="txt" data-seq="2"><span class="step-n">2</span>Operar <b>vectorizado</b> (sin bucles).</p>
+      <p class="txt" data-seq="3"><span class="step-n">3</span><b>Recortar</b> y convertir el tipo si se guarda.</p>
+      <p class="txt" data-seq="4"><span class="step-n">4</span><b>No modificar</b> la entrada.</p>
+    </div>
+<pre class="code" data-seq="2">def f(im, ...):
+    x = im.astype(float)     # 1 (y 4: copia)
+    y = ...                  # 2 fórmula NumPy
+    return y
+
+# al guardar:
+np.clip(y, 0, 255).astype(np.uint8)   # 3</pre>
+  </div>
+  <svg class="dg" viewBox="0 0 1664 110" data-seq="5" aria-label="flujo: uint8, astype float, fórmula, clip, uint8">
+    <rect class="box" x="2" y="10" width="290" height="80" rx="4"/><text x="147" y="60" text-anchor="middle">im uint8</text>
+    <line class="ln acc" x1="296" y1="50" x2="330" y2="50"/><polygon points="330,40 346,50 330,60" fill="var(--accent)"/>
+    <rect class="box acc" x="350" y="10" width="290" height="80" rx="4"/><text class="a" x="495" y="60" text-anchor="middle">astype(float)</text>
+    <line class="ln acc" x1="644" y1="50" x2="678" y2="50"/><polygon points="678,40 694,50 678,60" fill="var(--accent)"/>
+    <rect class="box acc" x="698" y="10" width="290" height="80" rx="4"/><text class="a" x="843" y="60" text-anchor="middle">fórmula</text>
+    <line class="ln acc" x1="992" y1="50" x2="1026" y2="50"/><polygon points="1026,40 1042,50 1026,60" fill="var(--accent)"/>
+    <rect class="box acc" x="1046" y="10" width="290" height="80" rx="4"/><text class="a" x="1191" y="60" text-anchor="middle">np.clip(0,255)</text>
+    <line class="ln acc" x1="1340" y1="50" x2="1354" y2="50"/><polygon points="1354,40 1370,50 1354,60" fill="var(--accent)"/>
+    <rect class="box" x="1372" y="10" width="290" height="80" rx="4"/><text x="1517" y="60" text-anchor="middle">astype(uint8)</text>
+  </svg>
+  </div>
+  <aside class="notes">Esta plantilla sirve para casi cualquier función de realce. astype(float) crea una copia, de modo que además protege la entrada original. Si la función devuelve la imagen para mostrarla basta con float; el clip y el uint8 se aplican al guardar.</aside>
+</section>
+
+<section class="slide" id="mini-1" data-fx="vc" data-section="D · Cierre" data-title="Mini ejercicios (I)">
+  <header class="s-head"><p class="kicker">tipo examen · inténtalo antes de mirar</p><h2 class="s-title">Mini ejercicios (I)</h2></header>
+  <div class="s-body vstack">
+    <p class="txt"><b>1 · threshold(im, thr)</b>: 255 si <code>im ≥ thr</code>; 0 si no.</p>
+<pre class="code" data-seq="1">def threshold(im, thr):
+    return np.where(im &gt;= thr, 255, 0).astype(np.uint8)
+# [[10, 200], [128, 127]], thr = 128  →  [[0, 255], [255, 0]]</pre>
+    <p class="txt"><b>2 · negative(im)</b>: invierte los niveles.</p>
+    <div class="g21">
+<pre class="code" data-seq="2">def negative(im):
+    return 255 - im
+# [[10, 200], [128, 127]] → [[245, 55], [127, 128]]</pre>
+      <div class="trap" data-seq="3"><b>uint8</b><code>255 - im</code> es seguro: el resultado queda en [0, 255]. <code>im - 255</code> desbordaría.</div>
+    </div>
+  </div>
+  <aside class="notes">Primero intenta escribirlas en papel. threshold: una máscara booleana más where y conversión a uint8. negative: la resta de 255 menos la imagen; con uint8 funciona porque ningún píxel es mayor que 255.</aside>
+</section>
+
+<section class="slide" id="mini-2" data-fx="vc" data-section="D · Cierre" data-title="Mini ejercicios (II)">
+  <header class="s-head"><p class="kicker">tipo examen · inténtalo antes de mirar</p><h2 class="s-title">Mini ejercicios (II)</h2></header>
+  <div class="s-body vstack">
+    <p class="txt"><b>3 · gamma(im, g)</b>: <span class="mono">255·(r/255)^g</span> en [0, 255].</p>
+<pre class="code" data-seq="1">def gamma(im, g):
+    return 255 * (im.astype(float) / 255) ** g      # r = 100, g = 2 → 39.2157</pre>
+    <p class="txt"><b>4 · stretch(im)</b>: estiramiento min-max a [0, 255].</p>
+    <div class="g21">
+<pre class="code" data-seq="2">def stretch(im):
+    x = im.astype(float)
+    return (x - x.min()) / (x.max() - x.min()) * 255
+# [[50, 100], [150, 200]] → [[0, 85], [170, 255]]</pre>
+      <div class="vstack">
+        <div class="eq" data-seq="3">$$s=255\,\frac{r-r_{\min}}{r_{\max}-r_{\min}}$$</div>
+        <div class="trap" data-seq="4"><b>imagen constante</b>Si max = min, división por cero (NaN).</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">gamma generaliza darkenImg y brightenImg: con g > 1 oscurece y con g < 1 aclara. stretch es el estiramiento lineal del contraste: lleva el mínimo a 0 y el máximo a 255. Ejemplo: 50, 100, 150, 200 con mínimo 50 y máximo 200 da 0, 85, 170, 255. A diferencia de la ecualización, es una transformación lineal: no cambia la forma del histograma, solo la escala.</aside>
+</section>
+
+<section class="slide" id="vf-1" data-fx="vc" data-section="D · Cierre" data-title="Verdadero o falso (I)">
+  <header class="s-head"><p class="kicker">tipo examen · decide antes de mirar</p><h2 class="s-title">Verdadero o falso (I)</h2></header>
+  <div class="s-body">
+    <div class="vf"><p>«<code>a * b</code> entre dos arrays 2D es el producto matricial.»</p><div class="ans f" data-seq="1"><b>F</b>Es elemento a elemento; el matricial es <code>a @ b</code>.</div></div>
+    <div class="vf"><p>«Una matriz (10, 8) y otra (8, 1) se pueden sumar por broadcasting.»</p><div class="ans f" data-seq="2"><b>F</b>Alineadas por la derecha: 10 ≠ 8. Con (1, 8) sí.</div></div>
+    <div class="vf"><p>«Si <code>a</code> es uint8 y vale 250, <code>a + 10</code> vale 260.»</p><div class="ans f" data-seq="3"><b>F</b>Desborda sin aviso: 260 mod 256 = 4.</div></div>
+    <div class="vf"><p>«<code>b = a[1:3]</code> crea una copia independiente de esas filas.»</p><div class="ans f" data-seq="4"><b>F</b>Es una vista: cambiar <code>b</code> cambia <code>a</code>.</div></div>
+  </div>
+  <aside class="notes">Cuatro trampas de NumPy que caen como verdadero o falso. Todas son falsas: el asterisco es elemento a elemento; el broadcasting compara por la derecha y 10 con 8 no encaja; uint8 es aritmética módulo 256; y el slicing devuelve una vista que comparte memoria.</aside>
+</section>
+
+<section class="slide" id="vf-2" data-fx="vc" data-section="D · Cierre" data-title="Verdadero o falso (II)">
+  <header class="s-head"><p class="kicker">tipo examen · decide antes de mirar</p><h2 class="s-title">Verdadero o falso (II)</h2></header>
+  <div class="s-body">
+    <div class="vf"><p>«<code>M.sum(axis=0)</code> devuelve una suma por columna.»</p><div class="ans v" data-seq="1"><b>V</b>Desaparece el eje 0 (filas): queda un valor por columna.</div></div>
+    <div class="vf"><p>«<code>darkenImg</code> y <code>brightenImg</code> con el mismo p son inversas.»</p><div class="ans v" data-seq="2"><b>V</b>B(D(r)) = 255·((r/255)ᵖ)^(1/p) = r.</div></div>
+    <div class="vf"><p>«Ecualizar el histograma aumenta la entropía.»</p><div class="ans f" data-seq="3"><b>F</b>La deja igual o la reduce (iglesia: 5,975 → 5,918 bits).</div></div>
+    <div class="vf"><p>«<code>np.histogram(x, list(range(256)))</code> devuelve 256 conteos.»</p><div class="ans f" data-seq="4"><b>F</b>256 bordes = 255 cajas; 254 y 255 van juntos.</div></div>
+    <div class="vf"><p>«Vectorizar con NumPy acelera órdenes de magnitud.»</p><div class="ans v" data-seq="5"><b>V</b>En la iglesia, ≈ 500× frente al doble bucle.</div></div>
+  </div>
+  <aside class="notes">La tercera es la errata de los apuntes: la ecualización es una función de los niveles, así que puede fundir niveles pero nunca crear información; la entropía no sube. La cuarta es la sutileza del código del profesor con los bordes del histograma. La última es verdadera, pero el factor exacto depende del ordenador.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

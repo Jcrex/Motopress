@@ -1,0 +1,69 @@
+:root { --folio: "VC.EXAMEN // "; }
+.fig { display: grid; gap: 8px; justify-items: center; margin: 0; }
+.fig img { width: 100%; max-height: 450px; object-fit: contain; border: var(--stroke) solid var(--line-2); background: var(--bg-2); }
+.fig figcaption { font: 500 22px var(--font-mono); color: var(--fg-3); text-align: center; }
+.ops { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 14px; align-items: center; }
+.ops .op { font: 600 56px var(--font-mono); color: var(--accent); }
+.struck { position: relative; opacity: .55; }
+.struck::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top right, transparent calc(50% - 2px), var(--err) 50%, transparent calc(50% + 2px)); pointer-events: none; }
+.flow { display: grid; gap: 10px; }
+.flow .row { display: grid; grid-template-columns: 1fr 70px 1.25fr; align-items: center; gap: 14px; padding: 10px 20px; border: var(--stroke) solid var(--line-2); border-left: 6px solid var(--accent); border-radius: var(--radius); background: var(--bg-2); font-size: 24px; color: var(--fg-2); }
+.flow .row .arr { font: 600 34px var(--font-mono); color: var(--accent); text-align: center; }
+.flow .row code { font-size: 24px; }
+.vf { display: grid; gap: 8px; }
+.vf .it { display: grid; grid-template-columns: 1.25fr 190px 1fr; gap: 18px; align-items: center; padding: 8px 18px; border: var(--stroke) solid var(--line); border-radius: var(--radius); font-size: 24px; color: var(--fg-2); }
+.vf .v { font: 700 26px var(--font-mono); text-align: center; }
+.vf .v.t { color: var(--ok); } .vf .v.f { color: var(--err); }
+.vf .why2 { font-size: 22px; color: var(--fg-3); }
+.out { font: 400 22px/1.45 var(--font-mono); color: var(--fg-2); background: var(--bg-2); border: var(--stroke) solid var(--line); border-radius: var(--radius); padding: 14px 20px; white-space: pre; margin: 0; }
+.out b { color: var(--err); font-weight: 600; }
+.out i { color: var(--ok); font-style: normal; }
+.pr-tag { display: inline-block; font: 600 20px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--warn); border: var(--stroke) solid var(--warn); padding: 2px 12px; margin-bottom: 10px; }
+.map text { fill: var(--fg); font: 500 25px var(--font-mono); }
+.map text.s { fill: var(--fg-2); font-size: 22px; }
+.map rect { fill: var(--bg-2); stroke: var(--accent); stroke-width: 3; }
+.map path { fill: none; stroke: var(--fg-3); stroke-width: 3; }
+.map .hd { fill: var(--fg-3); font-size: 22px; }
+aside.notes { display: none !important; }
+
+/* ---- pase de revisión: tamaños (mín. 22 px, texto 26–28, código 23–25) ---- */
+.slide p.txt { font-size: 27px; }
+.slide .tip, .slide .trap, .slide .exam { font-size: 25px; }
+.slide .tip b:first-child, .slide .trap b:first-child, .slide .exam b:first-child { font-size: 22px; }
+.slide table.t { font-size: 25px; }
+.slide table.t th, .slide .api th { font-size: 22px; }
+.slide .api table { font-size: 25px; }
+.slide pre.code { font-size: 25px; }
+.slide pre.code.sm { font-size: 23px; }
+.slide .eq.sm { font-size: 32px; }
+.slide .deriv { font-size: 34px; }
+.slide .deriv .why { font-size: 24px; }
+.fig figcaption { font-size: 24px; }
+.out { font-size: 24px; }
+.pr-tag { font-size: 22px; }
+.flow .row { font-size: 27px; padding: 12px 22px; }
+.flow .row code { font-size: 25px; }
+.vf .it { font-size: 26px; padding: 12px 18px; grid-template-columns: 1.25fr 200px 1fr; }
+.vf .v { font-size: 28px; }
+.vf .why2 { font-size: 24px; }
+.map text { font-size: 30px; }
+.map text.s { font-size: 25px; }
+.map .hd { font-size: 24px; }
+.cover-body .lead { max-width: 1400px; }
+.fig.sm img { max-height: 380px; }
+.hcap { font: 500 24px var(--font-mono); color: var(--fg-3); text-align: center; margin: 0; }
+.check { display: grid; gap: 14px; }
+.check .row { display: grid; grid-template-columns: 56px 1fr; gap: 18px; align-items: center; font-size: 27px; color: var(--fg-2); padding: 12px 20px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); }
+.check .row .k { font: 700 30px var(--font-mono); color: var(--ok); text-align: center; }
+.big-num.nc { text-transform: none; }
+/* ---- pase de revisión: rellenar mejor el lienzo ---- */
+.slide p.txt { font-size: 28px; }
+.slide .tip, .slide .trap, .slide .exam { font-size: 26px; }
+.slide table.t { font-size: 27px; }
+.slide table.t td, .slide table.t th { padding-top: 12px; padding-bottom: 12px; }
+.slide pre.code { font-size: 26px; }
+.slide pre.code.sm { font-size: 24px; }
+.slide .api table { font-size: 26px; }
+.slide .vstack { gap: 24px; }
+.vf .it { font-size: 27px; padding: 16px 20px; }
+.slide > .s-body.g2, .slide > .s-body.g21, .slide > .s-body.vstack, .slide > .s-body.vf, .slide > .s-body.check, .slide > .s-body.flow { align-content: center; }

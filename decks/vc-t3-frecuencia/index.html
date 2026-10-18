@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC T3 · Filtrado en frecuencia</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="7" data-section="Inicio" data-title="Filtrado en frecuencia">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lección 003</p>
+    <h1 class="s-title xl">Filtrado en frecuencia</h1>
+    <p class="lead">A · Fourier &nbsp;·&nbsp; B · DFT y FFT &nbsp;·&nbsp; C · teorema de la convolución &nbsp;·&nbsp; D · propiedades del espectro &nbsp;·&nbsp; E · filtros paso bajo, paso alto, banda y notch &nbsp;·&nbsp; F · repaso</p>
+  </div>
+  <aside class="notes">Esta es la lección más matemática del parcial. El hilo es: cambiamos de base (de píxeles a ondas), vemos que la convolución se vuelve un producto y por eso podemos diseñar filtros directamente sobre el espectro. Las preguntas típicas son verdadero o falso sobre el teorema de la convolución, la fase y la traslación.</aside>
+</section>
+
+<!-- ============ BLOQUE A ============ -->
+<section class="slide" id="a-alt" data-fx="vc" data-section="A · Fourier" data-title="Representación alternativa">
+  <header class="s-head"><p class="kicker">idea central</p><h2 class="s-title">Representación alternativa</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1">La <b>misma imagen</b> puede escribirse en bases distintas. No cambia la información: cambia lo que es fácil de ver.</p>
+      <div class="card" data-seq="2"><b>base de impulsos (píxeles)</b>\(f[n,m]=\sum_{a,b} f[a,b]\,\delta[n-a,m-b]\). Cada coeficiente dice «cuánto vale aquí». Localización perfecta, ninguna información de frecuencia.</div>
+      <div class="card" data-seq="3"><b>base de ondas (Fourier)</b>\(f[n,m]=\frac{1}{NM}\sum_{u,v}F[u,v]\,e^{+j2\pi(\frac{un}{N}+\frac{vm}{M})}\). Cada coeficiente dice «cuánta onda de esta frecuencia hay». Frecuencia perfecta, sin localización.</div>
+    </div>
+    <div class="vstack" style="align-items:center">
+      <figure class="f" data-seq="2"><img src="assets/ein_orig.png" alt="Einstein" style="--h:240px"><figcaption>dominio espacial f[n,m]</figcaption></figure>
+      <p class="txt" data-seq="3" style="text-align:center">⇅ transformación lineal invertible (sin pérdida)</p>
+      <figure class="f" data-seq="3"><img src="assets/esp_log.png" alt="Espectro" style="--h:240px"><figcaption>dominio frecuencial log(1+|F|)</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Piensa en los píxeles como una base de impulsos: cada número es el coeficiente de una delta. Fourier cambia a una base de ondas. Es una transformación lineal invertible, así que no se pierde nada; lo que cambia es qué operaciones son sencillas. Filtrar, que en el espacio es una convolución, en frecuencia será un simple producto.</aside>
+</section>
+
+<section class="slide" id="a-rampa" data-fx="vc" data-section="A · Fourier" data-title="Aproximar una rampa">
+  <header class="s-head"><p class="kicker">serie de Fourier · ejemplo</p><h2 class="s-title">Aproximar una rampa</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$\frac t2=\sum_{k\ge1}\frac{(-1)^{k+1}}{k}\sin(kt)$$</div>
+      <p class="txt" data-seq="1">en \(t\in(-\pi,\pi)\), extendida con periodo 2π.</p>
+      <p class="txt" data-seq="2">Con 1, 3, 10 y 50 términos la suma se parece cada vez más a la rampa.</p>
+      <div class="trap" data-seq="3"><b>fenómeno de Gibbs</b>Junto al salto (en ±π) queda un rebasamiento de ≈ 9 % que <i>no desaparece</i> al añadir términos: solo se estrecha. Es el mismo origen del <i>ringing</i> del filtro ideal.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="-3.1416,3.1416" data-y="-2,2" data-xl="t" data-yl="suma parcial" data-legend="tl" data-fns='[{"f":"x=>x/2","label":"t/2","dash":"6 6","c":"fg-3"},{"f":"x=>Math.sin(x)","label":"1 término"},{"f":"x=>{let s=0;for(let k=1;k&lt;=3;k++)s+=(k%2?1:-1)/k*Math.sin(k*x);return s}","label":"3 términos"},{"f":"x=>{let s=0;for(let k=1;k&lt;=10;k++)s+=(k%2?1:-1)/k*Math.sin(k*x);return s}","label":"10 términos"},{"f":"x=>{let s=0;for(let k=1;k&lt;=50;k++)s+=(k%2?1:-1)/k*Math.sin(k*x);return s}","label":"50 términos"}]' style="height:600px"></div>
+  </div>
+  <aside class="notes">La rampa es discontinua si se extiende periódicamente: salta de π/2 a −π/2. Una suma de senos, que son funciones suaves, aproxima bien la parte lineal, pero en el salto aparece un rebasamiento de aproximadamente el 9 % del salto que no se elimina aumentando términos. Lo volveremos a ver con el filtro paso bajo ideal.</aside>
+</section>
+
+<section class="slide" id="a-serie" data-fx="vc" data-section="A · Fourier" data-title="Serie de Fourier">
+  <header class="s-head"><p class="kicker">Fourier, 1822</p><h2 class="s-title">Serie de Fourier</h2></header>
+  <div class="s-body vstack">
+    <p class="txt" data-seq="1">Toda señal <b>periódica</b> (de periodo T) es una suma, posiblemente infinita, de senos y cosenos de frecuencias múltiplos de la fundamental.</p>
+    <div class="eq big" data-seq="2">$$f(t)=\frac{a_0}{2}+\sum_{k=1}^{\infty}\Big[a_k\cos\!\Big(\frac{2\pi k t}{T}\Big)+b_k\sin\!\Big(\frac{2\pi k t}{T}\Big)\Big]$$</div>
+    <div class="eq" data-seq="3">$$a_k=\frac{2}{T}\int_0^T f(t)\cos\!\Big(\frac{2\pi k t}{T}\Big)dt,\qquad b_k=\frac{2}{T}\int_0^T f(t)\sin\!\Big(\frac{2\pi k t}{T}\Big)dt$$</div>
+    <div class="g3" data-seq="4">
+      <div class="card"><b><span class="nc">a₀/2</span></b>valor medio (la componente continua, DC).</div>
+      <div class="card"><b><span class="nc">k = 1</span></b>frecuencia fundamental: un ciclo por periodo.</div>
+      <div class="card"><b><span class="nc">k</span> grande</b>detalles finos y saltos bruscos. Los bordes necesitan muchos términos.</div>
+    </div>
+  </div>
+  <aside class="notes">Fourier afirmó en 1822 que cualquier señal periódica se puede escribir como suma de senos y cosenos. Los coeficientes se obtienen proyectando la señal sobre cada onda (son integrales de f por el seno o el coseno). El término constante es la media: lo que luego llamaremos DC.</aside>
+</section>
+
+<section class="slide" id="a-ondas1d" data-fx="vc" data-section="A · Fourier" data-title="Ondas discretas 1D">
+  <header class="s-head"><p class="kicker">bloques de construcción</p><h2 class="s-title">Ondas discretas 1D</h2></header>
+  <div class="s-body g12">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$s_k[n]=A\sin\!\Big(\frac{2\pi k n}{N}\Big)$$$$c_k[n]=A\cos\!\Big(\frac{2\pi k n}{N}\Big)$$</div>
+      <p class="txt" data-seq="2"><b>k</b> = número de ciclos completos en las N muestras. El periodo es N/k muestras. Aquí N = 20, A = 1 y k = 1, 2, 3 (los puntos son las muestras de k = 1).</p>
+      <div class="tip" data-seq="3"><b>máxima frecuencia</b>Con N muestras solo se distinguen frecuencias hasta k = N/2 (Nyquist); más allá se confunden con otras (<i>aliasing</i>).</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,20" data-y="-1.2,1.2" data-xl="n (muestra)" data-yl="s_k[n]" data-legend="bl" data-fns='[{"f":"x=>Math.sin(2*Math.PI*1*x/20)","label":"k = 1"},{"f":"x=>Math.sin(2*Math.PI*2*x/20)","label":"k = 2"},{"f":"x=>Math.sin(2*Math.PI*3*x/20)","label":"k = 3"}]' data-pts='[[0,0],[1,0.309],[2,0.588],[3,0.809],[4,0.951],[5,1],[6,0.951],[7,0.809],[8,0.588],[9,0.309],[10,0],[11,-0.309],[12,-0.588],[13,-0.809],[14,-0.951],[15,-1],[16,-0.951],[17,-0.809],[18,-0.588],[19,-0.309]]' style="height:600px"></div>
+  </div>
+  <aside class="notes">Las ondas discretas son el equivalente discreto de seno y coseno. El índice k cuenta cuántos ciclos caben en las N muestras. En el gráfico se dibuja la curva continua; las muestras reales son los valores en n entero, marcados con puntos para k igual a 1.</aside>
+</section>
+
+<section class="slide" id="a-ondas2d" data-fx="vc" data-section="A · Fourier" data-title="Ondas 2D">
+  <header class="s-head"><p class="kicker">bloques de construcción</p><h2 class="s-title">Ondas 2D</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$\cos\!\Big(2\pi\Big(\frac{un}{N}+\frac{vm}{M}\Big)\Big)$$</div>
+    <div class="row" style="--h:400px">
+      <figure class="f" data-seq="2"><img src="assets/onda_2_0.png" alt="onda (2,0)"><figcaption>(u, v) = (2, 0)</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/onda_3_1.png" alt="onda (3,1)"><figcaption>(u, v) = (3, 1)</figcaption></figure>
+      <figure class="f" data-seq="4"><img src="assets/onda_7_-5.png" alt="onda (7,-5)"><figcaption>(u, v) = (7, −5)</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="5">Constante a lo largo de las rectas \(un/N+vm/M=\text{cte}\): varía en la dirección del vector <b>(u, v)</b>, perpendicular a las crestas. Su módulo \(\sqrt{u^2+v^2}\) es la frecuencia: más grande, franjas más finas.</p>
+  </div>
+  <aside class="notes">Generadas en Python con una malla de 128 por 128. Con (2,0) hay dos ciclos horizontales y ninguno vertical: franjas verticales. Con (7,-5) las franjas son finas y diagonales. Cada píxel del espectro corresponde a una de estas ondas.</aside>
+</section>
+
+<section class="slide" id="a-euler" data-fx="vc" data-section="A · Fourier" data-title="Euler y la exponencial">
+  <header class="s-head"><p class="kicker">exponencial compleja · demostración</p><h2 class="s-title">Euler y la exponencial</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1fr 620px;gap:40px;align-items:center">
+    <div class="deriv" style="font-size:34px;gap:14px">
+      <div data-seq="1"><span>$$e^{j\theta}=\cos\theta+j\sin\theta$$</span><span class="why">fórmula de Euler</span></div>
+      <div data-seq="2"><span>$$e^{-j\theta}=\cos\theta-j\sin\theta$$</span><span class="why">cos par, sin impar (el conjugado)</span></div>
+      <div data-seq="3"><span>$$e^{j\theta}+e^{-j\theta}=2\cos\theta$$</span><span class="why">sumar: la parte imaginaria se cancela</span></div>
+      <div data-seq="4"><span>$$\cos\theta=\frac{e^{j\theta}+e^{-j\theta}}{2}$$</span><span class="why">∎ dividir entre 2 (y sin θ = (e^{jθ} − e^{−jθ})/2j)</span></div>
+    </div>
+    <svg class="dia" viewBox="0 0 620 560" width="620" height="560" role="img" aria-label="Círculo unidad con e^{jθ} y su conjugado">
+      <g data-seq="1">
+        <line x1="40" y1="280" x2="590" y2="280" class="ax"/><line x1="300" y1="40" x2="300" y2="530" class="ax"/>
+        <text x="596" y="288" class="lb">Re</text><text x="312" y="50" class="lb">Im</text>
+        <circle cx="300" cy="280" r="210" class="circ"/>
+        <line x1="300" y1="280" x2="435" y2="119" class="vec"/>
+        <circle cx="435" cy="119" r="9" class="dot"/>
+        <text x="448" y="108" class="lb strong">e<tspan dy="-12" font-size="20">jθ</tspan></text>
+        <path d="M 360 280 A 60 60 0 0 0 338 234" class="arc"/><text x="368" y="252" class="lb">θ</text>
+        <line x1="435" y1="119" x2="435" y2="280" class="sin"/><text x="446" y="210" class="lb c3">j sin θ</text>
+      </g>
+      <g data-seq="2">
+        <line x1="300" y1="280" x2="435" y2="441" class="vec dash"/>
+        <circle cx="435" cy="441" r="9" class="dot"/>
+        <text x="448" y="472" class="lb strong">e<tspan dy="-12" font-size="20">−jθ</tspan></text>
+      </g>
+      <g data-seq="3">
+        <line x1="300" y1="280" x2="435" y2="280" class="cos"/>
+        <text x="300" y="318" class="lb c2">cos θ</text>
+        <text x="40" y="545" class="lb">la suma de los dos vectores cae sobre el eje real</text>
+      </g>
+    </svg>
+  </div>
+  <aside class="notes">Demostración de la identidad del coseno: se escribe Euler para theta y para menos theta, se suma y se divide entre dos. En el círculo unidad se ve: e elevado a j theta y su conjugado son simétricos respecto al eje real, así que al sumarlos la parte imaginaria se anula y queda dos veces el coseno. Análogamente el seno es la diferencia dividida entre 2j.</aside>
+</section>
+
+<section class="slide" id="a-python" data-fx="vc" data-section="A · Fourier" data-title="Complejos en Python">
+  <header class="s-head"><p class="kicker">lo que hay que escribir en el examen</p><h2 class="s-title">Complejos en Python</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code" data-seq="1">z = complex(3, 4)    # o bien 3 + 4j
+np.abs(z)    # 5.0     módulo
+np.angle(z)  # 0.927   fase (rad)
+np.real(z)   # 3.0
+np.imag(z)   # 4.0
+np.conj(z)   # (3-4j)
+np.exp(1j * theta)   # e^{jθ}</pre>
+      <div class="trap" data-seq="2"><b>errata de los apuntes</b><code>z = a + bj</code> es incorrecto: <code>bj</code> se lee como una variable. Hay que escribir <code>a + b*1j</code> o <code>complex(a, b)</code>.</div>
+    </div>
+    <div class="vstack">
+      <div class="eq" data-seq="3">$$e^{j2\pi(\frac{un}{N}+\frac{vm}{M})}=e^{j2\pi\frac{un}{N}}\cdot e^{j2\pi\frac{vm}{M}}$$</div>
+      <p class="txt" data-seq="3">La exponencial 2D es <b>separable</b> ⇒ la DFT 2D es una DFT 1D por columnas seguida de otra por filas.</p>
+<pre class="code" data-seq="4">F1 = np.fft.fft(np.fft.fft(im, axis=0), axis=1)
+np.allclose(F1, np.fft.fft2(im))   # True</pre>
+    </div>
+  </div>
+  <aside class="notes">En Python la unidad imaginaria es 1j, y hay que multiplicarla: b*1j. Las funciones de NumPy abs, angle, real, imag y conj trabajan elemento a elemento sobre matrices complejas, que es como se usan con el espectro. La separabilidad se comprobó en Python: aplicar fft por columnas y después por filas da exactamente fft2.</aside>
+</section>
+
+<section class="slide" id="a-familia" data-fx="vc" data-section="A · Fourier" data-title="La familia de transformadas">
+  <header class="s-head"><p class="kicker">cuál es cuál</p><h2 class="s-title">La familia de transformadas</h2></header>
+  <div class="s-body vstack">
+    <table class="t big">
+      <tr><th>transformada</th><th>señal de entrada</th><th>espectro</th><th>nota</th></tr>
+      <tr data-seq="1"><td>Serie de Fourier</td><td>continua, periódica</td><td>discreto, infinito</td><td>coeficientes a<sub>k</sub>, b<sub>k</sub></td></tr>
+      <tr data-seq="2"><td>TF (continua)</td><td>continua, aperiódica</td><td>continuo</td><td>integral sobre ℝ</td></tr>
+      <tr data-seq="3"><td>DFT / FFT</td><td>discreta, finita</td><td>discreto, finito</td><td>asume periodicidad implícita</td></tr>
+      <tr data-seq="4"><td>STFT</td><td>cualquiera, con ventana</td><td>local (espacio-frecuencia)</td><td>dice qué frecuencia y dónde</td></tr>
+    </table>
+    <div class="tip" data-seq="5"><b>regla de dualidad</b><b>Discreto</b> en un dominio ⇔ <b>periódico</b> en el otro. La serie (señal periódica) da un espectro discreto; la DFT es discreta en los dos dominios, así que es periódica en los dos.</div>
+    <div class="exam" data-seq="6"><b>en el examen</b>En imágenes digitales usamos siempre la <b>DFT</b>. Como trata la imagen como un periodo de una señal periódica, los bordes opuestos «se tocan»: de ahí el <i>wraparound</i> de la convolución circular.</div>
+  </div>
+  <aside class="notes">La serie sirve para periódicas continuas, la transformada de Fourier para aperiódicas continuas, y la DFT para señales discretas y finitas, que es nuestro caso. La DFT supone implícitamente que la señal se repite, y eso tiene consecuencias. La STFT introduce una ventana para ganar localización.</aside>
+</section>
+
+<!-- ============ BLOQUE B ============ -->
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="11" data-section="B · DFT y FFT" data-title="DFT y FFT">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque B</p>
+    <h1 class="s-title xl">DFT y FFT</h1>
+    <p class="lead">La definición que hay que saber escribir, un ejemplo a mano y por qué la FFT es tan rápida.</p>
+  </div>
+</section>
+
+<section class="slide" id="b-dft" data-fx="vc" data-section="B · DFT y FFT" data-title="DFT 2D y su inversa">
+  <header class="s-head"><p class="kicker">definición</p><h2 class="s-title">DFT 2D y su inversa</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$F[u,v]=\sum_{n=0}^{N-1}\sum_{m=0}^{M-1}f[n,m]\,e^{-j2\pi\left(\frac{un}{N}+\frac{vm}{M}\right)}$$</div>
+    <div class="eq" data-seq="2">$$f[n,m]=\frac{1}{NM}\sum_{u=0}^{N-1}\sum_{v=0}^{M-1}F[u,v]\,e^{+j2\pi\left(\frac{un}{N}+\frac{vm}{M}\right)}$$</div>
+    <table class="t">
+      <tr data-seq="3"><th>las 3 diferencias</th><th>DFT  F</th><th>inversa  F⁻¹</th></tr>
+      <tr data-seq="3"><td>signo del exponente</td><td>negativo (−j)</td><td>positivo (+j)</td></tr>
+      <tr data-seq="4"><td>factor de escala</td><td>ninguno</td><td>1/(NM)</td></tr>
+      <tr data-seq="5"><td>variables que se suman</td><td>n, m (espacio)</td><td>u, v (frecuencia)</td></tr>
+    </table>
+    <p class="txt" data-seq="6">NumPy usa exactamente esta convención: <code>np.fft.fft2</code> no normaliza e <code>ifft2</code> divide entre NM.</p>
+  </div>
+  <aside class="notes">Hay que saber escribirlas de memoria. Las diferencias son tres y es habitual que pregunten una: el signo, el factor 1 sobre NM y qué variables se suman. En el laboratorio usamos fft2 e ifft2 con FT e IFT, que además centran el espectro con fftshift.</aside>
+</section>
+
+<section class="slide" id="b-ejemplo" data-fx="vc" data-section="B · DFT y FFT" data-title="Ejemplo a mano: N = 4">
+  <header class="s-head"><p class="kicker">DFT 1D resuelta paso a paso</p><h2 class="s-title">Ejemplo a mano: N = 4</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:30px">
+      <div data-seq="1"><span>$$F[k]=\sum_{n=0}^{3}f[n]\,W^{kn},\quad W=e^{-j2\pi/4}=-j,\quad f=[1,2,3,4]$$</span><span class="why">W⁰=1, W¹=−j, W²=−1, W³=j</span></div>
+      <div data-seq="2"><span>$$F[0]=1+2+3+4=10$$</span><span class="why">DC = suma de todos los píxeles</span></div>
+      <div data-seq="3"><span>$$F[1]=1+2(-j)+3(-1)+4(j)=-2+2j$$</span><span class="why">W¹, W², W³</span></div>
+      <div data-seq="4"><span>$$F[2]=1+2(-1)+3(1)+4(-1)=-2$$</span><span class="why">W², W⁴=1, W⁶=−1</span></div>
+      <div data-seq="5"><span>$$F[3]=1+2(j)+3(-1)+4(-j)=-2-2j$$</span><span class="why">W³=j, W⁶=−1, W⁹=−j</span></div>
+    </div>
+    <div class="g3" style="align-items:start">
+<pre class="code" data-seq="6">np.fft.fft([1, 2, 3, 4])
+# [10.+0.j, -2.+2.j,
+#  -2.+0.j, -2.-2.j]</pre>
+      <div class="tip" data-seq="6"><b>comprobaciones</b>F[0] = suma (DC). Señal real ⇒ F[N−k] = F[k]*: F[3] = F[1]*. La mitad del espectro es redundante.</div>
+      <div class="fx" data-seq="7" data-role="plot" data-x="-0.5,3.5" data-y="0,11" data-xl="k" data-yl="|F[k]|" data-bars='[10,2.828,2,2.828]' data-pts='[[0,10,"10"],[1,2.828,"2,83"],[2,2,"2"],[3,2.828,"2,83"]]' data-fns='[]' style="min-height:0;height:300px"></div>
+    </div>
+  </div>
+  <aside class="notes">Se calcula cada término sustituyendo las potencias de W, que valen 1, menos j, menos 1 y j. El primer coeficiente es la suma, el valor DC. El tercero es real porque N/2 es el índice de Nyquist. Para una señal real, el último es el conjugado del segundo, y por eso el módulo es simétrico: 10, 2 raíz de 2, 2, 2 raíz de 2. NumPy da el mismo resultado.</aside>
+</section>
+
+<section class="slide" id="b-fft" data-fx="vc" data-section="B · DFT y FFT" data-title="La FFT: la mariposa">
+  <header class="s-head"><p class="kicker">divide y vencerás · pares e impares</p><h2 class="s-title">La FFT: la mariposa</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1fr 800px;gap:40px;align-items:center">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$F[k]=\underbrace{\sum_{r}f[2r]W_{N/2}^{kr}}_{E[k]}+W_N^{k}\underbrace{\sum_{r}f[2r+1]W_{N/2}^{kr}}_{O[k]}$$</div>
+      <div class="eq" data-seq="2">$$F[k]=E[k]+W_N^kO[k]$$$$F[k+\tfrac N2]=E[k]-W_N^kO[k]$$</div>
+      <p class="txt" data-seq="3">Una DFT de tamaño N = dos DFT de tamaño N/2 + N operaciones. Recursivamente: T(N) = 2T(N/2) + N ⇒ <b>N log₂N</b>.</p>
+    </div>
+    <svg class="dia" viewBox="0 0 800 540" width="800" height="540" role="img" aria-label="Mariposa de la FFT para N = 4">
+      <g data-seq="2">
+        <text x="10" y="78" class="lb">f[0]=1</text><text x="10" y="178" class="lb">f[2]=3</text>
+        <text x="10" y="338" class="lb">f[1]=2</text><text x="10" y="438" class="lb">f[3]=4</text>
+        <line x1="110" y1="70" x2="140" y2="70" class="wire"/><line x1="110" y1="170" x2="140" y2="170" class="wire"/>
+        <line x1="110" y1="330" x2="140" y2="330" class="wire"/><line x1="110" y1="430" x2="140" y2="430" class="wire"/>
+        <rect x="140" y="40" width="80" height="160" class="box"/><text x="180" y="128" class="lb mid">DFT₂</text>
+        <rect x="140" y="300" width="80" height="160" class="box"/><text x="180" y="388" class="lb mid">DFT₂</text>
+        <text x="228" y="60" class="lb c1">E[0]=4</text><text x="228" y="160" class="lb c1">E[1]=−2</text>
+        <text x="228" y="320" class="lb c2">O[0]=6</text><text x="228" y="420" class="lb c2">O[1]=−2</text>
+        <circle cx="340" cy="70" r="7" class="dot"/><circle cx="340" cy="170" r="7" class="dot"/>
+        <circle cx="340" cy="330" r="7" class="dot"/><circle cx="340" cy="430" r="7" class="dot"/>
+      </g>
+      <g data-seq="3">
+        <line x1="340" y1="70" x2="580" y2="70" class="wire"/><line x1="340" y1="70" x2="580" y2="330" class="wire"/>
+        <line x1="340" y1="170" x2="580" y2="170" class="wire"/><line x1="340" y1="170" x2="580" y2="430" class="wire"/>
+        <line x1="340" y1="330" x2="580" y2="70" class="wire c2"/><line x1="340" y1="330" x2="580" y2="330" class="wire c2"/>
+        <line x1="340" y1="430" x2="580" y2="170" class="wire c2"/><line x1="340" y1="430" x2="580" y2="430" class="wire c2"/>
+        <text x="520" y="122" class="lb c2">·W⁰</text><text x="520" y="222" class="lb c2">·W¹</text>
+        <text x="455" y="318" class="lb c2">·(−W⁰)</text><text x="455" y="418" class="lb c2">·(−W¹)</text>
+        <circle cx="580" cy="70" r="7" class="dot"/><circle cx="580" cy="170" r="7" class="dot"/>
+        <circle cx="580" cy="330" r="7" class="dot"/><circle cx="580" cy="430" r="7" class="dot"/>
+        <text x="594" y="78" class="lb strong">F[0]=10</text><text x="594" y="178" class="lb strong">F[1]=−2+2j</text>
+        <text x="594" y="338" class="lb strong">F[2]=−2</text><text x="594" y="438" class="lb strong">F[3]=−2−2j</text>
+        <text x="10" y="520" class="lb">N = 4 · W = −j · mismo resultado que la DFT directa</text>
+      </g>
+    </svg>
+  </div>
+  <aside class="notes">El truco es que W elevado a N/2 es menos uno, de modo que las dos mitades del espectro comparten los mismos E y O. En el ejemplo de N igual a 4: las DFT de tamaño 2 de los pares (1, 3) y de los impares (2, 4) son E = (4, −2) y O = (6, −2). Después, F0 = 4 + 6 = 10, F1 = −2 + (−j)(−2) = −2 + 2j, F2 = 4 − 6 = −2 y F3 = −2 − (−j)(−2) = −2 − 2j: lo mismo que a mano. La FFT calcula exactamente la DFT, no una aproximación.</aside>
+</section>
+
+<section class="slide" id="b-fftcoste" data-fx="vc" data-section="B · DFT y FFT" data-title="FFT: cuánto se ahorra">
+  <header class="s-head"><p class="kicker">de O(N²) a O(N log N)</p><h2 class="s-title">FFT: cuánto se ahorra</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t big" data-seq="1">
+        <tr><th>N = 1024</th><th>operaciones</th></tr>
+        <tr><td>DFT directa N²</td><td>1 048 576</td></tr>
+        <tr><td>FFT N·log₂N</td><td>10 240</td></tr>
+        <tr><td>ganancia</td><td class="ok">≈ 100× más rápida</td></tr>
+      </table>
+      <p class="txt" data-seq="2">La ganancia N / log₂N crece con N. En 2D, la DFT de una imagen M×N cuesta \(O(MN\log_2 MN)\) con la FFT (filas y columnas).</p>
+      <div class="exam" data-seq="3"><b>en el examen</b>La FFT no es otra transformada: es un <b>algoritmo</b> que calcula exactamente la misma DFT.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,64" data-y="0,4096" data-xl="N" data-yl="operaciones" data-fns='[{"f":"x=>x*x","label":"N²"},{"f":"x=>x*Math.log2(Math.max(x,1))","label":"N log₂N"}]' style="height:600px"></div>
+  </div>
+  <aside class="notes">Para N igual a 1024 la diferencia es de cien veces; en una imagen de 512 por 512 el ahorro es aún mayor. El gráfico muestra cómo la parábola N cuadrado se separa enseguida de N log N.</aside>
+</section>
+
+<section class="slide" id="b-topk" data-fx="vc" data-section="B · DFT y FFT" data-title="Reconstruir con los K mayores">
+  <header class="s-head"><p class="kicker">compresión con la DFT · einstein</p><h2 class="s-title">Reconstruir con los K mayores</h2></header>
+  <div class="s-body vstack">
+    <div class="row" style="--h:380px">
+      <figure class="f" data-seq="1"><img src="assets/ein_orig.png" alt="original"><figcaption>100 % (original)</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/ein_top20.png" alt="20 %"><figcaption>20 % · RMS 7,7</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/ein_top5.png" alt="5 %"><figcaption>5 % · RMS 13,3</figcaption></figure>
+      <figure class="f" data-seq="4"><img src="assets/ein_top1.png" alt="1 %"><figcaption>1 % · RMS 19,7</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="5">Se conservan los coeficientes con mayor |F[u,v]| (el resto se pone a 0) y se aplica la IFFT. Con el 5 % ya se reconoce la cara: la energía se concentra en pocas frecuencias bajas.</p>
+    <div class="tip" data-seq="6"><b>compresión</b>Guardar solo los coeficientes grandes es la idea de JPEG (con la DCT). RMS = error en niveles de gris sobre la imagen de 256×314.</div>
+  </div>
+  <aside class="notes">Experimento real con la imagen de Einstein reducida. Ordenamos los coeficientes por módulo, nos quedamos con el 1, el 5 y el 20 por ciento y reconstruimos. Los coeficientes grandes son los de baja frecuencia, que llevan la forma global; los detalles finos se pierden primero.</aside>
+</section>
+
+<section class="slide" id="b-prod" data-fx="vc" data-section="B · DFT y FFT" data-title="Suma frente a producto">
+  <header class="s-head"><p class="kicker">espectro de una suma y de un producto</p><h2 class="s-title">Suma frente a producto</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="deriv" style="font-size:30px">
+        <div data-seq="1"><span>$$\cos(a-b)=\cos a\cos b+\sin a\sin b$$</span><span class="why">coseno de una diferencia</span></div>
+        <div data-seq="2"><span>$$\cos(a+b)=\cos a\cos b-\sin a\sin b$$</span><span class="why">coseno de una suma</span></div>
+        <div data-seq="3"><span>$$\cos(a-b)+\cos(a+b)=2\cos a\cos b$$</span><span class="why">sumar: se cancelan los senos</span></div>
+        <div data-seq="4"><span>$$\cos a\cos b=\tfrac12[\cos(a-b)+\cos(a+b)]$$</span><span class="why">∎</span></div>
+      </div>
+      <div class="g2" data-seq="5" style="gap:16px">
+        <div class="card"><b>suma</b>cos(2π·3x) + cos(2π·5x): picos en <b>3 y 5</b>. Las frecuencias se conservan.</div>
+        <div class="card"><b>producto</b>cos(2π·3x) · cos(2π·5x): picos en <b>2 y 8</b> (diferencia y suma), de altura ½.</div>
+      </div>
+    </div>
+    <div class="vstack" style="gap:12px">
+      <div class="fx" data-role="plot" data-x="0,2" data-y="-2,3.6" data-xl="x" data-yl="señal" data-legend="tr" data-fns='[{"f":"x=>Math.cos(2*Math.PI*3*x)+Math.cos(2*Math.PI*5*x)","label":"suma"},{"f":"x=>Math.cos(2*Math.PI*3*x)*Math.cos(2*Math.PI*5*x)","label":"producto"}]' style="min-height:0;height:300px"></div>
+      <div class="fx" data-seq="5" data-role="plot" data-x="0,10" data-y="0,1.2" data-xl="frecuencia" data-yl="amplitud" data-legend="tr" data-fns='[{"f":"x=>Math.exp(-Math.pow((x-3)/0.1,2))+Math.exp(-Math.pow((x-5)/0.1,2))","label":"suma: 3, 5"},{"f":"x=>0.5*(Math.exp(-Math.pow((x-2)/0.1,2))+Math.exp(-Math.pow((x-8)/0.1,2)))","label":"producto: 2, 8"}]' style="min-height:0;height:300px"></div>
+    </div>
+  </div>
+  <aside class="notes">La suma es lineal: el espectro es la suma de los espectros, con picos en 3 y 5. El producto no: mezcla las frecuencias y genera la suma y la diferencia, 8 y 2, cada una con la mitad de amplitud. Esto es el dual del teorema de la convolución: producto en el espacio equivale a convolución en frecuencia, y convolución en el espacio equivale a producto en frecuencia.</aside>
+</section>
+
+<!-- ============ BLOQUE C ============ -->
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="19" data-section="C · Convolución" data-title="Teorema de la convolución">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque C · pregunta V/F del examen</p>
+    <h1 class="s-title xl">Convolución</h1>
+    <p class="lead">Convolucionar en el espacio es multiplicar en frecuencia: enunciado, demostración, coste y la trampa de la convolución circular.</p>
+  </div>
+</section>
+
+<section class="slide" id="c-enunciado" data-fx="vc" data-section="C · Convolución" data-title="Teorema de la convolución">
+  <header class="s-head"><p class="kicker">pregunta V/F del examen</p><h2 class="s-title">Teorema de la convolución</h2></header>
+  <div class="s-body vstack">
+    <div class="eq big" data-seq="1">$$f*h\;\xleftrightarrow{\;\mathcal F\;}\;F\cdot H$$</div>
+    <div class="g2" data-seq="2">
+      <div class="card"><b>en el espacio</b>convolución: cada salida es una suma ponderada de una ventana. Coste \(O(MNmn)\).</div>
+      <div class="card"><b>en frecuencia</b>producto elemento a elemento \(G[u,v]=F[u,v]\,H[u,v]\). Coste \(O(MN)\) tras las FFT.</div>
+    </div>
+    <div class="trap" data-seq="3"><b>la convolución de la DFT es circular</b>Como la DFT supone una imagen periódica, el producto F·H equivale a la convolución <i>circular</i>: lo que sale por un borde entra por el opuesto (<i>wraparound</i>). Para obtener la lineal hay que rellenar con ceros.</div>
+    <div class="eq" data-seq="4">$$\mathcal F^{-1}\{F\cdot H\}=f\circledast h\ \text{(circular)}\;=\;f*h\ \text{(lineal, si se rellena)}$$</div>
+  </div>
+  <aside class="notes">Este es el resultado clave. Convolucionar en el espacio es multiplicar en frecuencia, y viceversa. Con la DFT la convolución resultante es circular, porque la DFT supone periodicidad. La demostración sigue en la próxima diapositiva.</aside>
+</section>
+
+<section class="slide" id="c-demo" data-fx="vc" data-section="C · Convolución" data-title="Demostración del teorema">
+  <header class="s-head"><p class="kicker">1D discreto, N muestras · convolución circular</p><h2 class="s-title">Demostración del teorema</h2></header>
+  <div class="s-body">
+    <div class="deriv" style="font-size:31px;gap:12px">
+      <div data-seq="1"><span>$$(f\circledast h)[n]=\sum_{m=0}^{N-1}f[m]\,h[(n-m)\bmod N]$$</span><span class="why">definición (circular)</span></div>
+      <div data-seq="2"><span>$$G[k]=\sum_{n}\sum_{m}f[m]\,h[n-m]\,e^{-j2\pi kn/N}$$</span><span class="why">DFT de la salida</span></div>
+      <div data-seq="3"><span>$$G[k]=\sum_{m}f[m]\sum_{n}h[n-m]\,e^{-j2\pi kn/N}$$</span><span class="why">intercambiar sumatorios (finitos)</span></div>
+      <div data-seq="4"><span>$$p=n-m\;\Rightarrow\;e^{-j2\pi kn/N}=e^{-j2\pi km/N}\,e^{-j2\pi kp/N}$$</span><span class="why">cambio de variable n = p + m</span></div>
+      <div data-seq="5"><span>$$G[k]=\sum_{m}f[m]e^{-j2\pi km/N}\sum_{p}h[p]\,e^{-j2\pi kp/N}$$</span><span class="why">p recorre un periodo completo: por periodicidad el rango no importa</span></div>
+      <div data-seq="6"><span>$$G[k]=F[k]\cdot H[k]\quad\blacksquare$$</span><span class="why">en 2D es idéntico con dos sumas</span></div>
+    </div>
+  </div>
+  <aside class="notes">Los pasos: escribir la DFT de la convolución, intercambiar los sumatorios, hacer el cambio de variable p igual a n menos m, factorizar la exponencial y reconocer los dos factores como las DFT de f y de h. La periodicidad es esencial: es lo que permite que p recorra siempre un periodo completo sin importar m.</aside>
+</section>
+
+<section class="slide" id="c-coste" data-fx="vc" data-section="C · Convolución" data-title="¿Cuándo compensa la FFT?">
+  <header class="s-head"><p class="kicker">imagen 512×512 · núcleo <span class="nc">m×m</span> · MN = 262 144 · log₂(MN) = 18</p><h2 class="s-title">¿Cuándo compensa la FFT?</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t" data-seq="1">
+        <tr><th>método</th><th>operaciones</th><th>por píxel</th></tr>
+        <tr><td>espacial no separable</td><td>MN·mn</td><td>m²</td></tr>
+        <tr><td>espacial separable</td><td>MN(m+n)</td><td>2m</td></tr>
+        <tr><td>frecuencial</td><td>≈ 2MN·log₂(MN)</td><td>≈ 36</td></tr>
+      </table>
+      <p class="txt" data-seq="2">La FFT del filtro es un coste extra (se amortiza si se reutiliza). El coste frecuencial <b>no depende del tamaño del núcleo</b>.</p>
+      <div class="exam" data-seq="3"><b>puntos de cruce</b>No separable: m² = 36 ⇒ <b>m ≈ 6</b>. Separable: 2m = 36 ⇒ <b>m ≈ 18</b>. Con un 3×3 la FFT pierde siempre.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="1,24" data-y="0,80" data-xl="m (lado del núcleo)" data-yl="operaciones por píxel" data-legend="br" data-fns='[{"f":"x=>x*x","label":"no separable"},{"f":"x=>2*x","label":"separable"},{"f":"x=>36","label":"frecuencial"}]' data-pts='[[6,36,"m=6"],[18,36,"m=18"]]' style="height:600px"></div>
+  </div>
+  <aside class="notes">Cálculo: 2·MN·log2(MN) dividido entre MN da 2·18 igual a 36 operaciones por píxel. Igualando con m al cuadrado sale m igual a 6; con 2m sale m igual a 18. Son órdenes de magnitud: las constantes reales cambian algo el cruce. Para un 3 por 3 el método espacial cuesta 9 y el separable 6 por píxel: no compensa.</aside>
+</section>
+
+<section class="slide" id="c-vf" data-fx="vc" data-section="C · Convolución" data-title="V/F: el teorema acelera">
+  <header class="s-head"><p class="kicker">«the convolution theorem offers… speeding up image filtering»</p><h2 class="s-title">V/F: el teorema acelera</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="verdict" data-seq="1" data-a="pop">VERDADERO</div>
+      <p class="txt" data-seq="2">La convolución pasa a ser un <b>producto elemento a elemento</b> y la FFT cuesta \(O(MN\log MN)\), independiente del tamaño del núcleo, frente a \(O(MNmn)\) en el espacio.</p>
+      <div class="exam" data-seq="6"><b>respuesta modelo</b>«Verdadero: \(f*h=\mathcal F^{-1}\{F\cdot H\}\). Con la FFT el coste no depende del núcleo, así que compensa con núcleos grandes. Hay que rellenar con ceros (es circular) y solo vale para filtros lineales.»</div>
+    </div>
+    <div class="vstack">
+      <div class="card" data-seq="3"><b>matiz 1 · cuándo compensa</b>Con núcleos grandes (m ≳ 6 frente al no separable, m ≳ 18 frente al separable). No con 3×3.</div>
+      <div class="card" data-seq="4"><b>matiz 2 · es circular</b>Hay que rellenar (<i>padding</i>) hasta P ≥ M + m − 1 para evitar el <i>wraparound</i>.</div>
+      <div class="card" data-seq="5"><b>matiz 3 · solo lineales</b>Vale solo para filtros lineales e invariantes: la <b>mediana</b> no se puede hacer así.</div>
+    </div>
+  </div>
+  <aside class="notes">En un examen escrito conviene contestar verdadero y añadir los tres matices: compensa con núcleos grandes, la convolución es circular y solo sirve para filtros lineales. Con eso se cubre cualquier objeción del corrector.</aside>
+</section>
+
+<section class="slide" id="c-circ" data-fx="vc" data-section="C · Convolución" data-title="Circular frente a lineal">
+  <header class="s-head"><p class="kicker">gaussiana <span class="nc">σ</span> = 12 sobre einstein · resultado real</p><h2 class="s-title">Circular frente a lineal</h2></header>
+  <div class="s-body vstack">
+    <div class="row" style="--h:420px">
+      <figure class="f" data-seq="1"><img src="assets/wrap_circ.png" alt="circular"><figcaption>sin relleno (circular)</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/wrap_pad.png" alt="con relleno"><figcaption>con relleno 2M×2N</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/wrap_dif.png" alt="diferencia"><figcaption>|diferencia| (√, brillo = error)</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="4">El error se concentra en los <b>bordes</b>: sin relleno, lo que sale por abajo reaparece por arriba y lo de la derecha, por la izquierda (máximo 41 niveles de gris).</p>
+  </div>
+  <aside class="notes">Sin relleno, el borde oscuro de abajo se mezcla con la parte clara de arriba, y al revés, porque la DFT considera la imagen periódica. La diferencia se muestra con raíz cuadrada para que se vea el error pequeño; el máximo es de unos 41 niveles y la media de 2,5, todo en los bordes.</aside>
+</section>
+
+<section class="slide" id="c-relleno" data-fx="vc" data-section="C · Convolución" data-title="¿Cuánto hay que rellenar?">
+  <header class="s-head"><p class="kicker">por qué aparece el wraparound · esquema 1D</p><h2 class="s-title">¿Cuánto hay que rellenar?</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1000px 1fr;gap:40px;align-items:center">
+    <svg class="dia" viewBox="40 0 1000 520" width="1000" height="520" role="img" aria-label="Esquema del wraparound con y sin relleno">
+      <g data-seq="1">
+        <text x="10" y="40" class="lb strong">sin relleno: periodo P = M</text>
+        <rect x="140" y="70" width="240" height="60" class="img"/><rect x="380" y="70" width="240" height="60" class="img"/><rect x="620" y="70" width="240" height="60" class="img"/>
+        <text x="260" y="110" class="lb mid">f</text><text x="500" y="110" class="lb mid">f</text><text x="740" y="110" class="lb mid">f</text>
+        <rect x="100" y="150" width="320" height="40" class="out"/><rect x="340" y="196" width="320" height="40" class="out"/><rect x="580" y="150" width="320" height="40" class="out"/>
+        <rect x="340" y="146" width="80" height="94" class="clash"/><rect x="580" y="146" width="80" height="94" class="clash"/>
+        <text x="380" y="272" class="lb mid err">solape</text><text x="620" y="272" class="lb mid err">solape</text>
+      </g>
+      <g data-seq="2">
+        <text x="10" y="330" class="lb strong">con relleno: P ≥ M + m − 1</text>
+        <rect x="140" y="360" width="240" height="60" class="img"/><rect x="380" y="360" width="80" height="60" class="zero"/>
+        <rect x="460" y="360" width="240" height="60" class="img"/><rect x="700" y="360" width="80" height="60" class="zero"/>
+        <text x="260" y="400" class="lb mid">f</text><text x="420" y="400" class="lb mid">0</text><text x="580" y="400" class="lb mid">f</text><text x="740" y="400" class="lb mid">0</text>
+        <rect x="100" y="440" width="320" height="40" class="out"/><rect x="420" y="440" width="320" height="40" class="out"/>
+        <text x="760" y="470" class="lb ok">sin solape</text>
+      </g>
+    </svg>
+    <div class="vstack">
+      <div class="eq big" data-seq="3">$$P\ge M+m-1$$</div>
+      <p class="txt" data-seq="3">f mide M y el núcleo m: la convolución lineal mide <b>M + m − 1</b>. Si el periodo es menor, cada copia invade la siguiente.</p>
+      <div class="tip" data-seq="4"><b>en el libro</b>Se usa P = 2M (y Q = 2N), que siempre basta si m ≤ M. Después se recorta la parte M×N.</div>
+    </div>
+  </div>
+  <aside class="notes">La DFT trata f como un periodo de una señal periódica. La salida de la convolución de cada copia es más larga que M, mide M más m menos 1, y si el periodo es solo M se solapa con la salida de la copia vecina: eso es el wraparound. Si rellenamos con ceros hasta P mayor o igual que M más m menos 1, las salidas caben sin tocarse y la convolución circular coincide con la lineal.</aside>
+</section>
+
+<!-- ============ BLOQUE D ============ -->
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="23" data-section="D · Espectro" data-title="Propiedades del espectro">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque D · propiedades del espectro</p>
+    <h1 class="s-title xl">El espectro</h1>
+    <p class="lead">Cómo visualizarlo, qué le pasa al trasladar y al girar, y por qué la fase lleva la estructura.</p>
+  </div>
+</section>
+
+<section class="slide" id="d-centrado" data-fx="vc" data-section="D · Espectro" data-title="Espectro centrado">
+  <header class="s-head"><p class="kicker">cómo verlo · einstein</p><h2 class="s-title">Espectro centrado</h2></header>
+  <div class="s-body vstack">
+    <div class="row" style="--h:330px">
+      <figure class="f" data-seq="1"><img src="assets/esp_noshift.png" alt="sin shift"><figcaption>sin fftshift: DC en las esquinas</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/esp_lin.png" alt="lineal"><figcaption>centrado, |F| lineal</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/esp_log.png" alt="log"><figcaption>centrado, log(1 + |F|)</figcaption></figure>
+    </div>
+<pre class="code" data-seq="4">F   = np.fft.fftshift(np.fft.fft2(im))          # la DC (0,0) pasa al centro
+vis = np.log(1 + np.abs(F))                     # el rango dinámico es enorme
+im2 = np.real(np.fft.ifft2(np.fft.ifftshift(F)))  # deshacer el shift ANTES</pre>
+    <p class="txt" data-seq="5">Sin logaritmo solo se ve un punto: la DC es muchísimo mayor que el resto. Centro = frecuencias bajas, bordes = altas.</p>
+  </div>
+  <aside class="notes">Sin fftshift la frecuencia cero está en la esquina superior izquierda y las bajas frecuencias quedan repartidas por las cuatro esquinas. fftshift intercambia los cuadrantes para que la frecuencia cero quede en el centro. El módulo tiene un rango dinámico enorme, por eso se visualiza el logaritmo de uno más el módulo. Al invertir hay que usar primero ifftshift y luego ifft2.</aside>
+</section>
+
+<section class="slide" id="d-trasl" data-fx="vc" data-section="D · Espectro" data-title="Traslación">
+  <header class="s-head"><p class="kicker">propiedad · demostración</p><h2 class="s-title">Traslación</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:30px">
+      <div data-seq="1"><span>$$\sum_{n,m}f[n-n_0,m-m_0]\,e^{-j2\pi(\frac{un}{N}+\frac{vm}{M})}$$</span><span class="why">DFT de la imagen trasladada</span></div>
+      <div data-seq="2"><span>$$p=n-n_0,\;q=m-m_0\;\Rightarrow\;e^{-j2\pi(\frac{un_0}{N}+\frac{vm_0}{M})}\,F[u,v]$$</span><span class="why">cambio de variable y periodicidad</span></div>
+      <div data-seq="3"><span>$$\big|e^{j\phi}\big|=1\;\Rightarrow\;|F'|=|F|,\;\;\angle F'=\angle F-2\pi(\tfrac{un_0}{N}+\tfrac{vm_0}{M})$$</span><span class="why">solo cambia la fase</span></div>
+    </div>
+    <div class="row" style="--h:290px" data-seq="4">
+      <figure class="f"><img src="assets/ein_shift.png" alt="trasladada"><figcaption>trasladada (40, 70)</figcaption></figure>
+      <figure class="f"><img src="assets/esp_shift.png" alt="espectro"><figcaption>|F|: idéntico al original</figcaption></figure>
+      <figure class="f"><img src="assets/fase_orig.png" alt="fase original"><figcaption>fase original</figcaption></figure>
+      <figure class="f"><img src="assets/fase_shift.png" alt="fase trasladada"><figcaption>fase trasladada</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Desplazar la imagen no cambia el módulo del espectro, solo multiplica por una exponencial de módulo uno, es decir, cambia la fase. Verificado numéricamente: la diferencia máxima entre los módulos es del orden de 1e-9. Por eso la afirmación el espectro cambia con la traslación es falsa si hablamos del módulo.</aside>
+</section>
+
+<section class="slide" id="d-corrfase" data-fx="vc" data-section="D · Espectro" data-title="Correlación de fase">
+  <header class="s-head"><p class="kicker">estimar un desplazamiento</p><h2 class="s-title">Correlación de fase</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$R[u,v]=\frac{F_2\,F_1^{*}}{|F_2\,F_1^{*}|}=e^{-j2\pi(\frac{un_0}{N}+\frac{vm_0}{M})}$$</div>
+      <div class="eq" data-seq="2">$$\mathcal F^{-1}\{R\}=\delta[n-n_0,\,m-m_0]$$</div>
+      <p class="txt" data-seq="3">La fase relativa es la exponencial de la traslación y su inversa es un impulso: la <b>posición del máximo</b> es el desplazamiento.</p>
+      <div class="trap" data-seq="6"><b>poco robusto</b>(«not very robust»). Solo es exacto para desplazamientos circulares; con ruido, oclusión o bordes que entran y salen, el pico se emborrona.</div>
+    </div>
+    <div class="vstack">
+<pre class="code" data-seq="4">def desplazamiento(f1, f2):
+    R = np.fft.fft2(f2) * np.conj(np.fft.fft2(f1))
+    R /= np.abs(R) + 1e-12
+    r = np.real(np.fft.ifft2(R))
+    return np.unravel_index(np.argmax(r), r.shape)</pre>
+      <div class="row" data-seq="5" style="--h:250px;align-items:center">
+        <figure class="f"><img src="assets/corr_pico.png" alt="superficie r"><figcaption>r[n,m] real: pico (ampliado)</figcaption></figure>
+        <p class="txt" style="max-width:360px">einstein y su copia trasladada (40, 70): la función devuelve <b>(40, 70)</b> y r vale 1 en el pico.</p>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Comprobado en Python con la Einstein reducida, trasladada circularmente 40 filas y 70 columnas: el máximo de r está exactamente en (40, 70) con valor 1. El pico se ha dilatado a 7 por 7 píxeles solo para que se vea en la diapositiva. Se divide por el módulo para quedarnos solo con la fase. Es un método elegante pero frágil en imágenes reales.</aside>
+</section>
+
+<section class="slide" id="d-rot" data-fx="vc" data-section="D · Espectro" data-title="Rotación">
+  <header class="s-head"><p class="kicker">propiedad</p><h2 class="s-title">Rotación</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$f(R_\theta\mathbf x)\;\longleftrightarrow\;F(R_\theta\mathbf u)$$</div>
+    <div class="row" style="--h:370px">
+      <figure class="f" data-seq="2"><img src="assets/rot_orig.png" alt="original"><figcaption>imagen</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/rot_esp0.png" alt="espectro"><figcaption>log(1 + |F|)</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/rot_img.png" alt="girada"><figcaption>girada 30°</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/rot_esp1.png" alt="espectro girado"><figcaption>espectro girado 30°</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="4">Girar la imagen gira el espectro el <b>mismo ángulo</b> y alrededor del centro. Las líneas de energía del espectro, perpendiculares a los bordes de la imagen, giran con ella.</p>
+  </div>
+  <aside class="notes">Se enmascaró la imagen con un disco para que la rotación no introduzca esquinas negras. Fíjate en que las líneas de energía del espectro, que son perpendiculares a los bordes de la imagen, giran con ella. La interpolación al rotar es la responsable de pequeñas diferencias.</aside>
+</section>
+
+<section class="slide" id="d-magfase" data-fx="vc" data-section="D · Espectro" data-title="Magnitud frente a fase">
+  <header class="s-head"><p class="kicker">experimento de intercambio</p><h2 class="s-title">Magnitud frente a fase</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$F=|F|\,e^{j\angle F}\qquad g=\mathcal F^{-1}\{\,|F_A|\,e^{\,j\angle F_B}\}$$</div>
+    <div class="row" style="--h:340px">
+      <figure class="f" data-seq="1"><img src="assets/mf_A.png" alt="A"><figcaption>A</figcaption></figure>
+      <figure class="f" data-seq="1"><img src="assets/mf_B.png" alt="B"><figcaption>B</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/mf_magA_faseB.png" alt="magA fase B"><figcaption>|A| + fase de B ≈ B</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/mf_magB_faseA.png" alt="magB fase A"><figcaption>|B| + fase de A ≈ A</figcaption></figure>
+    </div>
+    <div class="trap" data-seq="4"><b>errata de los apuntes</b>La <b>fase lleva la estructura</b> (dónde están los bordes y los objetos). La magnitud dice cuánta energía hay en cada frecuencia, no dónde.</div>
+  </div>
+  <aside class="notes">Tomamos la magnitud de una imagen y la fase de otra: el resultado se parece a la imagen de la que venía la fase. Esto corrige una errata de los apuntes: la fase es la que contiene la información estructural. La magnitud solo domina en patrones muy periódicos, como veremos.</aside>
+</section>
+
+<section class="slide" id="d-magfase2" data-fx="vc" data-section="D · Espectro" data-title="Cuando manda la magnitud">
+  <header class="s-head"><p class="kicker">texturas periódicas · mimbre frente a habas</p><h2 class="s-title">Cuando manda la magnitud</h2></header>
+  <div class="s-body vstack">
+    <div class="row" style="--h:340px">
+      <figure class="f" data-seq="1"><img src="assets/mf_mimbre.png" alt="mimbre"><figcaption>mimbre</figcaption></figure>
+      <figure class="f" data-seq="1"><img src="assets/mf_habas.png" alt="habas"><figcaption>habas</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/mf_magMim_faseHab.png" alt="magnitud mimbre"><figcaption>|mimbre| + fase habas</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/mf_magHab_faseMim.png" alt="magnitud habas"><figcaption>|habas| + fase mimbre</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="3">En el mimbre, tan periódico, el resultado conserva la <b>trama de tejido</b> aunque la fase sea de las habas: la magnitud (picos de frecuencia muy marcados) domina. En imágenes naturales, no.</p>
+    <div class="exam" data-seq="4"><b>en el examen</b>«La fase es más importante para la estructura» ⇒ <b>verdadero</b>, con la excepción de los patrones muy periódicos.</div>
+  </div>
+  <aside class="notes">Con texturas muy regulares la energía se concentra en unos pocos picos del espectro, y esos picos definen el aspecto. Por eso, al combinar la magnitud del mimbre con la fase de las habas, sigue viéndose el tejido. Es la excepción que confirma la regla.</aside>
+</section>
+
+<section class="slide" id="d-limites" data-fx="vc" data-section="D · Espectro" data-title="Límites de Fourier">
+  <header class="s-head"><p class="kicker">qué y dónde · incertidumbre</p><h2 class="s-title">Límites de Fourier</h2></header>
+  <div class="s-body vstack">
+    <p class="txt" data-seq="1">Fourier dice <b>qué</b> frecuencias hay, pero no <b>dónde</b>: cada onda ocupa toda la imagen. Esto motiva la <b>STFT</b> (ventana) y las <b>wavelets</b>.</p>
+    <div style="display:grid;grid-template-columns:1fr 860px;gap:40px;align-items:center">
+      <table class="t big" data-seq="2">
+        <tr><th>base</th><th>en x</th><th>en u</th></tr>
+        <tr><td>píxel (δ)</td><td class="ok">perfecta</td><td class="err">ninguna</td></tr>
+        <tr><td>onda (sin, cos)</td><td class="err">ninguna</td><td class="ok">perfecta</td></tr>
+        <tr><td>gaussiana / STFT</td><td class="warn">compromiso</td><td class="warn">compromiso</td></tr>
+      </table>
+      <svg class="dia" viewBox="0 0 860 420" width="860" height="420" role="img" aria-label="Celdas de resolución espacio-frecuencia">
+        <g data-seq="3">
+          <rect x="40" y="30" width="220" height="300" class="frame"/>
+          <rect x="40" y="30" width="27.5" height="300" class="cell"/><rect x="67.5" y="30" width="27.5" height="300" class="cell"/><rect x="95" y="30" width="27.5" height="300" class="cell"/><rect x="122.5" y="30" width="27.5" height="300" class="cell hi"/><rect x="150" y="30" width="27.5" height="300" class="cell"/><rect x="177.5" y="30" width="27.5" height="300" class="cell"/><rect x="205" y="30" width="27.5" height="300" class="cell"/><rect x="232.5" y="30" width="27.5" height="300" class="cell"/>
+          <text x="150" y="372" class="lb mid">píxel δ</text>
+        </g>
+        <g data-seq="4">
+          <rect x="320" y="30" width="220" height="300" class="frame"/>
+          <rect x="320" y="30" width="220" height="50" class="cell"/><rect x="320" y="80" width="220" height="50" class="cell"/><rect x="320" y="130" width="220" height="50" class="cell hi"/><rect x="320" y="180" width="220" height="50" class="cell"/><rect x="320" y="230" width="220" height="50" class="cell"/><rect x="320" y="280" width="220" height="50" class="cell"/>
+          <text x="430" y="372" class="lb mid">onda de Fourier</text>
+        </g>
+        <g data-seq="5">
+          <rect x="600" y="30" width="220" height="300" class="frame"/>
+          <rect x="600" y="30" width="55" height="100" class="cell"/><rect x="655" y="30" width="55" height="100" class="cell"/><rect x="710" y="30" width="55" height="100" class="cell"/><rect x="765" y="30" width="55" height="100" class="cell"/>
+          <rect x="600" y="130" width="55" height="100" class="cell"/><rect x="655" y="130" width="55" height="100" class="cell hi"/><rect x="710" y="130" width="55" height="100" class="cell"/><rect x="765" y="130" width="55" height="100" class="cell"/>
+          <rect x="600" y="230" width="55" height="100" class="cell"/><rect x="655" y="230" width="55" height="100" class="cell"/><rect x="710" y="230" width="55" height="100" class="cell"/><rect x="765" y="230" width="55" height="100" class="cell"/>
+          <text x="710" y="372" class="lb mid">STFT (ventana)</text>
+        </g>
+        <text x="430" y="412" class="lb mid">eje horizontal: x (espacio) · eje vertical: u (frecuencia)</text>
+      </svg>
+    </div>
+    <div class="tip" data-seq="6"><b>incertidumbre</b>El área de cada celda no puede reducirse: para la gaussiana, \(\sigma_x\,\sigma_u=\frac{1}{2\pi}\). Ganar precisión en x se paga en u.</div>
+  </div>
+  <aside class="notes">Cada base reparte el plano espacio-frecuencia en celdas. Un píxel es una columna estrecha: sabemos exactamente dónde, pero ocupa todas las frecuencias. Una onda de Fourier es una fila: una sola frecuencia, pero en todas partes. La STFT usa ventanas y da celdas intermedias. El área mínima es fija: es el principio de incertidumbre. Las wavelets cambian la forma de las celdas según la frecuencia.</aside>
+</section>
+
+<!-- ============ BLOQUE E ============ -->
+<section class="slide is-plain divider" id="div-e" data-fx="backdrop" data-seed="29" data-section="E · Filtrado" data-title="Filtrado en frecuencia">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque E · filtrado en frecuencia</p>
+    <h1 class="s-title xl">Filtros</h1>
+    <p class="lead">G = H·F: el procedimiento en 7 pasos y los filtros paso bajo, paso alto, banda y notch, ideales y gaussianos.</p>
+  </div>
+</section>
+
+<section class="slide" id="e-filtrar" data-fx="vc" data-section="E · Filtrado" data-title="Filtrar = modificar el espectro">
+  <header class="s-head"><p class="kicker">función de transferencia</p><h2 class="s-title">Filtrar = modificar el espectro</h2></header>
+  <div class="s-body vstack">
+    <div class="eq big" data-seq="1">$$G[u,v]=H[u,v]\cdot F[u,v]\quad\Rightarrow\quad g=\mathcal F^{-1}\{G\}$$</div>
+    <div class="g2" style="align-items:center">
+      <table class="t">
+        <tr data-seq="2"><th>filtro H</th><th>efecto en la imagen</th></tr>
+        <tr data-seq="2"><td>paso bajo</td><td>suaviza, quita ruido</td></tr>
+        <tr data-seq="3"><td>paso alto</td><td>realza bordes y detalles</td></tr>
+        <tr data-seq="4"><td>paso banda</td><td>detalles de un tamaño concreto</td></tr>
+        <tr data-seq="5"><td>banda eliminada / notch</td><td>quita interferencias periódicas</td></tr>
+      </table>
+      <div class="fx" data-seq="2" data-role="plot" data-x="0,120" data-y="0,1.6" data-xl="D (distancia al centro del espectro)" data-yl="H(D)" data-legend="tr" data-fns='[{"f":"x=>Math.exp(-x*x/(2*30*30))","label":"paso bajo"},{"f":"x=>1-Math.exp(-x*x/(2*30*30))","label":"paso alto"},{"f":"x=>Math.exp(-Math.pow((x*x-3600)/(Math.max(x,0.001)*30),2))","label":"paso banda"}]' style="min-height:0;height:420px"></div>
+    </div>
+    <p class="txt" data-seq="6">H es la <b>función de transferencia</b>; su transformada inversa h es la <b>respuesta al impulso</b> (el núcleo espacial). Perfiles gaussianos: D₀ = 30; banda con C₀ = 60, W = 30.</p>
+  </div>
+  <aside class="notes">Gracias al teorema de la convolución, diseñar un filtro es dibujar H sobre el plano de frecuencias: dónde vale uno y dónde cero. Las bajas frecuencias están en el centro y las altas lejos. El gráfico muestra los perfiles radiales. Los bordes son altas frecuencias, no bajas: otra errata de los apuntes.</aside>
+</section>
+
+<section class="slide" id="e-emparejar" data-fx="vc" data-section="E · Filtrado" data-title="Empareja filtro y salida">
+  <header class="s-head"><p class="kicker">ejercicio · einstein · resultados reales</p><h2 class="s-title">Empareja filtro y salida</h2></header>
+  <div class="s-body vstack">
+    <div class="g2" style="gap:56px">
+      <div class="vstack" style="gap:8px">
+        <p class="txt"><b>Función de transferencia H</b> (centro = DC)</p>
+        <div class="row" style="--h:300px">
+          <figure class="f"><img src="assets/mask_glp30.png" alt="H1"><figcaption>1</figcaption></figure>
+          <figure class="f"><img src="assets/mask_ghp30.png" alt="H2"><figcaption>2</figcaption></figure>
+          <figure class="f"><img src="assets/mask_dog.png" alt="H3"><figcaption>3</figcaption></figure>
+        </div>
+      </div>
+      <div class="vstack" style="gap:8px">
+        <p class="txt"><b>Salida g</b> (gris medio = 0 en B y C)</p>
+        <div class="row" style="--h:300px">
+          <figure class="f"><img src="assets/ghp_30.png" alt="A"><figcaption>A</figcaption></figure>
+          <figure class="f"><img src="assets/dog_30.png" alt="B"><figcaption>B</figcaption></figure>
+          <figure class="f"><img src="assets/glp_30.png" alt="C"><figcaption>C</figcaption></figure>
+        </div>
+      </div>
+    </div>
+    <div class="exam" data-seq="1"><b>solución</b><b>1 → C</b> (paso bajo: H(0) = 1, conserva el brillo medio y desenfoca) · <b>2 → A</b> (paso alto: H(0) = 0, media nula, solo bordes finos) · <b>3 → B</b> (DoG, paso banda: también H(0) = 0, pero quita además el detalle más fino).</div>
+  </div>
+  <aside class="notes">El truco para razonar: mira el valor de H en el centro. Si vale uno, la media de la imagen se conserva y la salida tiene brillo normal. Si vale cero, la salida tiene media cero y se ve gris. Después, mira hasta dónde llega H: si deja pasar las frecuencias más altas, la salida tiene los detalles más finos. Las salidas A y B se muestran con el cero en gris medio.</aside>
+</section>
+
+<section class="slide" id="e-pasos" data-fx="vc" data-section="E · Filtrado" data-title="Procedimiento en 7 pasos">
+  <header class="s-head"><p class="kicker">Gonzalez–Woods · imagen M×N, relleno P×Q = 2M×2N</p><h2 class="s-title">Procedimiento en 7 pasos</h2></header>
+  <div class="s-body g2">
+    <ol class="steps">
+      <li data-seq="1"><span class="step-n">1</span><span>Rellenar f con ceros hasta P×Q</span></li>
+      <li data-seq="2"><span class="step-n">2</span><span>Multiplicar por \((-1)^{x+y}\) (centra la DFT)</span></li>
+      <li data-seq="3"><span class="step-n">3</span><span>Calcular la FFT: F(u,v)</span></li>
+      <li data-seq="4"><span class="step-n">4</span><span>H(u,v) real, simétrica, P×Q, centrada</span></li>
+      <li data-seq="5"><span class="step-n">5</span><span>Producto G = H·F</span></li>
+      <li data-seq="6"><span class="step-n">6</span><span>IFFT, parte real, y multiplicar por \((-1)^{x+y}\)</span></li>
+      <li data-seq="7"><span class="step-n">7</span><span>Recortar la esquina M×N</span></li>
+    </ol>
+    <div class="vstack">
+<pre class="code" data-seq="8">def filtrar(im, H):            # H: P×Q centrada
+    M, N = im.shape
+    fp = np.zeros(H.shape)     # 1. relleno
+    fp[:M, :N] = im
+    F = np.fft.fftshift(np.fft.fft2(fp))       # 2-3
+    g = np.fft.ifft2(np.fft.ifftshift(F * H))  # 5-6
+    return np.real(g)[:M, :N]  # 6-7</pre>
+      <div class="tip" data-seq="9"><b>variante del lab 3</b><code>fftshift</code>/<code>ifftshift</code> equivalen a multiplicar por \((-1)^{x+y}\) cuando P y Q son pares. Es la que usan <code>FT</code>, <code>IFT</code> y <code>filterFreq</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Los siete pasos del libro. Con H real y simétrica el resultado de la IFFT es real salvo errores numéricos, y por eso se toma la parte real. El código de la derecha es la variante moderna con fftshift: lo comprobé numéricamente y coincide con la versión del signo alterno hasta 1e-16.</aside>
+</section>
+
+<section class="slide" id="e-signo" data-fx="vc" data-section="E · Filtrado" data-title="El truco del signo alterno">
+  <header class="s-head"><p class="kicker">por qué el signo alterno centra la DFT</p><h2 class="s-title">El truco del signo alterno</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:30px;gap:10px">
+      <div data-seq="1"><span>$$(-1)^{x+y}=e^{j\pi(x+y)}$$</span><span class="why">porque e^{jπ} = −1</span></div>
+      <div data-seq="2"><span>$$e^{j\pi(x+y)}=e^{j2\pi\left(\frac{u_0x}{M}+\frac{v_0y}{N}\right)},\;u_0=\tfrac M2,\;v_0=\tfrac N2$$</span><span class="why">escribir π como 2π·(M/2)/M</span></div>
+      <div data-seq="3"><span>$$\sum f\,e^{j2\pi(\frac{u_0x}{M}+\frac{v_0y}{N})}e^{-j2\pi(\frac{ux}{M}+\frac{vy}{N})}=\sum f\,e^{-j2\pi(\frac{(u-u_0)x}{M}+\frac{(v-v_0)y}{N})}$$</span><span class="why">juntar exponentes</span></div>
+      <div data-seq="4"><span>$$\mathcal F\{f\,(-1)^{x+y}\}=F\!\left(u-\tfrac M2,\,v-\tfrac N2\right)$$</span><span class="why">∎ la DC (0,0) pasa a (M/2, N/2)</span></div>
+    </div>
+    <div class="g2" style="align-items:start">
+<pre class="code" data-seq="5">f = np.array([1, 2, 3, 4]); n = np.arange(4)
+np.fft.fft(f)                # [10, -2+2j, -2, -2-2j]
+np.fft.fft(f * (-1)**n)      # [-2, -2-2j, 10, -2+2j]
+np.fft.fftshift(np.fft.fft(f))   # idéntico</pre>
+      <div class="trap" data-seq="6"><b>solo con tamaños pares</b>Con N = 4 la DC (10) pasa a k = N/2 = 2. Con N impar, N/2 no es entero y el signo alterno ya no coincide con <code>fftshift</code> (comprobado con N = 5).</div>
+    </div>
+  </div>
+  <aside class="notes">Multiplicar la imagen por una exponencial compleja de frecuencia u0 desplaza el espectro u0. Es la propiedad dual de la traslación. Con u0 igual a M medios, la exponencial es el signo alterno. El ejemplo numérico, comprobado en Python, usa la misma señal que el ejemplo de la DFT a mano: el 10 de la DC pasa de la posición 0 a la 2.</aside>
+</section>
+
+<section class="slide" id="e-gauss" data-fx="vc" data-section="E · Filtrado" data-title="Gaussiana ↔ gaussiana">
+  <header class="s-head"><p class="kicker">ancho recíproco</p><h2 class="s-title">Gaussiana ↔ gaussiana</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:30px">
+      <div data-seq="1"><span>$$H(u)=e^{-u^2/2\sigma_u^2}$$</span><span class="why">gaussiana en frecuencia</span></div>
+      <div data-seq="2"><span>$$h(x)=\int H(u)e^{j2\pi ux}du=\sigma_u\sqrt{2\pi}\,e^{-2\pi^2\sigma_u^2x^2}$$</span><span class="why">transformada inversa conocida</span></div>
+      <div data-seq="3"><span>$$\sigma_x=\frac{1}{2\pi\sigma_u}\;\Rightarrow\;\sigma_x\,\sigma_u=\frac{1}{2\pi}$$</span><span class="why">anchos recíprocos</span></div>
+    </div>
+    <div class="g2" data-seq="4">
+      <div class="fx" data-role="plot" data-x="-3,3" data-y="0,1.1" data-xl="u (frecuencia)" data-yl="H(u)" data-fns='[{"f":"x=>Math.exp(-x*x/2)","label":"σᵤ = 1"},{"f":"x=>Math.exp(-x*x/(2*0.25))","label":"σᵤ = 0,5"}]' style="min-height:0;height:340px"></div>
+      <div class="fx" data-role="plot" data-x="-1,1" data-y="0,1.1" data-xl="x (espacio, h normalizada)" data-yl="h(x)" data-fns='[{"f":"x=>Math.exp(-2*Math.PI*Math.PI*1*x*x)","label":"σᵤ = 1"},{"f":"x=>Math.exp(-2*Math.PI*Math.PI*0.25*x*x)","label":"σᵤ = 0,5"}]' style="min-height:0;height:340px"></div>
+    </div>
+  </div>
+  <aside class="notes">Una gaussiana estrecha en frecuencia, es decir un paso bajo fuerte, corresponde a una gaussiana ancha en el espacio: un núcleo grande. La gaussiana es el único filtro que no tiene ringing, porque su transformada no tiene lóbulos negativos. En las gráficas, la curva de σu igual a 1 es la más ancha en frecuencia y la más estrecha en el espacio.</aside>
+</section>
+
+<section class="slide" id="e-ilp" data-fx="vc" data-section="E · Filtrado" data-title="Paso bajo ideal">
+  <header class="s-head"><p class="kicker">corte brusco · einstein</p><h2 class="s-title">Paso bajo ideal</h2></header>
+  <div class="s-body vstack">
+    <div class="g2" data-seq="1" style="align-items:center">
+      <div class="eq" style="margin:0">$$H(u,v)=\begin{cases}1&D(u,v)\le D_0\\0&D(u,v)>D_0\end{cases}$$</div>
+      <div class="eq" style="margin:0">$$D=\sqrt{(u-P/2)^2+(v-Q/2)^2}$$</div>
+    </div>
+    <div class="row" style="--h:350px">
+      <figure class="f" data-seq="2"><img src="assets/ilp_10.png" alt="D0 10"><figcaption>D₀ = 10</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/ilp_30.png" alt="D0 30"><figcaption>D₀ = 30</figcaption></figure>
+      <figure class="f" data-seq="4"><img src="assets/ilp_60.png" alt="D0 60"><figcaption>D₀ = 60</figcaption></figure>
+      <figure class="f" data-seq="5"><img src="assets/ilp_160.png" alt="D0 160"><figcaption>D₀ = 160</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="6">D₀ pequeño ⇒ muy borrosa y con <b>ondas</b> alrededor de los bordes (<i>ringing</i>). Con D₀ = 160 casi no se ve el efecto porque se conserva casi todo el espectro.</p>
+  </div>
+  <aside class="notes">Imagen de 256 por 314 con el origen de distancias en el centro del espectro. Un disco de radio D0 pasa y fuera se anula. El resultado es desenfoque más rizado visible alrededor de los contornos, sobre todo con D0 de 10 y 30.</aside>
+</section>
+
+<section class="slide" id="e-ringing" data-fx="vc" data-section="E · Filtrado" data-title="Ringing del filtro ideal">
+  <header class="s-head"><p class="kicker">núcleo espacial de H</p><h2 class="s-title">Ringing del filtro ideal</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$\int_{-u_0}^{u_0}e^{j2\pi ux}du=\frac{\sin(2\pi u_0x)}{\pi x}$$</div>
+      <p class="txt" data-seq="2">La caja de frecuencia es una <b>sinc</b> en el espacio (una función de Bessel J₁(r)/r en 2D). Tiene <b>lóbulos laterales</b> con valores negativos que decaen despacio.</p>
+      <div class="trap" data-seq="3"><b>consecuencia</b>Convolucionar con una sinc produce oscilaciones (ringing) junto a cada borde. Es el fenómeno de Gibbs de la rampa.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="-40,40" data-y="-0.4,1.1" data-xl="x (px, perfil central, D₀ = 30)" data-yl="h(x) normalizada" data-legend="tr" data-fns='[{"f":"x=>{const a=[-0.0004,0.0069,0.0122,0.0122,0.0064,-0.0029,-0.0112,-0.0141,-0.0097,0.0002,0.0109,0.0166,0.0139,0.0033,-0.0102,-0.0198,-0.0197,-0.0088,0.0083,0.0232,0.0272,0.0163,-0.0062,-0.0299,-0.0421,-0.0337,-0.0049,0.0331,0.0615,0.0619,0.0257,-0.0387,-0.1051,-0.1363,-0.0971,0.032,0.2438,0.5026,0.7527,0.9339,1.0,0.9339,0.7527,0.5026,0.2438,0.032,-0.0971,-0.1363,-0.1051,-0.0387,0.0257,0.0619,0.0615,0.0331,-0.0049,-0.0337,-0.0421,-0.0299,-0.0062,0.0163,0.0272,0.0232,0.0083,-0.0088,-0.0197,-0.0198,-0.0102,0.0033,0.0139,0.0166,0.0109,0.0002,-0.0097,-0.0141,-0.0112,-0.0029,0.0064,0.0122,0.0122,0.0069,-0.0004];const i=Math.max(0,Math.min(80,x+40)),k=Math.min(79,Math.floor(i)),t=i-k;return a[k]*(1-t)+a[k+1]*t}","label":"ideal (sinc)"},{"f":"x=>{const a=[0.0012,0.0131,0.0872,0.3381,0.7626,1,0.7626,0.3381,0.0872,0.0131,0.0012];const i=x+5;if(i&lt;=0||i&gt;=10)return 0;const k=Math.floor(i),t=i-k;return a[k]*(1-t)+a[k+1]*t}","label":"gaussiano"}]' style="height:600px"></div>
+  </div>
+  <aside class="notes">Perfil calculado haciendo la IFFT real de la máscara ideal con D0 igual a 30 sobre la rejilla de la imagen. Se ven los lóbulos negativos de la sinc. El núcleo gaussiano correspondiente es positivo en todos los puntos, así que no produce oscilaciones.</aside>
+</section>
+
+<section class="slide" id="e-glp" data-fx="vc" data-section="E · Filtrado" data-title="Paso bajo gaussiano">
+  <header class="s-head"><p class="kicker">transición suave · sin ringing</p><h2 class="s-title">Paso bajo gaussiano</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$H(u,v)=e^{-D^2(u,v)/2D_0^2}$$</div>
+    <div class="row" style="--h:400px">
+      <figure class="f" data-seq="2"><img src="assets/ilp_30.png" alt="ideal 30"><figcaption>ideal D₀ = 30</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/glp_10.png" alt="gauss 10"><figcaption>gaussiano D₀ = 10</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/glp_30.png" alt="gauss 30"><figcaption>gaussiano D₀ = 30</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/glp_60.png" alt="gauss 60"><figcaption>gaussiano D₀ = 60</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="4">Misma frecuencia de corte, pero sin las ondas del ideal. En D = D₀ la ganancia vale \(e^{-1/2}\approx0{,}61\), no 0. Su núcleo espacial es otra gaussiana, positiva, y por eso <b>no hay ringing</b>.</p>
+  </div>
+  <aside class="notes">Compara el primero con el tercero: misma D0, pero el gaussiano no genera halos. El precio es que no hay un corte nítido: algo de las frecuencias por encima de D0 sigue pasando.</aside>
+</section>
+
+<section class="slide" id="e-hp" data-fx="vc" data-section="E · Filtrado" data-title="Paso alto">
+  <header class="s-head"><p class="kicker">realce de bordes · gris medio = 0</p><h2 class="s-title">Paso alto</h2></header>
+  <div class="s-body vstack">
+    <div class="eq" data-seq="1">$$H_{HP}=1-H_{LP}\qquad\text{DoG:}\;\;H=e^{-D^2/2\sigma_1^2}-e^{-D^2/2\sigma_2^2},\;\sigma_1>\sigma_2$$</div>
+    <div class="row" style="--h:350px">
+      <figure class="f" data-seq="2"><img src="assets/ihp_30.png" alt="HP ideal"><figcaption>ideal D₀ = 30 (con ringing)</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/ghp_30.png" alt="HP gauss"><figcaption>gaussiano D₀ = 30</figcaption></figure>
+      <figure class="f" data-seq="4"><img src="assets/dog_30.png" alt="DoG"><figcaption>DoG σ₁ = 60, σ₂ = 20</figcaption></figure>
+    </div>
+    <div class="tip" data-seq="5"><b>lección</b>Se diseña en frecuencia y luego se extrae un núcleo espacial <i>pequeño</i>: la DoG espacial es la resta de dos gaussianas, barata de aplicar. Ojo: la DoG es en rigor paso banda (H(0) = 0).</div>
+  </div>
+  <aside class="notes">El paso alto es uno menos el paso bajo, así que anula la DC y deja los bordes. El ideal vuelve a mostrar ringing. La diferencia de gaussianas se aproxima con núcleos espaciales pequeños, que es lo que se hace en la práctica, en lugar de multiplicar en frecuencia.  Aquí σ1 y σ2 son anchos en frecuencia, con σ1 mayor que σ2: un paso bajo ancho menos uno estrecho da H mayor o igual que cero, nula en la DC y casi nula en las frecuencias muy altas.</aside>
+</section>
+
+<section class="slide" id="e-banda" data-fx="vc" data-section="E · Filtrado" data-title="Banda eliminada">
+  <header class="s-head"><p class="kicker">anillo de frecuencias · C₀ = centro, W = anchura</p><h2 class="s-title">Banda eliminada</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq" data-seq="1">$$H_{ideal}=\begin{cases}0&C_0-\tfrac W2\le D\le C_0+\tfrac W2\\1&\text{otro caso}\end{cases}$$</div>
+      <div class="eq" data-seq="2">$$H_{gauss}=1-e^{-\left(\frac{D^2-C_0^2}{D\,W}\right)^2}$$</div>
+      <div class="row" data-seq="4" style="--h:210px;align-items:center;justify-content:flex-start">
+        <figure class="f"><img src="assets/mask_br.png" alt="máscara banda"><figcaption>H gaussiano 2D</figcaption></figure>
+        <p class="txt">El paso banda es su complemento: \(H_{BP}=1-H_{BR}\). El gaussiano es suave y no tiene ringing.</p>
+      </div>
+    </div>
+    <div class="fx" data-seq="3" data-role="plot" data-x="0,100" data-y="-0.1,1.6" data-xl="D (distancia al centro)" data-yl="H(D)" data-legend="tr" data-fns='[{"f":"x=>(x&gt;=40&amp;&amp;x&lt;=60)?0:1","label":"ideal, C₀=50, W=20"},{"f":"x=>1-Math.exp(-Math.pow((x*x-2500)/(Math.max(x,0.001)*20),2))","label":"gaussiano"}]' style="height:540px"></div>
+  </div>
+  <aside class="notes">La banda eliminada es un anillo donde H vale cero. Se define con la distancia D al centro, un radio central C0 y una anchura W. La versión gaussiana evita el salto abrupto. El gráfico muestra los dos perfiles radiales con C0 igual a 50 y W igual a 20, y la imagen es la máscara gaussiana 2D con esos mismos valores.</aside>
+</section>
+
+<section class="slide" id="e-notch" data-fx="vc" data-section="E · Filtrado" data-title="Filtro notch">
+  <header class="s-head"><p class="kicker">interferencia periódica · einstein + onda de ejemplo</p><h2 class="s-title">Filtro notch</h2></header>
+  <div class="s-body vstack">
+    <div class="row" style="--h:360px">
+      <figure class="f" data-seq="1"><img src="assets/notch_img.png" alt="con interferencia"><figcaption>imagen con trama</figcaption></figure>
+      <figure class="f" data-seq="2"><img src="assets/notch_esp.png" alt="espectro"><figcaption>espectro: 2 picos</figcaption></figure>
+      <figure class="f" data-seq="3"><img src="assets/notch_mask.png" alt="máscara"><figcaption>H: 1 salvo 2 notches</figcaption></figure>
+      <figure class="f" data-seq="4"><img src="assets/notch_out.png" alt="resultado"><figcaption>resultado</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="5">Una onda periódica suma dos picos simétricos ±(u₀, v₀) al espectro. El <b>notch</b> pone H = 0 solo en esos puntos (y 1 en el resto): la imagen apenas se ve afectada.</p>
+    <div class="tip" data-seq="6"><b>usos</b>Moiré, tramas de escaneo, interferencias eléctricas. Siempre en <b>pares simétricos</b> para que la imagen siga siendo real.</div>
+  </div>
+  <aside class="notes">La interferencia es una onda coseno añadida a Einstein, de amplitud 40 niveles; es un ejemplo sintético. En el espectro aparecen dos puntos brillantes. Construimos H multiplicando dos gaussianas invertidas centradas en esos puntos. El resultado recupera la imagen limpia.</aside>
+</section>
+
+<!-- ============ BLOQUE F ============ -->
+<section class="slide is-plain divider" id="div-f" data-fx="backdrop" data-seed="31" data-section="F · Cierre" data-title="Repaso">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque F</p>
+    <h1 class="s-title xl">Repaso</h1>
+    <p class="lead">Chuleta de pares, propiedades y costes, y verdadero o falso de práctica.</p>
+  </div>
+</section>
+
+<section class="slide" id="f-chuleta" data-fx="vc" data-section="F · Cierre" data-title="Chuleta">
+  <header class="s-head"><p class="kicker">para llevarte al examen</p><h2 class="s-title">Chuleta</h2></header>
+  <div class="s-body vstack">
+    <div class="g2">
+      <table class="t big" data-seq="1">
+        <tr><th>espacio</th><th>frecuencia</th></tr>
+        <tr><td>impulso δ</td><td>constante (plano)</td></tr>
+        <tr><td>constante</td><td>impulso en la DC</td></tr>
+        <tr><td>gaussiana (σ)</td><td>gaussiana (1/σ)</td></tr>
+        <tr><td>caja (rect)</td><td>sinc</td></tr>
+        <tr><td>f * h</td><td>F · H</td></tr>
+        <tr><td>f · g</td><td>F * G (circular)</td></tr>
+      </table>
+      <table class="t big" data-seq="2">
+        <tr><th>propiedad</th><th>efecto</th></tr>
+        <tr><td>traslación</td><td>|F| igual; la fase cambia</td></tr>
+        <tr><td>rotación θ</td><td>el espectro gira θ</td></tr>
+        <tr><td>f real</td><td>F[−u] = F[u]*</td></tr>
+        <tr><td>F[0,0]</td><td>suma de píxeles (DC)</td></tr>
+        <tr><td>fase</td><td>lleva la estructura</td></tr>
+        <tr><td>bordes</td><td>altas frecuencias</td></tr>
+      </table>
+    </div>
+    <table class="t big" data-seq="3">
+      <tr><th>coste</th><th>fórmula</th><th>nota</th></tr>
+      <tr><td>DFT directa 1D</td><td>O(N²)</td><td>N = 1024: 1 048 576</td></tr>
+      <tr><td>FFT</td><td>O(N log N)</td><td>N = 1024: 10 240 (≈ 100×)</td></tr>
+      <tr><td>filtrado frecuencial</td><td>≈ 2MN log₂(MN)</td><td>independiente del núcleo; cruce m ≈ 6 / 18</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Resumen de pares y propiedades. Memoriza especialmente: convolución igual a producto, la traslación solo cambia la fase, la fase lleva la estructura y los bordes son altas frecuencias.</aside>
+</section>
+
+<section class="slide" id="f-vf" data-fx="vc" data-section="F · Cierre" data-title="V/F de práctica">
+  <header class="s-head"><p class="kicker">contesta antes de que aparezca la respuesta</p><h2 class="s-title">V/F de práctica</h2></header>
+  <div class="s-body">
+    <table class="t vf">
+      <tr><th>afirmación</th><th>resp.</th><th>por qué</th></tr>
+      <tr><td>El teorema de la convolución permite acelerar el filtrado</td><td class="ok" data-seq="1">verdadero</td><td data-seq="1">producto + FFT; núcleos grandes, circular, solo lineal</td></tr>
+      <tr><td>El espectro cambia con la traslación</td><td class="err" data-seq="2">falso</td><td data-seq="2">el módulo no cambia; solo la fase</td></tr>
+      <tr><td>La fase es más importante para la estructura</td><td class="ok" data-seq="3">verdadero</td><td data-seq="3">excepto en patrones muy periódicos</td></tr>
+      <tr><td>El paso bajo ideal no produce artefactos</td><td class="err" data-seq="4">falso</td><td data-seq="4">su núcleo es una sinc: ringing</td></tr>
+      <tr><td>La DFT supone que la imagen es periódica</td><td class="ok" data-seq="5">verdadero</td><td data-seq="5">de ahí la convolución circular y el wraparound</td></tr>
+      <tr><td>Los bordes son bajas frecuencias</td><td class="err" data-seq="6">falso</td><td data-seq="6">errata de los apuntes: son altas</td></tr>
+      <tr><td>La mediana se puede aplicar con el teorema de la convolución</td><td class="err" data-seq="7">falso</td><td data-seq="7">no es lineal: no hay H que la represente</td></tr>
+      <tr><td><code>np.fft.fft2</code> divide el resultado entre NM</td><td class="err" data-seq="8">falso</td><td data-seq="8">no normaliza; es <code>ifft2</code> quien divide entre NM</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Intenta contestar tú antes de que aparezca cada respuesta, y justifica con una frase. Las dos últimas son nuevas: la mediana no es lineal, y NumPy pone el factor 1 sobre NM en la inversa.</aside>
+</section>
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

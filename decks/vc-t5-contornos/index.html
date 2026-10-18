@@ -1,0 +1,891 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · T5 Contornos</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ================= A · MOTIVACIÓN ================= -->
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="5" data-section="Motivación" data-title="Detección de contornos">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lección 005</p>
+    <h1 class="s-title xl">Detección de contornos</h1>
+    <p class="lead">Enlazar bordes, transformada de Hough, códigos de cadena y signaturas.</p>
+  </div>
+  <aside class="notes">Esta lección continúa a la de detección de bordes. Allí obtuvimos un mapa de píxeles de borde; aquí queremos pasar de píxeles sueltos a curvas y fronteras. El Lab 4 usa la transformada de Hough, así que es la parte que más conviene dominar.</aside>
+</section>
+
+<section class="slide" id="rotos" data-fx="vc" data-section="Motivación" data-title="Los bordes salen rotos">
+  <header class="s-head"><p class="kicker">motivación</p><h2 class="s-title">Los bordes salen rotos</h2></header>
+  <div class="s-body g12">
+    <figure class="fig"><img class="px" src="assets/canny_roto.png" alt="Canny de cuadros con huecos" style="max-width:560px"><figcaption>Canny sobre cuadros.png con ruido (σ = 2)</figcaption></figure>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Un detector de bordes devuelve <b>píxeles</b> con huecos, ramas espurias y grosor irregular.</p>
+      <p class="txt" data-seq="2">Para medir, reconocer o describir objetos queremos <b>curvas</b> y <b>fronteras</b> completas.</p>
+      <div class="g2" data-seq="3">
+        <div class="tip"><b>procesamiento local</b>Unir cada píxel con sus vecinos parecidos.</div>
+        <div class="tip"><b>procesamiento global</b>Buscar la forma que explica muchos píxeles a la vez: Hough.</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Los huecos aparecen donde el gradiente es débil o el ruido rompe la cadena. Hay dos familias de soluciones: mirar solo el entorno de cada píxel (local) o votar entre todos los píxeles por un modelo geométrico (global).</aside>
+</section>
+
+<!-- ================= B · ENLACE LOCAL ================= -->
+<section class="slide is-plain divider" id="div-local" data-fx="backdrop" data-seed="11" data-section="Enlace local" data-title="Enlace local">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque 1 · procesamiento local</p>
+    <h1 class="s-title xl">Enlace local</h1>
+    <p class="lead">Unir cada píxel de borde con sus vecinos parecidos.</p>
+  </div>
+</section>
+
+<section class="slide" id="local-criterios" data-fx="vc" data-section="Enlace local" data-title="Enlace local: criterios">
+  <header class="s-head"><p class="kicker">procesamiento local · idea</p><h2 class="s-title">Enlace local: criterios</h2></header>
+  <div class="s-body g2" style="align-items:center">
+    <div class="vstack">
+      <p class="txt" data-seq="1">Magnitud y ángulo del gradiente en cada píxel:</p>
+      <div class="eq" data-seq="1">$$M=\sqrt{g_x^2+g_y^2},\quad \alpha=\arctan\frac{g_y}{g_x}$$</div>
+      <p class="txt" data-seq="2">El vecino \((s,t)\in S_{xy}\) se une a \((x,y)\) si cumple <b>los dos</b> criterios:</p>
+      <div class="eq" data-seq="2">$$\begin{aligned}|M(s,t)-M(x,y)|&\le E\\ |\alpha(s,t)-\alpha(x,y)|&\le A\end{aligned}$$</div>
+      <div class="trap" data-seq="6"><b>coste</b>Hay que examinar <b>todos</b> los vecinos de <b>cada</b> píxel de borde: caro para tiempo real.</div>
+    </div>
+    <figure class="fig" data-seq="3" style="max-width:540px;justify-self:center">
+      <svg class="dg" viewBox="0 0 530 530" role="img" aria-label="vecindad 3x3">
+<rect class="cell" x="10" y="10" width="170" height="170"/>
+<path class="g-n" d="M95.0,81.0 L95.0,80.7"/><path class="g-n-h" d="M95.0,66.7 L104.0,80.7 L86.0,80.7 Z"/>
+<text class="nm" x="95.0" y="164">20 · 90°</text>
+<rect class="v-no" data-seq="4" x="16" y="16" width="158" height="158"/>
+<text class="vn" data-seq="4" x="32" y="50">✗</text>
+<rect class="cell" x="180" y="10" width="170" height="170"/>
+<path class="g-n" d="M265.0,81.0 L265.0,80.7"/><path class="g-n-h" d="M266.2,66.8 L274.0,81.5 L256.1,79.9 Z"/>
+<text class="nm" x="265.0" y="164">20 · 85°</text>
+<rect class="v-no" data-seq="4" x="186" y="16" width="158" height="158"/>
+<text class="vn" data-seq="4" x="202" y="50">✗</text>
+<rect class="cell" x="350" y="10" width="170" height="170"/>
+<path class="g-n" d="M435.0,81.0 L478.5,55.9"/><path class="g-n-h" d="M490.7,48.9 L483.0,63.7 L474.0,48.1 Z"/>
+<text class="nm" x="435.0" y="164">90 · 30°</text>
+<rect class="v-no" data-seq="4" x="356" y="16" width="158" height="158"/>
+<text class="vn" data-seq="4" x="372" y="50">✗</text>
+<rect class="cell" x="10" y="180" width="170" height="170"/>
+<path class="g-n" d="M95.0,251.0 L96.9,197.2"/><path class="g-n-h" d="M97.4,183.2 L105.9,197.5 L87.9,196.9 Z"/>
+<text class="nm" x="95.0" y="334">95 · 88°</text>
+<rect class="v-ok" data-seq="4" x="16" y="186" width="158" height="158"/>
+<text class="vk" data-seq="4" x="32" y="220">✓</text>
+<rect class="cell" x="180" y="180" width="170" height="170"/>
+<path class="g-c" d="M265.0,251.0 L265.0,193.6"/><path class="g-c-h" d="M265.0,179.6 L274.0,193.6 L256.0,193.6 Z"/>
+<text class="nm" x="265.0" y="334">100 · 90°</text>
+<rect class="v-c" x="186" y="186" width="158" height="158"/>
+<rect class="cell" x="350" y="180" width="170" height="170"/>
+<path class="g-n" d="M435.0,251.0 L430.5,199.5"/><path class="g-n-h" d="M429.3,185.6 L439.5,198.7 L421.5,200.3 Z"/>
+<text class="nm" x="435.0" y="334">92 · 95°</text>
+<rect class="v-ok" data-seq="4" x="356" y="186" width="158" height="158"/>
+<text class="vk" data-seq="4" x="372" y="220">✓</text>
+<rect class="cell" x="10" y="350" width="170" height="170"/>
+<path class="g-n" d="M95.0,421.0 L95.0,420.7"/><path class="g-n-h" d="M97.5,406.9 L103.9,422.3 L86.2,419.2 Z"/>
+<text class="nm" x="95.0" y="504">20 · 80°</text>
+<rect class="v-no" data-seq="4" x="16" y="356" width="158" height="158"/>
+<text class="vn" data-seq="4" x="32" y="390">✗</text>
+<rect class="cell" x="180" y="350" width="170" height="170"/>
+<path class="g-n" d="M265.0,421.0 L265.0,420.7"/><path class="g-n-h" d="M265.0,406.7 L274.0,420.7 L256.0,420.7 Z"/>
+<text class="nm" x="265.0" y="504">20 · 90°</text>
+<rect class="v-no" data-seq="4" x="186" y="356" width="158" height="158"/>
+<text class="vn" data-seq="4" x="202" y="390">✗</text>
+<rect class="cell" x="350" y="350" width="170" height="170"/>
+<path class="g-n" d="M435.0,421.0 L435.0,420.7"/><path class="g-n-h" d="M432.5,406.9 L443.8,419.2 L426.1,422.3 Z"/>
+<text class="nm" x="435.0" y="504">20 · 100°</text>
+<rect class="v-no" data-seq="4" x="356" y="356" width="158" height="158"/>
+<text class="vn" data-seq="4" x="372" y="390">✗</text>
+<path class="edge" data-seq="5" data-a="draw" d="M22,299.0 L508,299.0"/>
+</svg>
+      <figcaption>de ejemplo: E = 10, A = 15°</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">E es el umbral de diferencia de magnitud y A el de diferencia de ángulo. En la figura, el píxel central tiene M = 100 y gradiente vertical (90 grados). Los vecinos izquierdo y derecho tienen magnitud y ángulo parecidos: se unen, y el borde resultante es horizontal, perpendicular al gradiente. El de arriba a la derecha tiene magnitud parecida pero ángulo de 30 grados: falla el criterio de ángulo. Los demás son débiles: falla el de magnitud. Es el método general, pero costoso; la siguiente diapositiva presenta una simplificación para tiempo real.</aside>
+</section>
+
+<section class="slide" id="local-simple" data-fx="vc" data-section="Enlace local" data-title="Enlace local simplificado">
+  <header class="s-head"><p class="kicker">procesamiento local · tiempo real</p><h2 class="s-title">Enlace local simplificado</h2></header>
+  <div class="s-body g2" style="align-items:center">
+    <div class="vstack">
+      <div data-seq="1"><span class="step-n">1</span><span class="pill">umbralizar</span>
+        <div class="eq sm">$$g(x,y)=\begin{cases}1 & M>T_M \ \text{ y }\ \alpha\in A\pm T_A\\ 0 & \text{en otro caso}\end{cases}$$</div></div>
+      <div data-seq="2"><span class="step-n">2</span><span class="pill">rellenar huecos</span>
+        <p class="txt" style="margin-top:8px">Recorrer <b>por filas</b> y poner a 1 los huecos de ceros de longitud <b>menor que \(L\)</b> entre dos unos.</p></div>
+      <div data-seq="4"><span class="step-n">3</span><span class="pill">otras direcciones</span>
+        <p class="txt" style="margin-top:8px">Girar \(g\) un ángulo \(\beta\), aplicar el paso 2 y deshacer el giro (\(-\beta\)).</p></div>
+    </div>
+    <figure class="fig" data-seq="2">
+      <svg class="dg" viewBox="0 0 820 330" role="img" aria-label="relleno de huecos por filas">
+<text class="lb2" x="10" y="30" style="text-anchor:start">antes</text>
+<rect class="on" x="10" y="44" width="50" height="50"/>
+<text class="bit" x="35.0" y="78.0">1</text>
+<rect class="on" x="60" y="44" width="50" height="50"/>
+<text class="bit" x="85.0" y="78.0">1</text>
+<rect class="cell" x="110" y="44" width="50" height="50"/>
+<text class="bit" x="135.0" y="78.0">0</text>
+<rect class="cell" x="160" y="44" width="50" height="50"/>
+<text class="bit" x="185.0" y="78.0">0</text>
+<rect class="on" x="210" y="44" width="50" height="50"/>
+<text class="bit" x="235.0" y="78.0">1</text>
+<rect class="on" x="260" y="44" width="50" height="50"/>
+<text class="bit" x="285.0" y="78.0">1</text>
+<rect class="on" x="310" y="44" width="50" height="50"/>
+<text class="bit" x="335.0" y="78.0">1</text>
+<rect class="cell" x="360" y="44" width="50" height="50"/>
+<text class="bit" x="385.0" y="78.0">0</text>
+<rect class="cell" x="410" y="44" width="50" height="50"/>
+<text class="bit" x="435.0" y="78.0">0</text>
+<rect class="cell" x="460" y="44" width="50" height="50"/>
+<text class="bit" x="485.0" y="78.0">0</text>
+<rect class="cell" x="510" y="44" width="50" height="50"/>
+<text class="bit" x="535.0" y="78.0">0</text>
+<rect class="cell" x="560" y="44" width="50" height="50"/>
+<text class="bit" x="585.0" y="78.0">0</text>
+<rect class="on" x="610" y="44" width="50" height="50"/>
+<text class="bit" x="635.0" y="78.0">1</text>
+<rect class="cell" x="660" y="44" width="50" height="50"/>
+<text class="bit" x="685.0" y="78.0">0</text>
+<rect class="on" x="710" y="44" width="50" height="50"/>
+<text class="bit" x="735.0" y="78.0">1</text>
+<rect class="on" x="760" y="44" width="50" height="50"/>
+<text class="bit" x="785.0" y="78.0">1</text>
+<g data-seq="3"><text class="lb2" x="10" y="150" style="text-anchor:start">después (L = 4)</text>
+<rect class="on" x="10" y="164" width="50" height="50"/>
+<text class="bit" x="35.0" y="198.0">1</text>
+<rect class="on" x="60" y="164" width="50" height="50"/>
+<text class="bit" x="85.0" y="198.0">1</text>
+<rect class="filled" x="110" y="164" width="50" height="50"/>
+<text class="bit" x="135.0" y="198.0">1</text>
+<rect class="filled" x="160" y="164" width="50" height="50"/>
+<text class="bit" x="185.0" y="198.0">1</text>
+<rect class="on" x="210" y="164" width="50" height="50"/>
+<text class="bit" x="235.0" y="198.0">1</text>
+<rect class="on" x="260" y="164" width="50" height="50"/>
+<text class="bit" x="285.0" y="198.0">1</text>
+<rect class="on" x="310" y="164" width="50" height="50"/>
+<text class="bit" x="335.0" y="198.0">1</text>
+<rect class="cell" x="360" y="164" width="50" height="50"/>
+<text class="bit" x="385.0" y="198.0">0</text>
+<rect class="cell" x="410" y="164" width="50" height="50"/>
+<text class="bit" x="435.0" y="198.0">0</text>
+<rect class="cell" x="460" y="164" width="50" height="50"/>
+<text class="bit" x="485.0" y="198.0">0</text>
+<rect class="cell" x="510" y="164" width="50" height="50"/>
+<text class="bit" x="535.0" y="198.0">0</text>
+<rect class="cell" x="560" y="164" width="50" height="50"/>
+<text class="bit" x="585.0" y="198.0">0</text>
+<rect class="on" x="610" y="164" width="50" height="50"/>
+<text class="bit" x="635.0" y="198.0">1</text>
+<rect class="filled" x="660" y="164" width="50" height="50"/>
+<text class="bit" x="685.0" y="198.0">1</text>
+<rect class="on" x="710" y="164" width="50" height="50"/>
+<text class="bit" x="735.0" y="198.0">1</text>
+<rect class="on" x="760" y="164" width="50" height="50"/>
+<text class="bit" x="785.0" y="198.0">1</text>
+<text class="vk" x="160.0" y="254">2 &lt; 4 ✓</text>
+<text class="vn" x="485.0" y="254">5 ≥ 4 ✗</text>
+<text class="vk" x="685.0" y="254">1 &lt; 4 ✓</text>
+</g></svg>
+      <figcaption>paso 2 sobre una fila de ejemplo con L = 4</figcaption>
+    </figure>
+  </div>
+  <aside class="notes">En lugar de comparar cada píxel con todos sus vecinos, se fija una dirección de interés A. Se queda uno con los píxeles de gradiente fuerte y orientado como A, con tolerancia TA. Luego basta una pasada por filas: en la figura, los huecos de 2 y de 1 ceros son menores que L = 4 y se rellenan; el de 5 ceros no. Para otras direcciones se rota la imagen, se vuelve a pasar por filas y se rota de vuelta.</aside>
+</section>
+
+<section class="slide" id="local-ejemplo" data-fx="vc" data-section="Enlace local" data-title="Enlace local: ejemplo real">
+  <header class="s-head"><p class="kicker">procesamiento local · resultado</p><h2 class="s-title">Enlace local: ejemplo real</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:860px 1fr;gap:40px;align-items:center">
+    <div class="imgrow3">
+      <figure class="fig" data-seq="1"><img src="assets/link_M.png" alt="M"><figcaption>M(x,y)</figcaption></figure>
+      <figure class="fig" data-seq="2"><img class="px" src="assets/link_umbral.png" alt="umbral"><figcaption>M &gt; T<sub>M</sub> y ángulo</figcaption></figure>
+      <figure class="fig" data-seq="3"><img class="px" src="assets/link_h.png" alt="horizontal"><figcaption>enlace horizontal</figcaption></figure>
+      <figure class="fig" data-seq="4"><img class="px" src="assets/link_v.png" alt="vertical"><figcaption>enlace vertical</figcaption></figure>
+      <figure class="fig" data-seq="5"><img class="px" src="assets/link_or.png" alt="OR"><figcaption>OR lógico</figcaption></figure>
+      <figure class="fig" data-seq="6"><img class="px" src="assets/link_thin.png" alt="adelgazado"><figcaption>adelgazamiento</figcaption></figure>
+    </div>
+    <div class="vstack">
+    <p class="txt" data-seq="6">Parámetros de la lección: \(T_M=30\,\%\) de \(\max M\), \(A=90^\circ\), \(T_A=45^\circ\) y \(L\approx5\,\%\) del ancho \(W\).</p>
+    <p class="txt" data-seq="6">Aquí \(W=256\Rightarrow L=13\). El enlace vertical es el mismo algoritmo con el mapa girado 90°.</p>
+    <p class="cap-small" data-seq="6">Reproducción propia sobre cuadros.png con ruido gaussiano; la lección usa una furgoneta de 534×566.</p>
+    </div>
+  </div>
+  <aside class="notes">Horizontal: bordes horizontales tienen gradiente vertical, alpha igual a 90 grados; se usa el ángulo módulo 180 para aceptar gradientes de signo contrario. El enlace vertical es el mismo algoritmo con el mapa girado 90 grados. Se combinan con un OR lógico y se adelgaza el resultado para obtener curvas de un píxel de grosor.</aside>
+</section>
+
+<!-- ================= C · HOUGH PARA RECTAS ================= -->
+<section class="slide is-plain divider" id="div-hough" data-fx="backdrop" data-seed="17" data-section="Hough: rectas" data-title="Hough para rectas">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque 2 · procesamiento global</p>
+    <h1 class="s-title xl">Hough para rectas</h1>
+    <p class="lead">Cada píxel vota; las rectas son los picos del acumulador.</p>
+  </div>
+</section>
+
+<section class="slide" id="hough-idea" data-fx="vc" data-section="Hough: rectas" data-title="Hough: la idea">
+  <header class="s-head"><p class="kicker">procesamiento global · transformada de Hough</p><h2 class="s-title">Hough: la idea</h2></header>
+  <div class="s-body vstack">
+    <figure class="fig" data-seq="1"><img src="assets/dualidad.png" alt="dualidad punto recta" style="max-width:1200px"><figcaption>valores de ejemplo: tres puntos de la recta y = 0,5x + 1</figcaption></figure>
+    <p class="txt" data-seq="2">Cada punto \((x_i,y_i)\) <b>vota</b> por todas las rectas que pasan por él: en el espacio de parámetros \((a,b)\) es la recta \(b=-x_ia+y_i\). Las rectas de puntos colineales <b>se cortan</b> en \((a',b')\).</p>
+  </div>
+  <aside class="notes">Esta es la idea central: invertimos el problema. En vez de buscar qué puntos forman una recta, cada punto dice qué rectas son compatibles con él. Una recta de la imagen es un punto del espacio de parámetros, y un punto de la imagen es una recta del espacio de parámetros. Si varios puntos son colineales, sus rectas coinciden en un punto, y ahí se acumulan los votos.</aside>
+</section>
+
+<section class="slide" id="hough-pendiente" data-fx="vc" data-section="Hough: rectas" data-title="¿Por qué no y = ax + b?">
+  <header class="s-head"><p class="kicker">parametrización · problema</p><h2 class="s-title">¿Por qué no y = ax + b?</h2></header>
+  <div class="s-body g2">
+    <div class="fx" data-role="plot" data-x="0,180" data-y="-10,10" data-xl="ángulo de la recta φ (°)" data-yl="pendiente a = tan φ" data-fns='[{"f":"x=>Math.tan(x*Math.PI/180)","label":"a = tan φ"}]' style="height:560px"></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">La pendiente \(a=\tan\varphi\) tiende a \(\infty\) cuando la recta es <b>vertical</b>.</p>
+      <p class="txt" data-seq="2">El acumulador necesitaría un rango <b>infinito</b> y una resolución muy desigual: casi toda la resolución se gastaría en ángulos cercanos a 90°.</p>
+      <div class="exam" data-seq="3"><b>en el examen</b>Verdadero/falso: «la forma \(y=ax+b\) es la preferida en Hough». Falso: se usa la forma normal \(\rho=x\cos\theta+y\sin\theta\).</div>
+    </div>
+  </div>
+  <aside class="notes">La figura muestra tan de phi entre 0 y 180 grados recortada a menos diez y diez: explota en 90 grados. La lección usa a y b solo para explicar la dualidad; en la práctica se usan coordenadas polares de la recta, con ambos parámetros acotados.</aside>
+</section>
+
+<section class="slide" id="hough-normal" data-fx="vc" data-section="Hough: rectas" data-title="La forma normal de la recta">
+  <header class="s-head"><p class="kicker">parametrización · demostración</p><h2 class="s-title">La forma normal de la recta</h2></header>
+  <div class="s-body g2">
+    <figure class="fig"><img src="assets/normal.png" alt="forma normal" style="max-width:620px"></figure>
+    <div class="deriv" style="grid-template-columns:1fr;">
+      <div data-seq="1" style="grid-template-columns:1fr 330px"><span>$$\mathbf n=(\cos\theta,\ \sin\theta),\ \ \|\mathbf n\|=1$$</span><span class="why">normal unitaria a la recta</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 330px"><span>$$P\in\text{recta}\iff P\cdot\mathbf n=\rho$$</span><span class="why">todos los puntos proyectan igual sobre n</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 330px"><span>$$x\cos\theta+y\sin\theta=\rho$$</span><span class="why">producto escalar desarrollado</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 330px"><span>$$\theta\in[-90^\circ,90^\circ),\ \ \rho\in[-D,D]$$</span><span class="why">\(D=\sqrt{H^2+W^2}\); una recta, un par</span></div>
+    </div>
+  </div>
+  <aside class="notes">La recta es el conjunto de puntos cuya proyección sobre la normal unitaria es constante e igual a rho, la distancia con signo desde el origen. Vertical x igual c: theta cero, rho igual c. Horizontal y igual c: theta noventa grados, rho igual c. Con theta en menos 90 a 90 cada recta aparece una sola vez, porque sumar 180 grados a theta equivale a cambiar el signo de rho. En skimage x es la columna, y es la fila, y el origen está en la esquina superior izquierda.</aside>
+</section>
+
+<section class="slide" id="hough-sinusoide" data-fx="vc" data-section="Hough: rectas" data-title="Un punto es una sinusoide">
+  <header class="s-head"><p class="kicker">espacio de parámetros (<span class="nc">θ</span>, <span class="nc">ρ</span>)</p><h2 class="s-title">Un punto es una sinusoide</h2></header>
+  <div class="s-body g2">
+    <div class="fx" data-role="plot" data-x="-90,90" data-y="-10,10" data-xl="θ (°)" data-yl="ρ" data-fns='[{"f":"x=>2*(Math.cos(x*Math.PI/180)+Math.sin(x*Math.PI/180))","label":"(2, 2)"},{"f":"x=>4*(Math.cos(x*Math.PI/180)+Math.sin(x*Math.PI/180))","label":"(4, 4)"},{"f":"x=>6*(Math.cos(x*Math.PI/180)+Math.sin(x*Math.PI/180))","label":"(6, 6)"}]' data-pts='[[-45,0,"θ=−45°, ρ=0"]]' style="height:580px"></div>
+    <div class="deriv" style="grid-template-columns:1fr;">
+      <div data-seq="1" style="grid-template-columns:1fr 280px"><span>$$\rho(\theta)=x\cos\theta+y\sin\theta=r\cos(\theta-\phi)$$</span><span class="why">\(r=\sqrt{x^2+y^2}\), \(\phi=\operatorname{atan2}(y,x)\)</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 280px"><span>$$(k,k):\ \rho=k(\cos\theta+\sin\theta)=k\sqrt2\cos(\theta-45^\circ)$$</span><span class="why">puntos de la recta \(y=x\)</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 280px"><span>$$\cos(\theta-45^\circ)=0\Rightarrow\theta=-45^\circ\Rightarrow\rho=0$$</span><span class="why">el mismo punto para todo k</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 280px"><span>$$\tfrac{\sqrt2}{2}x-\tfrac{\sqrt2}{2}y=0\iff y=x$$</span><span class="why">comprobación con skimage (x = columna)</span></div>
+    </div>
+  </div>
+  <aside class="notes">Un punto fijo (x,y) recorre en el plano (theta,rho) una sinusoide de amplitud igual a su distancia al origen. Para tres puntos de la diagonal y igual x, las tres curvas pasan por theta menos 45 grados y rho cero. El otro cero del coseno, theta igual 135 grados, queda fuera del rango menos 90 a 90.</aside>
+</section>
+
+<section class="slide" id="hough-acum" data-fx="vc" data-section="Hough: rectas" data-title="El acumulador: bucle">
+  <header class="s-head"><p class="kicker">algoritmo · versión directa</p><h2 class="s-title">El acumulador: bucle</h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">def hough_acum(bordes, thetas):
+    ys, xs = np.nonzero(bordes)                  # píxeles de borde
+    D = int(np.ceil(np.hypot(*bordes.shape)))
+    H = np.zeros((2*D + 1, len(thetas)), int)    # filas ρ, columnas θ
+    for x, y in zip(xs, ys):
+        for t, th in enumerate(thetas):
+            rho = x*np.cos(th) + y*np.sin(th)
+            H[int(round(rho)) + D, t] += 1       # un voto
+    return H</pre>
+    <div class="g3">
+      <div class="tip" data-seq="2"><b>discretizar θ</b>p. ej. 180 valores en \([-90^\circ,90^\circ)\), en radianes.</div>
+      <div class="tip" data-seq="3"><b>discretizar ρ</b>pasos de 1 píxel en \([-D,D]\); índice \(\rho+D\ge 0\).</div>
+      <div class="exam" data-seq="4"><b>tamaño</b>256×256: \(D=\lceil 362{,}04\rceil=363\) ⇒ \(H\) de \(727\times180\).</div>
+    </div>
+  </div>
+  <aside class="notes">Cada píxel de borde recorre todos los ángulos y suma un voto en la celda correspondiente. El coste es número de píxeles de borde por número de ángulos. El desplazamiento más D convierte rho, que puede ser negativo, en un índice de fila válido. Hemos comprobado que esta función reproduce exactamente la H de skimage: 727 por 180 en cuadros.</aside>
+</section>
+
+<section class="slide" id="hough-vect" data-fx="vc" data-section="Hough: rectas" data-title="El acumulador: vectorizado">
+  <header class="s-head"><p class="kicker">algoritmo · NumPy</p><h2 class="s-title">El acumulador: vectorizado</h2></header>
+  <div class="s-body vstack">
+<pre class="code" data-seq="1">def hough_acum(bordes, thetas):
+    ys, xs = np.nonzero(bordes)
+    D = int(np.ceil(np.hypot(*bordes.shape)))
+    H = np.zeros((2*D + 1, len(thetas)), int)
+    rho = (np.outer(xs, np.cos(thetas))
+           + np.outer(ys, np.sin(thetas)))   # (N, T)
+    idx = np.round(rho).astype(int) + D
+    cols = np.tile(np.arange(len(thetas)), (len(xs), 1))
+    np.add.at(H, (idx, cols), 1)  # suma repetidos
+    return H</pre>
+    <div class="g2" style="align-items:start">
+      <div class="api" data-seq="2"><div class="sig">np.outer(a, b)</div><table>
+        <tr><td>a, b</td><td>vectores de N y T elementos</td></tr>
+        <tr><td>retorna</td><td>matriz \(N\times T\) con \(a_i b_j\)</td></tr></table></div>
+      <div class="trap" data-seq="3"><b>trampa</b><code>H[idx, cols] += 1</code> pierde votos si hay índices repetidos; hace falta <code>np.add.at</code> (o <code>np.bincount</code>).</div>
+    </div>
+  </div>
+  <aside class="notes">np.outer de las columnas con los cosenos más np.outer de las filas con los senos calcula la matriz de rho para todos los puntos y todos los ángulos de golpe. Después se redondea y se acumulan los votos. Dos puntos distintos pueden caer en la misma celda para el mismo ángulo, por eso hace falta add.at. Esta versión da exactamente la misma H que skimage.transform.hough_line.</aside>
+</section>
+
+<section class="slide" id="hough-algo" data-fx="vc" data-section="Hough: rectas" data-title="Algoritmo de Hough">
+  <header class="s-head"><p class="kicker">enlazar bordes con Hough · lección, diapositiva 12</p><h2 class="s-title">Algoritmo de Hough</h2></header>
+  <div class="s-body pipe">
+    <div class="st" data-seq="1"><p><span class="step-n">1</span>Mapa de bordes <b>binario</b> (Sobel + umbral o Canny).</p><img src="assets/pipe_1_bordes.png" alt="bordes"></div>
+    <div class="st" data-seq="2"><p><span class="step-n">2</span>Acumulador \(H(\rho,\theta)\): el <b>espacio de Hough</b>.</p><img src="assets/pipe_2_H.png" alt="acumulador"></div>
+    <div class="st" data-seq="3"><p><span class="step-n">3</span><b>Picos</b> de \(H\): umbral y distancia mínima.</p><img src="assets/pipe_3_picos.png" alt="picos"></div>
+    <div class="st" data-seq="4"><p><span class="step-n">4</span><b>Continuidad</b>: unir huecos pequeños, quitar tramos cortos.</p><img src="assets/pipe_4_segm.png" alt="segmentos"></div>
+  </div>
+  <p class="txt" data-seq="5" style="margin-top:20px">Resultado real con cuadros.png: 5 picos (umbral del 45 % del máximo) dan 6 segmentos; la recta vertical derecha se parte en dos porque el cuadrado interior corta el borde.</p>
+  <aside class="notes">Resultado real sobre cuadros.png. Hough devuelve rectas infinitas. El cuarto paso convierte las rectas en segmentos: se toman los píxeles de borde que votaron por cada pico, se ordenan a lo largo de la recta y se cortan donde hay un hueco mayor que el 20 por ciento de la altura, como en la lección; se descartan los tramos cortos. Fijaos en la recta vertical de la derecha: queda partida en dos tramos porque el cuadrado interior interrumpe el borde. En el Lab 4 el ejercicio opcional pide dibujar las rectas y, como reto, hallar los segmentos.</aside>
+</section>
+
+<section class="slide" id="hough-api" data-fx="vc" data-section="Hough: rectas" data-title="Funciones de skimage">
+  <header class="s-head"><p class="kicker">lab 4 · preguntas E3, E5 y E6</p><h2 class="s-title">Funciones de skimage</h2></header>
+  <div class="s-body"><div class="g2">
+    <div class="api" data-seq="1"><div class="sig">H, thetas, rhos = hough_line(bordes, theta)</div><table>
+      <tr><td>bordes</td><td>imagen binaria de bordes</td></tr>
+      <tr><td>theta</td><td><code>np.linspace(-np.pi/2, np.pi/2, 200)</code>, en radianes</td></tr>
+      <tr><td>H</td><td>acumulador, forma <code>(len(rhos), len(thetas))</code></td></tr>
+      <tr><td>rhos</td><td>de \(-D\) a \(D\), pasos de 1 píxel</td></tr></table></div>
+    <div class="api" data-seq="2"><div class="sig">acc, th, rho = hough_line_peaks(H, thetas, rhos, ...)</div><table>
+      <tr><td>threshold</td><td>mínimo de votos; por defecto \(0{,}5\max H\)</td></tr>
+      <tr><td>min_angle</td><td>separación mínima en nº de bins de θ (10)</td></tr>
+      <tr><td>min_distance</td><td>separación mínima en nº de bins de ρ (9)</td></tr>
+      <tr><td>num_peaks</td><td>máximo de picos (infinito)</td></tr>
+      <tr><td>retorna</td><td>votos, θ y ρ de cada pico</td></tr></table></div>
+  </div>
+<pre class="code" data-seq="3" style="margin-top:22px"># p4.py (Lab 4): 200 ángulos y picos al 15 % del máximo
+H, thetas, rhos = hough_line(edges, np.linspace(-np.pi/2, np.pi/2, 200))
+picos = hough_line_peaks(H, thetas, rhos, threshold=0.15*np.max(H),
+                         min_angle=20, min_distance=15)
+plt.imshow(np.log(H + 1))         # el log es solo para visualizar</pre>
+  </div>
+  <aside class="notes">En el código del lab, el acumulador se llama H y se muestra con log de H más uno para poder ver los picos. Los picos se buscan con hough_line_peaks con umbral del 15 por ciento del máximo, min_angle 20 y min_distance 15. Los picos nos dan las rectas más votadas, es decir, con más píxeles de borde alineados.</aside>
+</section>
+
+<section class="slide" id="hough-demo" data-fx="vc" data-section="Hough: rectas" data-title="Hough con cuadros.png">
+  <header class="s-head"><p class="kicker">ejemplo real · diapositiva 13 de la lección</p><h2 class="s-title">Hough con cuadros.png</h2></header>
+  <div class="s-body vstack">
+    <figure class="fig" data-seq="1"><img src="assets/hough_demo.png" alt="Hough sobre cuadros" style="max-width:1560px"></figure>
+    <p class="txt" data-seq="2">Resolución de 1 píxel en \(\rho\) y 1° en \(\theta\): \(H\) de \(727\times180\) con 994 píxeles de borde \(\Rightarrow\) 178 920 votos. Picos principales: \((\theta,\rho)=(0^\circ,64),(0^\circ,111),(0^\circ,159),(-90^\circ,-32),(-90^\circ,-223)\).</p>
+  </div>
+  <aside class="notes">Los picos con theta cero son las rectas verticales x igual 64, 111 y 159. Los picos con theta menos 90 grados y rho negativo son las rectas horizontales y igual 32 e y igual 223: y por sin de menos 90 es menos y, luego rho igual a menos y. Hay más rectas reales en la imagen, pero se pidió un umbral del 45 por ciento del máximo.</aside>
+</section>
+
+<section class="slide" id="hough-leer" data-fx="vc" data-section="Hough: rectas" data-title="Leer el espacio de Hough">
+  <header class="s-head"><p class="kicker">lab 4 · pregunta E6</p><h2 class="s-title">Leer el espacio de Hough</h2></header>
+  <div class="s-body g12">
+    <figure class="fig" data-seq="1"><img src="assets/hough_H.png" alt="H anotada" style="max-width:720px"></figure>
+    <ul class="pts" style="font-size:25px">
+      <li data-seq="2"><b>Eje horizontal:</b> \(\theta\); <b>vertical:</b> \(\rho\).</li>
+      <li data-seq="3"><b>Cada celda</b> = nº de píxeles de borde de esa recta.</li>
+      <li data-seq="4"><b>Picos</b> = rectas con muchos píxeles alineados.</li>
+      <li data-seq="5"><b>Mariposas</b> alrededor de un pico: rectas casi iguales (θ y ρ vecinos) que recogen parte de los mismos píxeles.</li>
+      <li data-seq="6"><b>Paralelas:</b> picos con la misma \(\theta\) y distinto \(\rho\).</li>
+      <li data-seq="7"><b>Borde izquierdo y derecho:</b> \((-90^\circ,\rho)\) y \((90^\circ,-\rho)\) son la misma recta.</li>
+    </ul>
+  </div>
+  <aside class="notes">Mirad que los tres picos de theta cero comparten columna: son tres rectas verticales paralelas. Los dos picos de theta menos 90 también son paralelos entre sí. La periodicidad hace que lo que sale por la derecha de theta noventa reaparezca por la izquierda con rho cambiado de signo, y por eso hay picos pegados a los bordes de la figura.</aside>
+</section>
+
+<section class="slide" id="hough-rot" data-fx="vc" data-section="Hough: rectas" data-title="Rotación y espacio de Hough">
+  <header class="s-head"><p class="kicker">lab 4 · bRotate</p><h2 class="s-title">Rotación y espacio de Hough</h2></header>
+  <div class="s-body g21" style="align-items:start">
+    <figure class="fig" data-seq="1"><img src="assets/hough_rotacion.png" alt="rotación" style="max-width:780px"></figure>
+    <div class="vstack"><div class="deriv" style="grid-template-columns:1fr;font-size:28px">
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$P'=R_\alpha P,\quad \mathbf n'=R_\alpha\mathbf n$$</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$\rho'=P'\cdot\mathbf n'=P\cdot\mathbf n=\rho$$</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr"><span>$$\theta'=\theta\pm\alpha$$</span></div>
+    </div>
+    <div class="tip" data-seq="5" style="font-size:22px"><b>experimento</b>Giro de 15° con <code>ndi.rotate</code>: los picos pasan de \(0^\circ\) y \(-90^\circ\) a \(-15^\circ\) y \(75^\circ\). El signo depende del sentido de giro y del eje y hacia abajo.</div></div>
+  </div>
+  <aside class="notes">Una matriz de rotación es ortogonal, así que conserva el producto escalar. Girar los puntos y la normal el mismo ángulo conserva rho y suma alfa a theta, siempre que se gire alrededor del origen de coordenadas. En el experimento, ndi.rotate gira alrededor del centro de la imagen, no de la esquina que skimage usa como origen, por eso los valores de rho cambian. Lo importante: el número de picos se mantiene y theta se desplaza en alfa; en la figura aparece menos 15 por el convenio de ejes. Además, algunos picos pueden salir del intervalo menos 90 a 90 y reaparecer con rho cambiado de signo.</aside>
+</section>
+
+<!-- ================= D · OTRAS FORMAS ================= -->
+<section class="slide is-plain divider" id="div-formas" data-fx="backdrop" data-seed="23" data-section="Otras formas" data-title="Otras formas">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque 3 · más parámetros</p>
+    <h1 class="s-title xl">Otras formas</h1>
+    <p class="lead">Circunferencias, coste del acumulador y Hough generalizado.</p>
+  </div>
+</section>
+
+<section class="slide" id="circulos" data-fx="vc" data-section="Otras formas" data-title="Hough para circunferencias">
+  <header class="s-head"><p class="kicker">Hough · otras primitivas</p><h2 class="s-title">Hough para circunferencias</h2></header>
+  <div class="s-body vstack">
+    <div class="g2" style="align-items:center">
+      <div class="eq sm" data-seq="1">$$(x-a)^2+(y-b)^2=r^2$$</div>
+      <p class="txt" data-seq="2">Tres parámetros \((a,b,r)\): el acumulador es <b>3D</b>. Cada borde vota por un cono de círculos.</p>
+    </div>
+    <figure class="fig" data-seq="3"><img src="assets/circulos.png" alt="círculos" style="max-width:980px"><figcaption>llaves_monedas.png: hough_circle con radios 24 a 39 y 5 picos (las 5 monedas)</figcaption></figure>
+<pre class="code sm" data-seq="4">radios = np.arange(24, 40)
+Hc = hough_circle(bordes, radios)                       # forma (16, alto, ancho)
+acc, cx, cy, r = hough_circle_peaks(Hc, radios, total_num_peaks=5)</pre>
+  </div>
+  <aside class="notes">Con la dirección del gradiente se reduce el coste: el centro está a distancia r sobre la recta del gradiente, a igual a x menos r coseno phi y b igual a y menos r seno phi, de modo que cada borde y cada radio votan por un solo punto en lugar de por una circunferencia entera. La función hough_circle de skimage vota por todos los ángulos; no usa el gradiente. Es el motivo por el que las llaves, que no son círculos, no aparecen entre los picos.</aside>
+</section>
+
+<section class="slide" id="circ-grad" data-fx="vc" data-section="Otras formas" data-title="Círculos con el gradiente">
+  <header class="s-head"><p class="kicker">Hough · reducir el coste</p><h2 class="s-title">Círculos con el gradiente</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1fr 560px;gap:40px;align-items:center">
+    <figure class="fig" data-seq="1"><svg class="dg" viewBox="0 0 1000 510" role="img" aria-label="votos de circunferencias con y sin gradiente">
+<text class="lb2" x="250" y="34">sin gradiente</text>
+<circle class="real" cx="250" cy="270" r="100"/>
+<circle class="vote" data-seq="2" data-a="draw" cx="336.6" cy="220.0" r="100"/>
+<circle class="pt" cx="336.6" cy="220.0" r="9"/>
+<circle class="vote" data-seq="3" data-a="draw" cx="173.4" cy="205.7" r="100"/>
+<circle class="pt" cx="173.4" cy="205.7" r="9"/>
+<circle class="vote" data-seq="4" data-a="draw" cx="215.8" cy="364.0" r="100"/>
+<circle class="pt" cx="215.8" cy="364.0" r="9"/>
+<circle class="vote" data-seq="5" data-a="draw" cx="326.6" cy="334.3" r="100"/>
+<circle class="pt" cx="326.6" cy="334.3" r="9"/>
+<circle class="hit" data-seq="6" data-a="pop" cx="250" cy="270" r="12"/>
+<text class="lb2" x="750" y="34">con gradiente</text>
+<circle class="real" cx="750" cy="270" r="100"/>
+<g data-seq="2"><path class="g-n" d="M836.6,220.0 L872.1,199.5"/><path class="g-n-h" d="M884.2,192.5 L876.1,206.4 L868.1,192.6 Z"/><path class="ray" d="M836.6,220.0 L750.0,270.0"/></g>
+<circle class="pt" cx="836.6" cy="220.0" r="9"/>
+<g data-seq="3"><path class="g-n" d="M673.4,205.7 L642.0,179.4"/><path class="g-n-h" d="M631.3,170.4 L647.1,173.2 L636.8,185.5 Z"/><path class="ray" d="M673.4,205.7 L750.0,270.0"/></g>
+<circle class="pt" cx="673.4" cy="205.7" r="9"/>
+<g data-seq="4"><path class="g-n" d="M715.8,364.0 L701.8,402.5"/><path class="g-n-h" d="M697.0,415.7 L694.3,399.8 L709.3,405.2 Z"/><path class="ray" d="M715.8,364.0 L750.0,270.0"/></g>
+<circle class="pt" cx="715.8" cy="364.0" r="9"/>
+<g data-seq="5"><path class="g-n" d="M826.6,334.3 L858.0,360.6"/><path class="g-n-h" d="M868.7,369.6 L852.9,366.8 L863.2,354.5 Z"/><path class="ray" d="M826.6,334.3 L750.0,270.0"/></g>
+<circle class="pt" cx="826.6" cy="334.3" r="9"/>
+<circle class="hit" data-seq="6" data-a="pop" cx="750" cy="270" r="12"/>
+<text class="lb3" x="750" y="502">1 voto por radio</text>
+<text class="lb3" x="250" y="502">un círculo de votos</text>
+</svg></figure>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Sin gradiente, cada borde y cada \(r\) votan por <b>todos</b> los centros a distancia \(r\): una circunferencia en \((a,b)\).</p>
+      <p class="txt" data-seq="6">El gradiente es <b>radial</b>: el centro está sobre su recta.</p>
+      <div class="eq" data-seq="6">$$a=x-r\cos\varphi,\quad b=y-r\sin\varphi$$</div>
+      <div class="tip" data-seq="7"><b>coste</b>De \(N\cdot n_r\cdot n_\varphi\) votos a \(N\cdot n_r\) (o el doble si no se sabe el signo del gradiente).</div>
+    </div>
+  </div>
+  <aside class="notes">Un punto de borde (x, y) de una circunferencia de centro (a, b) y radio r cumple x = a + r cos phi, y = b + r sin phi, y su gradiente apunta en la dirección phi, la radial. Despejando: a = x − r cos phi, b = y − r sin phi. Si conocemos phi por el gradiente, cada borde y cada radio votan por un solo centro en lugar de por una circunferencia entera de centros. Si no sabemos si el objeto es más claro o más oscuro que el fondo, se vota en los dos sentidos. La función hough_circle de skimage no usa el gradiente: vota por todos los ángulos.</aside>
+</section>
+
+<section class="slide" id="coste" data-fx="vc" data-section="Otras formas" data-title="Coste del acumulador">
+  <header class="s-head"><p class="kicker">Hough · complejidad</p><h2 class="s-title">Coste del acumulador</h2></header>
+  <div class="s-body g21">
+    <div><table class="t" data-seq="1">
+      <tr><th>forma</th><th>parámetros</th><th>celdas de H</th></tr>
+      <tr><td>recta</td><td class="mono">ρ, θ</td><td class="mono">n<sub>ρ</sub> · n<sub>θ</sub> = 727 · 180</td></tr>
+      <tr><td>circunferencia</td><td class="mono">a, b, r</td><td class="mono">16 · 507 · 558 ≈ 4,5 M</td></tr>
+      <tr><td>elipse</td><td class="mono">a, b, ejes, ángulo (5)</td><td class="mono">producto de 5 resoluciones</td></tr>
+    </table>
+    <figure class="fig" style="margin-top:26px">
+      <svg class="dg" viewBox="0 0 900 270" role="img" aria-label="celdas del acumulador en escala logarítmica">
+        <text x="180" y="54" style="text-anchor:end">recta</text>
+        <rect class="bar" data-seq="2" data-a="grow" x="190" y="22" width="307" height="48"/>
+        <text x="507" y="54" style="text-anchor:start">1,3·10<tspan class="sup" dy="-12">5</tspan></text>
+        <text x="180" y="129" style="text-anchor:end">círculo</text>
+        <rect class="bar" data-seq="3" data-a="grow" x="190" y="97" width="399" height="48"/>
+        <text x="599" y="129" style="text-anchor:start">4,5·10<tspan class="sup" dy="-12">6</tspan></text>
+        <text x="180" y="204" style="text-anchor:end">elipse*</text>
+        <rect class="bar ej" data-seq="4" data-a="grow" x="190" y="172" width="600" height="48"/>
+        <text x="800" y="204" style="text-anchor:start">10<tspan class="sup" dy="-12">10</tspan></text>
+        <line class="axis" x1="190" x2="190" y1="12" y2="230"/>
+        <text class="lb3" x="490" y="262">nº de celdas, escala logarítmica · *de ejemplo: 100 valores por parámetro</text>
+      </svg>
+    </figure></div>
+    <div class="vstack">
+      <div class="trap" data-seq="1"><b>regla</b>El acumulador crece como el <b>producto</b> de las resoluciones de los parámetros: cada parámetro extra multiplica memoria y tiempo.</div>
+      <p class="txt" data-seq="5">Tiempo de las rectas: \(N_{\text{bordes}}\times n_\theta\) votos (994 × 180 en cuadros).</p>
+      <p class="txt" data-seq="6"><b>Hough generalizado</b>: formas arbitrarias descritas por una tabla; solo se cita.</p>
+    </div>
+  </div>
+  <aside class="notes">Los tamaños de la tabla son los de nuestros ejemplos: 727 por 180 para las rectas de cuadros y 16 radios por la imagen de monedas de 507 por 558 para las circunferencias. Con más parámetros se pagaría demasiado, por eso se usan trucos como el gradiente o formas con pocos parámetros.</aside>
+</section>
+
+<!-- ================= E · REPRESENTAR FRONTERAS ================= -->
+<section class="slide is-plain divider" id="div-fronteras" data-fx="backdrop" data-seed="29" data-section="Fronteras" data-title="Representar fronteras">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque 4 · descriptores</p>
+    <h1 class="s-title xl">Representar fronteras</h1>
+    <p class="lead">Seguimiento, códigos de cadena, polígonos y signaturas.</p>
+  </div>
+</section>
+
+<section class="slide" id="traza" data-fx="vc" data-step-ms="520" data-section="Fronteras" data-title="Seguimiento de fronteras">
+  <header class="s-head"><p class="kicker">boundary tracing · algoritmo de Moore</p><h2 class="s-title">Seguimiento de fronteras</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:600px 1fr;gap:56px;align-items:center">
+    <figure class="fig"><svg class="dg" viewBox="0 0 596 512" role="img" aria-label="seguimiento de Moore">
+<rect class="cell" x="4" y="4" width="84" height="84"/>
+<rect class="cell" x="88" y="4" width="84" height="84"/>
+<rect class="cell" x="172" y="4" width="84" height="84"/>
+<rect class="cell" x="256" y="4" width="84" height="84"/>
+<rect class="cell" x="340" y="4" width="84" height="84"/>
+<rect class="cell" x="424" y="4" width="84" height="84"/>
+<rect class="cell" x="508" y="4" width="84" height="84"/>
+<rect class="cell" x="4" y="88" width="84" height="84"/>
+<rect class="cell" x="88" y="88" width="84" height="84"/>
+<rect class="on" x="172" y="88" width="84" height="84"/>
+<text class="one" x="214.0" y="139.0">1</text>
+<rect class="on" x="256" y="88" width="84" height="84"/>
+<text class="one" x="298.0" y="139.0">1</text>
+<rect class="on" x="340" y="88" width="84" height="84"/>
+<text class="one" x="382.0" y="139.0">1</text>
+<rect class="cell" x="424" y="88" width="84" height="84"/>
+<rect class="cell" x="508" y="88" width="84" height="84"/>
+<rect class="cell" x="4" y="172" width="84" height="84"/>
+<rect class="on" x="88" y="172" width="84" height="84"/>
+<text class="one" x="130.0" y="223.0">1</text>
+<rect class="cell" x="172" y="172" width="84" height="84"/>
+<rect class="cell" x="256" y="172" width="84" height="84"/>
+<rect class="cell" x="340" y="172" width="84" height="84"/>
+<rect class="on" x="424" y="172" width="84" height="84"/>
+<text class="one" x="466.0" y="223.0">1</text>
+<rect class="cell" x="508" y="172" width="84" height="84"/>
+<rect class="cell" x="4" y="256" width="84" height="84"/>
+<rect class="on" x="88" y="256" width="84" height="84"/>
+<text class="one" x="130.0" y="307.0">1</text>
+<rect class="cell" x="172" y="256" width="84" height="84"/>
+<rect class="cell" x="256" y="256" width="84" height="84"/>
+<rect class="cell" x="340" y="256" width="84" height="84"/>
+<rect class="on" x="424" y="256" width="84" height="84"/>
+<text class="one" x="466.0" y="307.0">1</text>
+<rect class="cell" x="508" y="256" width="84" height="84"/>
+<rect class="cell" x="4" y="340" width="84" height="84"/>
+<rect class="cell" x="88" y="340" width="84" height="84"/>
+<rect class="on" x="172" y="340" width="84" height="84"/>
+<text class="one" x="214.0" y="391.0">1</text>
+<rect class="cell" x="256" y="340" width="84" height="84"/>
+<rect class="on" x="340" y="340" width="84" height="84"/>
+<text class="one" x="382.0" y="391.0">1</text>
+<rect class="cell" x="424" y="340" width="84" height="84"/>
+<rect class="cell" x="508" y="340" width="84" height="84"/>
+<rect class="cell" x="4" y="424" width="84" height="84"/>
+<rect class="cell" x="88" y="424" width="84" height="84"/>
+<rect class="cell" x="172" y="424" width="84" height="84"/>
+<rect class="on" x="256" y="424" width="84" height="84"/>
+<text class="one" x="298.0" y="475.0">1</text>
+<rect class="cell" x="340" y="424" width="84" height="84"/>
+<rect class="cell" x="424" y="424" width="84" height="84"/>
+<rect class="cell" x="508" y="424" width="84" height="84"/>
+<g data-seq="1"><text class="lb ok" x="178" y="116" style="text-anchor:start">b₀</text><text class="lb err" x="130.0" y="139.0">c₀</text></g>
+<path class="scan" data-seq="2" data-a="draw" d="M148.5,130.0 A65.5,65.5 0 0 1 279.5,130.0"/><path class="scan-h" data-seq="2" d="M279.5,142.0 L270.5,124.0 L288.5,124.0 Z"/>
+<g data-seq="3"><path class="arr" d="M228.0,130.0 L268.0,130.0"/><path class="arr-h" d="M284.0,130.0 L268.0,139.0 L268.0,121.0 Z"/></g>
+<g data-seq="4"><path class="arr" d="M312.0,130.0 L352.0,130.0"/><path class="arr-h" d="M368.0,130.0 L352.0,139.0 L352.0,121.0 Z"/></g>
+<g data-seq="5"><path class="arr" d="M391.9,139.9 L444.8,192.8"/><path class="arr-h" d="M456.1,204.1 L438.4,199.2 L451.2,186.4 Z"/></g>
+<g data-seq="6"><path class="arr" d="M466.0,228.0 L466.0,268.0"/><path class="arr-h" d="M466.0,284.0 L457.0,268.0 L475.0,268.0 Z"/></g>
+<g data-seq="7"><path class="arr" d="M456.1,307.9 L403.2,360.8"/><path class="arr-h" d="M391.9,372.1 L396.8,354.4 L409.6,367.2 Z"/></g>
+<g data-seq="8"><path class="arr" d="M372.1,391.9 L319.2,444.8"/><path class="arr-h" d="M307.9,456.1 L312.8,438.4 L325.6,451.2 Z"/></g>
+<g data-seq="9"><path class="arr" d="M288.1,456.1 L235.2,403.2"/><path class="arr-h" d="M223.9,391.9 L241.6,396.8 L228.8,409.6 Z"/></g>
+<g data-seq="10"><path class="arr" d="M204.1,372.1 L151.2,319.2"/><path class="arr-h" d="M139.9,307.9 L157.6,312.8 L144.8,325.6 Z"/></g>
+<g data-seq="11"><path class="arr" d="M130.0,284.0 L130.0,244.0"/><path class="arr-h" d="M130.0,228.0 L139.0,244.0 L121.0,244.0 Z"/></g>
+<g data-seq="12"><path class="arr" d="M139.9,204.1 L192.8,151.2"/><path class="arr-h" d="M204.1,139.9 L199.2,157.6 L186.4,144.8 Z"/></g>
+</svg><figcaption>forma de ejemplo: 10 píxeles de frontera</figcaption></figure>
+    <ol class="pts" style="font-size:26px">
+      <li data-seq="1"><b>b₀</b>: primer 1 (arriba-izquierda). <b>c₀</b>: su vecino oeste, que es 0.</li>
+      <li data-seq="2">Recorrer los 8 vecinos de <b>b</b> en sentido <b>horario</b>, empezando en <b>c</b>.</li>
+      <li data-seq="3">El primer 1 es el nuevo <b>b</b>; el vecino anterior (un 0) es el nuevo <b>c</b>.</li>
+      <li data-seq="12">Parar al volver a <b>b₀</b> con el mismo siguiente píxel.</li>
+    </ol>
+  </div>
+  <aside class="notes">Objetivo: una vez que tenemos los píxeles de una frontera, ordenarlos para poder calcular descriptores. Desde b0, con c0 a su izquierda, se miran en sentido horario el noroeste, el norte, el noreste y el este: el este es el primer 1, así que pasa a ser b, y el noreste, que era 0, pasa a ser c. Se repite hasta volver a b0. El resultado es una lista ordenada y cerrada de los 10 píxeles. La forma es un ejemplo propio, no la de la lección, pero sigue las mismas reglas.</aside>
+</section>
+
+<section class="slide" id="freeman" data-fx="vc" data-section="Fronteras" data-title="Código de cadena de Freeman">
+  <header class="s-head"><p class="kicker">representación de fronteras</p><h2 class="s-title">Código de cadena de Freeman</h2></header>
+  <div class="s-body g12">
+    <figure class="fig" data-seq="1"><img src="assets/rosa.png" alt="rosa de direcciones" style="max-width:740px"><figcaption>0 = este, sentido antihorario</figcaption></figure>
+    <div class="vstack">
+      <p class="txt" data-seq="2">La frontera se guarda como el <b>punto inicial</b> y la secuencia de <b>direcciones</b> entre píxeles consecutivos.</p>
+      <p class="txt" data-seq="3"><b>4-conectividad:</b> códigos 0–3. <b>8-conectividad:</b> códigos 0–7.</p>
+      <div class="tip" data-seq="4"><b>remuestreo</b>Superponer una rejilla más gruesa y asignar los puntos a sus nodos: cadena más corta y menos sensible al ruido de digitalización (eficiencia y robustez).</div>
+      <div class="trap" data-seq="5"><b>ojo con el eje</b>En una imagen la fila crece hacia abajo: «norte» (2) es fila − 1 y «sur» (6) es fila + 1.</div>
+    </div>
+  </div>
+  <aside class="notes">Cada código es un múltiplo de 45 grados. Con 8 direcciones, cada elemento cabe en 3 bits. La lección resalta dos usos: ahorro de almacenamiento y análisis más fácil.</aside>
+</section>
+
+<section class="slide" id="cadena-ej" data-fx="vc" data-step-ms="480" data-section="Fronteras" data-title="Ejemplo: cadena a mano">
+  <header class="s-head"><p class="kicker">ejemplo resuelto · 8-conectividad</p><h2 class="s-title">Ejemplo: cadena a mano</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:560px 1fr;gap:48px;align-items:center">
+    <figure class="fig"><svg class="dg" viewBox="0 0 596 512" role="img" aria-label="código de cadena">
+<rect class="cell" x="4" y="4" width="84" height="84"/>
+<rect class="cell" x="88" y="4" width="84" height="84"/>
+<rect class="cell" x="172" y="4" width="84" height="84"/>
+<rect class="cell" x="256" y="4" width="84" height="84"/>
+<rect class="cell" x="340" y="4" width="84" height="84"/>
+<rect class="cell" x="424" y="4" width="84" height="84"/>
+<rect class="cell" x="508" y="4" width="84" height="84"/>
+<rect class="cell" x="4" y="88" width="84" height="84"/>
+<rect class="cell" x="88" y="88" width="84" height="84"/>
+<rect class="on" x="172" y="88" width="84" height="84"/>
+<text class="one" x="214.0" y="139.0">1</text>
+<rect class="on" x="256" y="88" width="84" height="84"/>
+<text class="one" x="298.0" y="139.0">1</text>
+<rect class="on" x="340" y="88" width="84" height="84"/>
+<text class="one" x="382.0" y="139.0">1</text>
+<rect class="cell" x="424" y="88" width="84" height="84"/>
+<rect class="cell" x="508" y="88" width="84" height="84"/>
+<rect class="cell" x="4" y="172" width="84" height="84"/>
+<rect class="on" x="88" y="172" width="84" height="84"/>
+<text class="one" x="130.0" y="223.0">1</text>
+<rect class="cell" x="172" y="172" width="84" height="84"/>
+<rect class="cell" x="256" y="172" width="84" height="84"/>
+<rect class="cell" x="340" y="172" width="84" height="84"/>
+<rect class="on" x="424" y="172" width="84" height="84"/>
+<text class="one" x="466.0" y="223.0">1</text>
+<rect class="cell" x="508" y="172" width="84" height="84"/>
+<rect class="cell" x="4" y="256" width="84" height="84"/>
+<rect class="on" x="88" y="256" width="84" height="84"/>
+<text class="one" x="130.0" y="307.0">1</text>
+<rect class="cell" x="172" y="256" width="84" height="84"/>
+<rect class="cell" x="256" y="256" width="84" height="84"/>
+<rect class="cell" x="340" y="256" width="84" height="84"/>
+<rect class="on" x="424" y="256" width="84" height="84"/>
+<text class="one" x="466.0" y="307.0">1</text>
+<rect class="cell" x="508" y="256" width="84" height="84"/>
+<rect class="cell" x="4" y="340" width="84" height="84"/>
+<rect class="cell" x="88" y="340" width="84" height="84"/>
+<rect class="on" x="172" y="340" width="84" height="84"/>
+<text class="one" x="214.0" y="391.0">1</text>
+<rect class="cell" x="256" y="340" width="84" height="84"/>
+<rect class="on" x="340" y="340" width="84" height="84"/>
+<text class="one" x="382.0" y="391.0">1</text>
+<rect class="cell" x="424" y="340" width="84" height="84"/>
+<rect class="cell" x="508" y="340" width="84" height="84"/>
+<rect class="cell" x="4" y="424" width="84" height="84"/>
+<rect class="cell" x="88" y="424" width="84" height="84"/>
+<rect class="cell" x="172" y="424" width="84" height="84"/>
+<rect class="on" x="256" y="424" width="84" height="84"/>
+<text class="one" x="298.0" y="475.0">1</text>
+<rect class="cell" x="340" y="424" width="84" height="84"/>
+<rect class="cell" x="424" y="424" width="84" height="84"/>
+<rect class="cell" x="508" y="424" width="84" height="84"/>
+<text class="lb err" x="166" y="118" style="text-anchor:end">inicio</text>
+<g data-seq="2"><path class="arr" d="M228.0,130.0 L268.0,130.0"/><path class="arr-h" d="M284.0,130.0 L268.0,139.0 L268.0,121.0 Z"/><text class="code-n" x="247.1" y="111.4">0</text></g>
+<g data-seq="3"><path class="arr" d="M312.0,130.0 L352.0,130.0"/><path class="arr-h" d="M368.0,130.0 L352.0,139.0 L352.0,121.0 Z"/><text class="code-n" x="348.9" y="111.4">0</text></g>
+<g data-seq="4"><path class="arr" d="M391.9,139.9 L444.8,192.8"/><path class="arr-h" d="M456.1,204.1 L438.4,199.2 L451.2,186.4 Z"/><text class="code-n" x="448.2" y="164.3">7</text></g>
+<g data-seq="5"><path class="arr" d="M466.0,228.0 L466.0,268.0"/><path class="arr-h" d="M466.0,284.0 L457.0,268.0 L475.0,268.0 Z"/><text class="code-n" x="496.0" y="264.5">6</text></g>
+<g data-seq="6"><path class="arr" d="M456.1,307.9 L403.2,360.8"/><path class="arr-h" d="M391.9,372.1 L396.8,354.4 L409.6,367.2 Z"/><text class="code-n" x="449.7" y="365.4">5</text></g>
+<g data-seq="7"><path class="arr" d="M372.1,391.9 L319.2,444.8"/><path class="arr-h" d="M307.9,456.1 L312.8,438.4 L325.6,451.2 Z"/><text class="code-n" x="347.6" y="463.0">5</text></g>
+<g data-seq="8"><path class="arr" d="M288.1,456.1 L235.2,403.2"/><path class="arr-h" d="M223.9,391.9 L241.6,396.8 L228.8,409.6 Z"/><text class="code-n" x="248.4" y="463.0">3</text></g>
+<g data-seq="9"><path class="arr" d="M204.1,372.1 L151.2,319.2"/><path class="arr-h" d="M139.9,307.9 L157.6,312.8 L144.8,325.6 Z"/><text class="code-n" x="146.3" y="365.4">3</text></g>
+<g data-seq="10"><path class="arr" d="M130.0,284.0 L130.0,244.0"/><path class="arr-h" d="M130.0,228.0 L139.0,244.0 L121.0,244.0 Z"/><text class="code-n" x="100.0" y="264.5">2</text></g>
+<g data-seq="11"><path class="arr" d="M139.9,204.1 L192.8,151.2"/><path class="arr-h" d="M204.1,139.9 L199.2,157.6 L186.4,144.8 Z"/><text class="code-n" x="147.8" y="164.3">1</text></g>
+</svg></figure>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Desde el 1 de arriba-izquierda, en sentido horario:</p>
+      <div class="chain"><span data-seq="2">0</span> <span data-seq="3">0</span> <span data-seq="4">7</span> <span data-seq="5">6</span> <span data-seq="6">5</span> <span data-seq="7">5</span> <span data-seq="8">3</span> <span data-seq="9">3</span> <span data-seq="10">2</span> <span data-seq="11">1</span></div>
+      <p class="txt" data-seq="12">E, E, SE, S, SO, SO, NO, NO, N, NE: 10 píxeles, 10 códigos; el último cierra la curva.</p>
+<pre class="code" data-seq="13">D = {(0,1):0, (-1,1):1, (-1,0):2, (-1,-1):3,
+     (0,-1):4, (1,-1):5, (1,0):6, (1,1):7}  # (Δfila, Δcol)
+def cadena(p):                   # p: píxeles ordenados
+    n = len(p)
+    return [D[(p[(i+1)%n][0] - p[i][0],
+               p[(i+1)%n][1] - p[i][1])] for i in range(n)]</pre>
+    </div>
+  </div>
+  <aside class="notes">La forma tiene diez píxeles de frontera, los mismos que en el seguimiento de Moore. Verificado en Python: con los píxeles (1,2),(1,3),(1,4),(2,5),(3,5),(4,4),(5,3),(4,2),(3,1),(2,1) la función devuelve 0076553321. Recordad que en el diccionario la fila crece hacia abajo, por eso el norte es menos uno en fila.</aside>
+</section>
+
+<section class="slide" id="normaliza" data-fx="vc" data-section="Fronteras" data-title="Normalización de la cadena">
+  <header class="s-head"><p class="kicker">invariancias</p><h2 class="s-title">Normalización de la cadena</h2></header>
+  <div class="s-body vstack">
+    <div class="g2">
+      <div class="vstack" data-seq="1"><p class="lab">a) punto de inicio</p><p class="txt">Rotar circularmente la secuencia hasta obtener el <b>menor entero</b>.</p>
+<pre class="code">def normalizar(c):
+    return min(c[i:] + c[:i] for i in range(len(c)))</pre></div>
+      <div class="vstack" data-seq="2"><p class="lab">b) rotación de la forma</p><p class="txt">Primera diferencia circular: cuántos giros de 45° antihorarios separan dos códigos.</p>
+<pre class="code">def primera_dif(c):
+    n = len(c)
+    return [(c[(i+1) % n] - c[i]) % 8
+            for i in range(n)]</pre></div>
+    </div>
+    <div class="eq" data-seq="3">$$d_i=(c_{i+1}-c_i)\bmod 8,\qquad d_{n-1}=(c_0-c_{n-1})\bmod 8$$</div>
+    <p class="txt" data-seq="4">Girar la forma \(k\cdot45^\circ\) suma \(k\) a todos los códigos: \((c_{i+1}+k)-(c_i+k)=c_{i+1}-c_i\). La diferencia no cambia.</p>
+  </div>
+  <aside class="notes">Normalizar el punto de inicio: la misma frontera puede empezar en cualquier píxel, así que elegimos la rotación circular que da el menor entero. Primera diferencia: es la demostración de la última línea, la constante k se cancela. Orden recomendado: primera diferencia del código circular y después normalizar el resultado. La lección calcula la diferencia con la convención d_i igual c_{i+1} menos c_i; Gonzalez y Woods colocan el elemento de cierre al principio. Es solo un desplazamiento circular.</aside>
+</section>
+
+<section class="slide" id="norm-tabla" data-fx="vc" data-section="Fronteras" data-title="Invariancias en la práctica">
+  <header class="s-head"><p class="kicker">ejemplo propio verificado en Python</p><h2 class="s-title">Invariancias en la práctica</h2></header>
+  <div class="s-body vstack">
+    <table class="t" data-seq="1">
+      <tr><th>caso</th><th>cadena</th><th>menor entero</th><th>1.ª diferencia</th><th>dif. normalizada</th></tr>
+      <tr><td>original</td><td class="mono c">0076553321</td><td class="mono c">0076553321</td><td class="mono c">0777060777</td><td class="mono ok">0607770777</td></tr>
+      <tr><td>inicio en otro píxel</td><td class="mono c">3321007655</td><td class="mono ok">0076553321</td><td class="mono c">0777077706</td><td class="mono ok">0607770777</td></tr>
+      <tr><td>forma girada 90°</td><td class="mono c">2210775543</td><td class="mono warn">0775543221</td><td class="mono ok">0777060777</td><td class="mono ok">0607770777</td></tr>
+    </table>
+    <ul class="pts" style="font-size:25px">
+      <li data-seq="2">Cambiar el inicio: lo arregla el <b>menor entero</b> (el segundo caso coincide con el primero).</li>
+      <li data-seq="3">Girar la forma: el código cambia, pero la <b>primera diferencia</b> es la misma (tercer caso).</li>
+      <li data-seq="4">Para ambas a la vez: diferencia primero y <b>normalizar</b> después (última columna idéntica).</li>
+    </ul>
+    <div class="trap" data-seq="5"><b>V/F</b>«La primera diferencia hace la cadena invariante a la rotación»: verdadero <b>solo para múltiplos de 45°</b> (la cuadrícula impone ese límite).</div>
+  </div>
+  <aside class="notes">Fijaos en el tercer caso: tras girar 90 grados el menor entero cambia a 0775543221, pero la diferencia del código girado coincide con la original. Si normalizamos primero y diferenciamos después, la diferencia sale desplazada circularmente, de ahí la columna final.</aside>
+</section>
+
+<section class="slide" id="ej-lec" data-fx="vc" data-section="Fronteras" data-title="Ejemplo real de la lección">
+  <header class="s-head"><p class="kicker">lección, diapositiva 17</p><h2 class="s-title">Ejemplo real de la lección</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:1fr 400px;gap:48px;align-items:center">
+    <div class="vstack">
+      <p class="lab" data-seq="1">código de cadena de 8 direcciones (32 elementos)</p>
+      <div class="chain sm" data-seq="1">00006066666666444444242222202202</div>
+      <p class="lab" data-seq="2">menor entero: ya es el mínimo (empieza por 0000)</p>
+      <p class="lab" data-seq="3">primera diferencia (circular)</p>
+      <div class="chain sm" data-seq="3">0006260000000600000626000062062<b>6</b></div>
+      <div class="eq sm" data-seq="3">$$0\!-\!0,\ 0\!-\!0,\ 0\!-\!0,\ 6\!-\!0=6,\ 0\!-\!6\equiv2,\ 6\!-\!0=6,\dots$$</div>
+      <p class="txt" data-seq="3">La última (naranja) es el cierre: \((c_0-c_{31})\bmod 8=(0-2)\bmod8=6\).</p>
+      <p class="txt" data-seq="5"><b>6</b> = giro de 90° a la derecha, <b>2</b> = giro de 90° a la izquierda. Ventajas: ahorro de almacenamiento y análisis más fácil.</p>
+    </div>
+    <figure class="fig"><svg class="dg" viewBox="0 0 388 456" role="img" aria-label="forma de la cadena">
+<line class="gl" x1="40" x2="40" y1="30" y2="426"/>
+<line class="gl" x1="84" x2="84" y1="30" y2="426"/>
+<line class="gl" x1="128" x2="128" y1="30" y2="426"/>
+<line class="gl" x1="172" x2="172" y1="30" y2="426"/>
+<line class="gl" x1="216" x2="216" y1="30" y2="426"/>
+<line class="gl" x1="260" x2="260" y1="30" y2="426"/>
+<line class="gl" x1="304" x2="304" y1="30" y2="426"/>
+<line class="gl" x1="348" x2="348" y1="30" y2="426"/>
+<line class="gl" x1="40" x2="348" y1="426" y2="426"/>
+<line class="gl" x1="40" x2="348" y1="382" y2="382"/>
+<line class="gl" x1="40" x2="348" y1="338" y2="338"/>
+<line class="gl" x1="40" x2="348" y1="294" y2="294"/>
+<line class="gl" x1="40" x2="348" y1="250" y2="250"/>
+<line class="gl" x1="40" x2="348" y1="206" y2="206"/>
+<line class="gl" x1="40" x2="348" y1="162" y2="162"/>
+<line class="gl" x1="40" x2="348" y1="118" y2="118"/>
+<line class="gl" x1="40" x2="348" y1="74" y2="74"/>
+<line class="gl" x1="40" x2="348" y1="30" y2="30"/>
+<path class="trace" data-seq="4" data-a="draw" d="M128,30 L172,30 L216,30 L260,30 L304,30 L304,74 L348,74 L348,118 L348,162 L348,206 L348,250 L348,294 L348,338 L348,382 L348,426 L304,426 L260,426 L216,426 L172,426 L128,426 L84,426 L84,382 L40,382 L40,338 L40,294 L40,250 L40,206 L40,162 L84,162 L84,118 L84,74 L128,74 L128,30"/>
+<circle class="t-r" data-seq="5" cx="304" cy="30" r="11"/>
+<circle class="t-l" data-seq="5" cx="304" cy="74" r="11"/>
+<circle class="t-r" data-seq="5" cx="348" cy="74" r="11"/>
+<circle class="t-r" data-seq="5" cx="348" cy="426" r="11"/>
+<circle class="t-r" data-seq="5" cx="84" cy="426" r="11"/>
+<circle class="t-l" data-seq="5" cx="84" cy="382" r="11"/>
+<circle class="t-r" data-seq="5" cx="40" cy="382" r="11"/>
+<circle class="t-r" data-seq="5" cx="40" cy="162" r="11"/>
+<circle class="t-l" data-seq="5" cx="84" cy="162" r="11"/>
+<circle class="t-r" data-seq="5" cx="84" cy="74" r="11"/>
+<circle class="t-l" data-seq="5" cx="128" cy="74" r="11"/>
+<circle class="t-r" data-seq="5" cx="128" cy="30" r="11"/>
+<circle class="t-s" cx="128" cy="30" r="8"/>
+</svg>
+      <div class="leg" data-seq="5"><span><i style="background:var(--accent-3)"></i>6: derecha</span><span><i style="background:var(--ok)"></i>2: izquierda</span></div>
+    </figure>
+  </div>
+  <aside class="notes">Esta es la secuencia de la lección; la diferencia coincide con la de la lección elemento a elemento, y se ha comprobado en Python. A la derecha está la forma que describe la cadena, dibujada siguiendo los códigos desde el punto blanco: es cerrada. Hay ocho giros a la derecha (seises) y cuatro a la izquierda (doses): ocho por menos noventa más cuatro por noventa da menos 360 grados, una vuelta completa en sentido horario.</aside>
+</section>
+
+<section class="slide" id="poligono" data-fx="vc" data-section="Fronteras" data-title="Aproximación poligonal">
+  <header class="s-head"><p class="kicker">representar fronteras con pocos segmentos</p><h2 class="s-title">Aproximación poligonal</h2></header>
+  <div class="s-body vstack">
+    <div class="g2" style="align-items:center">
+      <p class="txt" data-seq="1"><b>Objetivo:</b> capturar la esencia de la frontera con el <b>mínimo</b> número de segmentos.</p>
+      <p class="txt" data-seq="2"><b>Analogía de la goma elástica:</b> la frontera queda dentro de una banda de celdas; una goma tensada dentro de la banda da el polígono de <b>perímetro mínimo</b> (MPP).</p>
+    </div>
+    <figure class="fig" data-seq="3"><img src="assets/poligono.png" alt="aproximación poligonal" style="max-width:1500px"><figcaption>ilustración propia con Douglas-Peucker (no es el MPP): menos vértices a mayor tolerancia</figcaption></figure>
+  </div>
+  <aside class="notes">El MPP de la lección encierra la frontera en una banda de celdas de tamaño S y busca el polígono de perímetro mínimo dentro de ella. Mayor S, menos vértices pero peor ajuste. La imagen de abajo usa otro algoritmo, Douglas-Peucker, solo para mostrar el compromiso entre número de vértices y fidelidad.</aside>
+</section>
+
+<section class="slide" id="mpp" data-fx="vc" data-section="Fronteras" data-title="MPP: vértices según S">
+  <header class="s-head"><p class="kicker">lección, diapositiva 19 · hoja de 566×566</p><h2 class="s-title">MPP: vértices según S</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t" data-seq="1">
+        <tr><th>S (tamaño de celda)</th><th>N (vértices)</th></tr>
+        <tr><td class="mono">2</td><td class="mono c">206</td></tr><tr><td class="mono">4</td><td class="mono c">127</td></tr>
+        <tr><td class="mono">8</td><td class="mono c">92</td></tr><tr><td class="mono">16</td><td class="mono c">66</td></tr>
+        <tr><td class="mono">32</td><td class="mono c">32</td></tr><tr><td class="mono">64</td><td class="mono c">13</td></tr>
+      </table>
+      <p class="cap-small" data-seq="2">Frontera 8-conectada original: 1900 puntos.</p>
+    </div>
+    <div class="vstack">
+      <div class="fx" data-role="plot" data-x="0,64" data-y="0,220" data-xl="S (tamaño de celda)" data-yl="N (vértices)" data-pts='[[2,206],[4,127],[8,92],[16,66],[32,32],[64,13]]' style="height:430px"></div>
+      <div class="tip" data-seq="3"><b>compromiso</b>S mayor: menos vértices y representación más compacta, pero se pierden detalles (a S = 64 la hoja queda casi irreconocible).</div>
+    </div>
+  </div>
+  <aside class="notes">Pasar de 1900 puntos a 206 vértices con S igual a 2 ya es una compresión de casi diez veces. Con S igual a 32 se llega a 32 vértices y todavía se reconoce la hoja, con S igual a 64 solo quedan 13 vértices.</aside>
+</section>
+
+<section class="slide" id="firmas" data-fx="vc" data-section="Fronteras" data-title="Signaturas">
+  <header class="s-head"><p class="kicker">representación 1D de la frontera</p><h2 class="s-title">Signaturas</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq sm" data-seq="1">$$r(\theta)=\lVert P(\theta)-C\rVert$$</div>
+      <p class="txt" data-seq="1">Distancia del centroide \(C\) al punto de la frontera en el ángulo \(\theta\). Objetivo: una representación más simple de describir.</p>
+      <p class="txt" data-seq="2"><b>Círculo:</b> \(r(\theta)=A\), constante.</p>
+      <p class="txt" data-seq="3"><b>Cuadrado</b> de semilado \(A\): \(r(\theta)=A/\max(|\cos\theta|,|\sin\theta|)\), con mínimo \(A\) y picos \(\sqrt2A\) en las esquinas (45°, 135°, 225° y 315°).</p>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,360" data-y="0,1.6" data-xl="θ (°)" data-yl="r(θ), con A = 1" data-fns='[{"f":"x=>1","label":"círculo"},{"f":"x=>1/Math.max(Math.abs(Math.cos(x*Math.PI/180)),Math.abs(Math.sin(x*Math.PI/180)))","label":"cuadrado"}]' style="height:560px"></div>
+  </div>
+  <aside class="notes">Las dos curvas se calculan con las fórmulas de arriba, igual que la figura de la lección. La signatura es invariante a la traslación, porque se mide desde el centroide; un giro la desplaza en theta y un cambio de escala la multiplica, que se corrige normalizando por el máximo.</aside>
+</section>
+
+<section class="slide" id="firmas-ab" data-fx="vc" data-section="Fronteras" data-title="Signaturas: ¿A o B?">
+  <header class="s-head"><p class="kicker">lección, diapositiva 21 · emparejar forma y signatura</p><h2 class="s-title">Signaturas: ¿A o B?</h2></header>
+  <div class="s-body g2">
+    <div class="fx" data-role="plot" data-x="0,360" data-y="0,2.2" data-xl="θ (°)" data-yl="r(θ), formas ideales" data-fns='[{"f":"x=>{const t=((x%120)+120)%120;return 1/Math.cos((t-60)*Math.PI/180)/2}","label":"triángulo"},{"f":"x=>1/Math.max(Math.abs(Math.cos(x*Math.PI/180)),Math.abs(Math.sin(x*Math.PI/180)))","label":"cuadrado"}]' style="height:560px"></div>
+    <div class="vstack">
+      <p class="txt" data-seq="1">Cada <b>pico</b> de la signatura es una <b>esquina</b> de la forma: lejos del centroide.</p>
+      <p class="txt" data-seq="2">Tres picos <span class="pill">3</span> → <b>triángulo</b> (forma A). Cuatro picos <span class="pill">4</span> → <b>cuadrado</b> (forma B).</p>
+      <div class="exam" data-seq="3"><b>en el examen</b>Contar los picos y compararlos con el número de esquinas. Las formas reales son redondeadas, así que los picos tienen alturas desiguales, pero se cuentan igual.</div>
+    </div>
+  </div>
+  <aside class="notes">En la lección hay dos signaturas reales para las formas A, un triángulo, y B, un cuadrado. La que tiene cuatro picos es la del cuadrado, la de tres es la del triángulo. Aquí se dibujan las signaturas ideales calculadas: el triángulo equilátero tiene picos en 0, 120 y 240 grados, y el cuadrado en 45 grados y sus múltiplos de 90. El triángulo está reescalado para que ambas curvas quepan en el mismo eje.</aside>
+</section>
+
+<!-- ================= F · CIERRE ================= -->
+<section class="slide" id="chuleta" data-fx="vc" data-section="Cierre" data-title="Chuleta de contornos">
+  <header class="s-head"><p class="kicker">para memorizar</p><h2 class="s-title">Chuleta de contornos</h2></header>
+  <div class="s-body vstack">
+    <table class="t lg">
+      <tr><th>tema</th><th>qué recordar</th></tr>
+      <tr><td>enlace local</td><td>\(|M-M'|\le E\) y \(|\alpha-\alpha'|\le A\); versión rápida: umbral, rellenar huecos \(\lt L\) por filas, girar y repetir</td></tr>
+      <tr><td>recta normal</td><td>\(\rho=x\cos\theta+y\sin\theta\), \(\theta\in[-90^\circ,90^\circ)\), \(\rho\in[-D,D]\), \(D=\sqrt{H^2+W^2}\)</td></tr>
+      <tr><td>Hough rectas</td><td>punto = sinusoide; recta = pico; \(H\) tiene \((2D+1)\times n_\theta\) celdas; 3 colineales: sinusoides concurrentes</td></tr>
+      <tr><td>circunferencia</td><td>\((a,b,r)\): acumulador 3D; con gradiente \(a=x-r\cos\varphi\), \(b=y-r\sin\varphi\)</td></tr>
+      <tr><td>cadena de Freeman</td><td>0 = este, antihorario; 8 códigos; inicio: menor entero; \(d_i=(c_{i+1}-c_i)\bmod8\)</td></tr>
+      <tr><td>signatura</td><td>\(r(\theta)\) desde el centroide: círculo constante, cuadrado con 4 picos \(\sqrt2A\)</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Repasad esta tabla en voz alta; son las fórmulas que hay que saber escribir de memoria.</aside>
+</section>
+
+<section class="slide" id="vf" data-fx="vc" data-section="Cierre" data-title="V/F de práctica">
+  <header class="s-head"><p class="kicker">examen · verdadero o falso</p><h2 class="s-title">V/F de práctica</h2></header>
+  <div class="s-body vstack">
+    <table class="t lg">
+      <tr><th>afirmación</th><th>respuesta</th><th>matiz</th></tr>
+            <tr><td>En Hough, un punto de la imagen es una recta en \((\rho,\theta)\).</td><td class="err" data-seq="1">Falso</td><td data-seq="1">Es una <b>sinusoide</b>.</td></tr>
+      <tr><td>La primera diferencia hace la cadena invariante a la rotación.</td><td class="ok" data-seq="2">Verdadero</td><td data-seq="2">Para giros múltiplos de 45°.</td></tr>
+      <tr><td>La forma \(y=ax+b\) es la preferida en Hough.</td><td class="err" data-seq="3">Falso</td><td data-seq="3">La pendiente es infinita en verticales.</td></tr>
+      <tr><td>Los picos del acumulador indican rectas con muchos puntos.</td><td class="ok" data-seq="4">Verdadero</td><td data-seq="4">Cada celda cuenta los píxeles de borde de esa recta.</td></tr>
+      <tr><td>Al girar la imagen \(\alpha\), \(\rho\) de los picos no cambia nunca.</td><td class="err" data-seq="5">Falso</td><td data-seq="5">Solo si se gira alrededor del origen; \(\theta\) sí cambia en \(\alpha\).</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Las cuatro primeras son las de práctica de la lección; la quinta aclara la regla de la rotación que preguntan en el Lab 4.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

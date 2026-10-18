@@ -1,0 +1,65 @@
+:root { --folio: "VC.LAB3 // "; }
+.fig { display: grid; gap: 8px; justify-items: center; align-content: start; margin: 0; }
+.fig img { height: var(--h, 420px); width: auto; max-width: 100%; object-fit: contain; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); }
+.fig figcaption { font: 400 22px/1.3 var(--font-mono); color: var(--fg-2); text-align: center; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; align-items: start; }
+.g3t { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; align-items: start; }
+.quad { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; width: 260px; }
+.quad div { height: 124px; display: grid; place-items: center; font: 600 40px var(--font-mono); color: var(--fg); border-radius: var(--radius); }
+.quad .q1 { background: color-mix(in srgb, var(--cat-1) 55%, var(--bg-2)); }
+.quad .q2 { background: color-mix(in srgb, var(--cat-2) 55%, var(--bg-2)); }
+.quad .q3 { background: color-mix(in srgb, var(--cat-3) 55%, var(--bg-2)); }
+.quad .q4 { background: color-mix(in srgb, var(--cat-4) 55%, var(--bg-2)); }
+.quads { display: flex; gap: 40px; align-items: center; justify-content: center; font: 500 26px var(--font-mono); color: var(--fg-2); }
+.quads .arrow { font-size: 64px; color: var(--accent); }
+.quads figcaption { text-align: center; margin-top: 10px; }
+.big-ok { font: 600 64px/1 var(--font-display); color: var(--ok); }
+.row-eq { display: flex; gap: 40px; align-items: center; justify-content: center; }
+.res { font: 500 26px/1.5 var(--font-mono); color: var(--fg-2); }
+.res b { color: var(--accent); }
+aside.notes { display: none !important; }
+
+/* --- pase de revisión: tamaños y piezas nuevas --- */
+.api table { font-size: 25px; }
+.api .sig { font-size: 30px; }
+.tip, .trap, .exam { font-size: 26px; }
+table.t { font-size: 26px; }
+pre.code { font-size: 26px; }
+pre.code.sm { font-size: 24px; line-height: 1.42; }
+.fig figcaption { font-size: 24px; }
+.res { font-size: 28px; }
+.quad { width: 300px; gap: 8px; }
+.quad div { height: 142px; font-size: 48px; }
+.quads { gap: 48px; }
+/* tiras 1D de índices (fftshift con N impar) */
+.strips { display: grid; gap: 18px; }
+.strip { display: grid; grid-template-columns: 430px auto auto; gap: 18px; align-items: center; }
+.strip .lab { font: 500 24px/1.2 var(--font-mono); color: var(--fg-2); }
+.strip .cells { display: flex; gap: 6px; }
+.strip .cells span { width: 64px; height: 64px; display: grid; place-items: center; font: 600 30px var(--font-mono); color: var(--fg); border-radius: var(--radius); background: color-mix(in srgb, var(--cat-1) 40%, var(--bg-2)); }
+.strip .cells span.dc { background: color-mix(in srgb, var(--accent) 70%, var(--bg-2)); }
+.strip .ok, .strip .bad { font: 600 24px var(--font-mono); }
+.strip .ok { color: var(--ok); } .strip .bad { color: var(--err); }
+/* verdadero / falso */
+.vf { display: grid; gap: 14px; }
+.vf > div { display: grid; grid-template-columns: 1fr 520px; gap: 24px; align-items: center; padding: 14px 20px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: color-mix(in srgb, var(--bg-2) 60%, transparent); }
+.vf .q { font-size: 26px; line-height: 1.35; color: var(--fg); }
+.vf .a { font-size: 24px; line-height: 1.35; color: var(--fg-2); }
+.vf .a b { font: 700 26px var(--font-mono); margin-right: 10px; }
+.vf .a.v b { color: var(--ok); } .vf .a.f b { color: var(--err); }
+/* cadena de operaciones */
+.flow { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: nowrap; }
+.flow .n { padding: 14px 20px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); font: 500 26px var(--font-mono); color: var(--fg); background: var(--bg-2); white-space: nowrap; }
+.flow .n.hl { border-color: var(--accent); color: var(--accent); }
+.flow .ar { font: 600 30px var(--font-mono); color: var(--fg-3); }
+/* ajustes del segundo pase */
+.strip { grid-template-columns: 400px auto auto; white-space: nowrap; gap: 22px; }
+.strip .cells span { width: 76px; height: 76px; font-size: 34px; }
+.strips { gap: 24px; }
+.vf > div { padding: 20px 24px; }
+.vf .q { font-size: 28px; }
+.vf .a { font-size: 25px; }
+.big-ok { font-size: 84px; }
+.lgd { display: grid; gap: 10px; font: 400 24px var(--font-mono); color: var(--fg); }
+.lgd span { display: flex; align-items: center; gap: 14px; }
+.lgd i { display: inline-block; width: 44px; }

@@ -265,3 +265,5 @@ svg .thr { stroke: var(--warn); stroke-width: 3; stroke-dasharray: 8 6; }
 svg .halo { font-size: 22px; }
 .enfrenta { height: calc(100% - 110px); }
 .medidos .big.word { font-size: 76px; }
+/* Arcilla pone el folio abajo a la izquierda: el pie sube por encima */
+[data-style="arcilla"] .slide > .src.src.src { bottom: 84px; }

@@ -1,0 +1,853 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · El parcial resuelto</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ============ BLOQUE A · FORMATO Y ESTRATEGIA ============ -->
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="10" data-section="Estrategia" data-title="El parcial, resuelto">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · parcial</p>
+    <h1 class="s-title xl">El parcial, resuelto</h1>
+    <p class="lead">Lunes 19-oct-2026 · 15:00–16:30 · aula TD1202AA<br>Lecciones 0–4 y labs 0–4.<br>Los 5 ejercicios del ejemplo, la pregunta V/F y 5 ejercicios de práctica, con el código ejecutado.</p>
+  </div>
+  <aside class="notes">Este deck es el repaso final. Todo el código que ves se ha ejecutado de verdad con las imágenes del curso (el script es pruebas.py). Si algo falla en tu cabeza durante el examen, vuelve al método de las diapositivas 3 y 4.</aside>
+</section>
+
+<section class="slide" id="formato" data-fx="vc" data-section="Estrategia" data-title="Cómo es el examen">
+  <header class="s-head"><p class="kicker">formato</p><h2 class="s-title">Cómo es el examen</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><b>Escrito, 1,5 h.</b> Sin ordenador: escribes funciones Python/NumPy/SciPy a mano.</p>
+      <p class="txt" data-seq="2"><b>Funciones cortas:</b> entre 2 y 6 líneas, sin bucles si se puede.</p>
+      <p class="txt" data-seq="3"><b>Verdadero/falso</b> con justificación: «The convolution theorem offers the possibility of speeding up image filtering».</p>
+      <p class="txt" data-seq="4"><b>Justificar:</b> el 5b pide una «brief explanation» del procedimiento.</p>
+    </div>
+    <div class="vstack">
+      <table class="t">
+        <tr><th>Se valora</th><th>Cómo conseguirlo</th></tr>
+        <tr><td class="ok">Vectorizar</td><td>operaciones sobre toda la matriz</td></tr>
+        <tr><td class="ok">Función adecuada</td><td><code>convolve</code>, <code>gaussian_filter</code>, <code>medfilt2d</code>…</td></tr>
+        <tr><td class="ok">Justificar</td><td>nombrar la teoría que lo respalda</td></tr>
+        <tr><td class="warn">Tipo y forma</td><td>float, bool, canales</td></tr>
+      </table>
+      <div class="exam" data-seq="5"><b>en el examen</b>Una solución con bucles suele ser válida, pero puntúa peor que una vectorizada.</div>
+    </div>
+  </div>
+  <aside class="notes">El ejemplo del profesor tiene cinco ejercicios: filterIm, countIm, blurFgBk, gamma_correction con rgb2gray y el ruido TLA. Ninguna solución oficial pasa de unas 10 líneas. Lo que se premia es reconocer la operación de teoría detrás del enunciado.</aside>
+</section>
+
+<section class="slide" id="metodo" data-fx="vc" data-section="Estrategia" data-title="Método en 4 pasos">
+  <header class="s-head"><p class="kicker">cualquier ejercicio de código</p><h2 class="s-title">Método en 4 pasos</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><span class="step-n">1</span><b>Operación de teoría.</b> ¿Puntual, vecindad lineal, vecindad no lineal, frecuencia o bordes?</p>
+      <p class="txt" data-seq="2"><span class="step-n">2</span><b>Función.</b> Elige la de biblioteca (árbol de la diapositiva siguiente).</p>
+      <p class="txt" data-seq="3"><span class="step-n">3</span><b>Tipo y forma.</b> ¿float o uint8? ¿máscara booleana? ¿1 canal o 3?</p>
+      <p class="txt" data-seq="4"><span class="step-n">4</span><b>No modificar la entrada.</b> Trabaja sobre una copia y devuelve el resultado.</p>
+    </div>
+    <div class="vstack">
+      <pre class="code sm" data-seq="5">def f(im, ...):
+    im = im.astype(float)      # paso 3
+    # paso 1 y 2: operación + función
+    out = convolve(im, mask)
+    return out                 # paso 4: im intacta</pre>
+      <div class="tip" data-seq="6"><b>truco</b>Antes de escribir, di en voz alta: «esto es un ___ de la lección ___». Si no sabes completarlo, aún no sabes qué función usar.</div>
+    </div>
+  </div>
+  <aside class="notes">El paso 3 es donde se pierden más puntos: los errores de dtype no dan excepción, dan resultados raros. El paso 4 es la errata típica de las soluciones oficiales, como veremos en los ejercicios 3 y 5.</aside>
+</section>
+
+<section class="slide" id="arbol" data-fx="vc" data-section="Estrategia" data-title="¿Qué función llamo?">
+  <header class="s-head"><p class="kicker">árbol de decisión</p><h2 class="s-title">¿Qué función llamo?</h2></header>
+  <div class="s-body flow">
+    <div class="row" data-seq="1"><span>Cada píxel depende solo de sí mismo</span><span class="arr">→</span><span>aritmética NumPy: <code>a*im**g</code>, <code>np.where</code>, LUT <code>T[im]</code>, <code>np.clip</code></span></div>
+    <div class="row" data-seq="2"><span>Suma ponderada de una ventana (lineal)</span><span class="arr">→</span><span><code>convolve(im, mask)</code> · <code>gaussian_filter(im, sigma)</code></span></div>
+    <div class="row" data-seq="3"><span>Contar o sumar en una ventana</span><span class="arr">→</span><span>umbral booleano, luego <code>convolve(·, np.ones((sX,sY)))</code></span></div>
+    <div class="row" data-seq="4"><span>Ordenar la ventana (mediana, mín., máx.)</span><span class="arr">→</span><span><code>medfilt2d</code> · <code>median_filter</code> · <code>minimum_filter</code> · <code>maximum_filter</code></span></div>
+    <div class="row" data-seq="5"><span>Filtro grande o definido por frecuencias</span><span class="arr">→</span><span><code>np.fft.fft2</code> + máscara + <code>ifft2</code></span></div>
+    <div class="row" data-seq="6"><span>Bordes · rectas</span><span class="arr">→</span><span><code>sobel</code>, <code>feature.canny</code> · <code>hough_line</code></span></div>
+    <div class="row" data-seq="7"><span>Mezclar dos imágenes según una máscara</span><span class="arr">→</span><span>combinación convexa <code>a*im1 + (1-a)*im2</code></span></div>
+  </div>
+  <aside class="notes">Esta diapositiva es la que hay que memorizar. Cada fila es una operación de teoría: punto (lección 1), vecindad lineal (lección 2), vecindad no lineal (lección 2), frecuencia (lección 3), bordes (lección 4) y rectas (lección 5, lab 4).</aside>
+</section>
+
+<!-- ============ BLOQUE B · DICCIONARIO ============ -->
+<section class="slide is-plain divider" id="d-dicc" data-fx="backdrop" data-seed="11" data-section="Diccionario" data-title="Diccionario">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b · del enunciado al código</p>
+    <h1 class="s-title xl">Diccionario</h1>
+    <p class="lead">Frases fijas que delatan la operación de teoría, y los imports de siempre.</p>
+  </div>
+</section>
+
+<section class="slide" id="diccionario" data-fx="vc" data-section="Diccionario" data-title="Palabras del enunciado">
+  <header class="s-head"><p class="kicker">enunciado → teoría → función</p><h2 class="s-title">Palabras del enunciado</h2></header>
+  <div class="s-body">
+    <table class="t">
+      <tr><th>El enunciado dice…</th><th>Teoría</th><th>Función</th></tr>
+      <tr><td>«in the spatial domain the filter with mask»</td><td>convolución (T2)</td><td><code>convolve</code></td></tr>
+      <tr><td>«window of size … around (i, j)»</td><td>vecindad</td><td><code>convolve</code> con unos</td></tr>
+      <tr><td>«at least minCount pixels»</td><td>suma ≥ umbral</td><td><code>… &gt;= minCount</code></td></tr>
+      <tr><td>«blurred with a Gaussian of std sigma»</td><td>paso bajo (T2)</td><td><code>gaussian_filter(im, sigma)</code></td></tr>
+      <tr><td>«gamma correction a·I^γ»</td><td>potencia (T1)</td><td><code>a*im**gamma</code></td></tr>
+      <tr><td>«salt and pepper / impulse / probability p»</td><td>ruido impulsivo</td><td><code>rand(m,n) &lt; p</code> + mediana</td></tr>
+      <tr><td>«frequency / Fourier / convolution theorem»</td><td>T3</td><td><code>np.fft</code></td></tr>
+      <tr><td>«edges / gradient»</td><td>T4</td><td><code>sobel</code> · <code>canny</code></td></tr>
+      <tr><td>«lines»</td><td>Hough (T5, lab 4)</td><td><code>hough_line</code></td></tr>
+    </table>
+  </div>
+  <aside class="notes">Aprende a traducir. El enunciado casi nunca nombra la función, pero siempre usa una frase fija que apunta a la teoría. «At least minCount pixels in a window» es una suma sobre una ventana, es decir, una convolución con unos.</aside>
+</section>
+
+<section class="slide" id="imports" data-fx="vc" data-section="Diccionario" data-title="Imports que escribir siempre">
+  <header class="s-head"><p class="kicker">si el enunciado no los da</p><h2 class="s-title">Imports de siempre</h2></header>
+  <div class="s-body g21">
+<pre class="code" data-seq="1" style="font-size:28px">import numpy as np
+from scipy.ndimage import convolve, gaussian_filter
+from scipy.signal import medfilt2d
+from PIL import Image
+
+im = np.array(Image.open('building.ppm')) / 255.0</pre>
+    <div class="vstack">
+      <div class="trap" data-seq="2"><b>trampa</b><code>scipy.signal.convolve2d</code> usa <code>mode='full'</code> por defecto y devuelve una imagen más grande. <code>scipy.ndimage.convolve</code> conserva el tamaño (<code>mode='reflect'</code>).</div>
+      <div class="tip" data-seq="3"><b>truco</b>Dividir entre 255.0 pasa uint8 a float en [0, 1]: lo que necesitan gamma y el ruido TLA.</div>
+    </div>
+  </div>
+  <aside class="notes">Escribir los imports cuesta diez segundos y evita ambigüedades. Si el enunciado ya trae los imports, úsalos tal cual. La normalización entre 255.0 aparece literalmente en el ejercicio 5.</aside>
+</section>
+
+<!-- ============ BLOQUE C · EJERCICIO 1 ============ -->
+<section class="slide is-plain divider" id="d-e1" data-fx="backdrop" data-seed="12" data-section="Ejercicio 1" data-title="filterIm">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">ejercicio 1 · filtrado espacial</p>
+    <h1 class="s-title xl">filterIm</h1>
+    <p class="lead">Una máscara 3×3: qué detecta, por qué conv = corr y la trampa del uint8.</p>
+  </div>
+</section>
+
+<section class="slide" id="e1-sol" data-fx="vc" data-section="Ejercicio 1" data-title="filterIm: enunciado">
+  <header class="s-head"><p class="kicker">ejercicio 1 · filtrado espacial</p><h2 class="s-title">filterIm</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <p class="txt">«Write <code>filterIm(im)</code> to apply in the spatial domain the filter with mask…» y devuelve la imagen filtrada.</p>
+<pre class="code" data-seq="1">def filterIm(im):
+    mask = np.array([[-1,-1, 2],
+                     [-1, 2,-1],
+                     [ 2,-1,-1]])
+    return convolve(im, mask)</pre>
+      <div class="exam" data-seq="2"><b>en el examen</b>«Spatial domain + mask» = <code>convolve</code>. Dos líneas: máscara y llamada.</div>
+    </div>
+    <div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0" style="height:420px"></div>
+  </div>
+  <aside class="notes">Es el ejercicio más simple. El valor está en saber qué hace la máscara, que es lo que preguntaría una V/F: detector de líneas, suma cero, simetría central.</aside>
+</section>
+
+<section class="slide" id="e1-teoria" data-fx="vc" data-section="Ejercicio 1" data-title="filterIm: qué hace la máscara">
+  <header class="s-head"><p class="kicker">ejercicio 1 · teoría</p><h2 class="s-title">Qué hace la máscara</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><b>(a) Detector de líneas a +45°</b> (T4). Los 2 están en la diagonal «/».</p>
+      <div class="eq sm" data-seq="2">$$\sum_{i,j} h(i,j) = -1-1+2-1+2-1+2-1-1 = 0$$</div>
+      <p class="txt" data-seq="3">Suma 0 ⇒ en una zona plana la respuesta es 0: no detecta el nivel de gris, solo el cambio.</p>
+      <p class="txt" data-seq="4"><b>(b) Simetría central:</b> girada 180° queda igual ⇒ <code>convolve</code> y <code>correlate</code> dan lo mismo (T2).</p>
+    </div>
+    <div class="vstack">
+      <div class="g2">
+        <div class="vstack"><div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0" style="height:300px"></div><p class="txt" style="text-align:center">h</p></div>
+        <div class="vstack"><div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0" style="height:300px"></div><p class="txt" style="text-align:center">h girada 180°</p></div>
+      </div>
+      <div class="eq sm" data-seq="5">$$h(i,j)=h(-i,-j)\;\Rightarrow\; f*h=f\star h$$</div>
+    </div>
+  </div>
+  <aside class="notes">Girar 180° es invertir filas y columnas a la vez. La fila de arriba [-1,-1,2] pasa abajo invertida [2,-1,-1], y la de abajo pasa arriba invertida: el resultado es la misma matriz. Por eso conv y corr coinciden. Una máscara de Sobel, en cambio, es antisimétrica: al girarla cambia de signo.</aside>
+</section>
+
+<section class="slide" id="e1-num" data-fx="vc" data-section="Ejercicio 1" data-title="filterIm: ejemplo numérico">
+  <header class="s-head"><p class="kicker">ejercicio 1 · ejemplo inventado</p><h2 class="s-title">Línea diagonal 5×5</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[0,0,0,0,1],[0,0,0,1,0],[0,0,1,0,0],[0,1,0,0,0],[1,0,0,0,0]]' data-k='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-mode="conv" data-pad="zero" data-dec="0" style="height:500px"></div>
+    <p class="txt" data-seq="1">Imagen de ejemplo (inventada). La respuesta máxima, 6, cae <b>sobre la línea</b>; en los extremos vale 4 (relleno con ceros) y fuera de ella es negativa.</p>
+  </div>
+  <aside class="notes">Comprueba el centro a mano: los tres píxeles de la línea que caen dentro de la ventana multiplican por 2 cada uno, 2+2+2 = 6, y el resto vale 0. Fuera de la línea, un píxel de la diagonal cae sobre un -1 o dos y el resultado es -1 o -2.</aside>
+</section>
+
+<section class="slide" id="e1-dtype" data-fx="vc" data-section="Ejercicio 1" data-title="filterIm: trampa del dtype">
+  <header class="s-head"><p class="kicker">ejercicio 1 · trampa</p><h2 class="s-title">Trampa del dtype</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">im = np.zeros((5, 5), np.uint8)
+for i in range(5): im[i, 4-i] = 9
+
+convolve(im, mask)[2]                  # uint8
+convolve(im.astype(float), mask)[2]    # float</pre>
+      <pre class="out" data-seq="2">uint8 → [<b>247 238</b>  54 <b>238 247</b>]
+float → [ -9  -18  54  -18  -9]
+<i>247 = 256 − 9</i> · <i>238 = 256 − 18</i></pre>
+    </div>
+    <div class="vstack">
+      <div class="trap" data-seq="3"><b>trampa</b>Con <code>im</code> en uint8, <code>convolve</code> devuelve <b>uint8</b>: los negativos no se pierden, dan la vuelta (módulo 256) y parecen valores altos.</div>
+      <div class="tip" data-seq="4"><b>versión robusta</b><code>convolve(im.astype(float), mask)</code></div>
+      <div class="exam" data-seq="5"><b>en el examen</b>Si el enunciado da la imagen ya normalizada (float en [0, 1]), la solución oficial es correcta tal cual.</div>
+    </div>
+  </div>
+  <aside class="notes">Valores reales ejecutados con scipy. El detalle importante es que no hay ninguna excepción: el programa corre y da una imagen incorrecta. Con máscaras de suma cero hay siempre negativos, así que el desbordamiento es seguro.</aside>
+</section>
+
+<section class="slide" id="e1-real" data-fx="vc" data-section="Ejercicio 1" data-title="filterIm: uint8 frente a float">
+  <header class="s-head"><p class="kicker">ejercicio 1 · boat256, resultado real</p><h2 class="s-title">uint8 frente a float</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <figure class="fig sm"><img src="assets/fi_in.png" alt="boat256"><figcaption>im (uint8)</figcaption></figure>
+      <figure class="fig sm" data-seq="1"><img src="assets/fi_f.png" alt="respuesta en float"><figcaption>float: solo positivos ⇒ líneas «/»</figcaption></figure>
+      <figure class="fig sm" data-seq="2"><img src="assets/fi_u8.png" alt="respuesta en uint8"><figcaption>uint8: negativos dan la vuelta</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="3">En float, el 47 % de los píxeles da respuesta negativa. En uint8 esos valores se convierten en 256 − |v|: el 42 % de la imagen supera 200 y las líneas quedan enterradas en ruido.</p>
+  </div>
+  <aside class="notes">Resultado ejecutado en gen_assets.py: convolve(boat8, mask) devuelve dtype uint8. Con la imagen en float, la respuesta positiva (recortada en 0 y estirada al percentil 99) resalta las líneas a +45 grados: los mástiles y cabos inclinados. En uint8 todo lo negativo aparece como blanco.</aside>
+</section>
+
+<!-- ============ BLOQUE D · EJERCICIO 2 ============ -->
+<section class="slide is-plain divider" id="d-e2" data-fx="backdrop" data-seed="13" data-section="Ejercicio 2" data-title="countIm">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">ejercicio 2 · puntual + vecindad</p>
+    <h1 class="s-title xl">countIm</h1>
+    <p class="lead">Contar píxeles en una ventana = umbral + convolución con unos.</p>
+  </div>
+</section>
+
+<section class="slide" id="e2-enun" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: enunciado">
+  <header class="s-head"><p class="kicker">ejercicio 2 · puntual + vecindad</p><h2 class="s-title">countIm</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt">Devuelve una matriz del tamaño de <code>im</code> que indica, para cada <i>(i, j)</i>, si hay <b>al menos <code>minCount</code></b> píxeles en una ventana <code>sX×sY</code> alrededor de <i>(i, j)</i> con nivel de gris <b>menor que <code>thr</code></b>.</p>
+      <div class="tip"><b>pista del enunciado</b>Una convolución combinada con otra operación antes o después, sin bucles.</div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="1"><span class="step-n">1</span><b>Puntual:</b> umbral. \( b(i,j)=1[\,f(i,j)&lt;thr\,] \)</p>
+      <p class="txt" data-seq="2"><span class="step-n">2</span><b>Vecindad:</b> suma de la ventana. Es lineal con pesos 1 ⇒ convolución con unos.</p>
+      <p class="txt" data-seq="3"><span class="step-n">3</span><b>Puntual:</b> comparar el conteo con <code>minCount</code>.</p>
+    </div>
+  </div>
+  <aside class="notes">Descomponer es la clave: tres operaciones simples encadenadas. Umbral (lección 1), conteo en ventana (lección 2) y otro umbral. El enunciado lo insinúa con «some convolution combined with some other operation before and/or after».</aside>
+</section>
+
+<section class="slide" id="e2-sol" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: solución">
+  <header class="s-head"><p class="kicker">ejercicio 2 · solución</p><h2 class="s-title">Por qué funciona</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+<pre class="code" data-seq="1">def countIm(im, thr, sX, sY, minCount):
+    im_th = (im &lt; thr).astype(float)
+    return convolve(im_th, np.ones((sX, sY))) &gt;= minCount</pre>
+      <div class="eq sm" data-seq="2">$$c(i,j)=\sum_{(u,v)\in W} 1\cdot b(i+u,\,j+v)=\#\{\text{píxeles con }f\lt thr\}$$</div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="3">Los pesos son 1, así que cada píxel de la ventana suma su valor: 0 si no cumple, 1 si cumple. La suma <b>cuenta</b>.</p>
+      <div class="tip" data-seq="4"><b>truco</b>El núcleo de unos es simétrico: conv = corr, no importa el giro.</div>
+      <div class="exam" data-seq="5"><b>en el examen</b>Variantes: «porcentaje» ⇒ dividir por <code>sX*sY</code> (<code>uniform_filter</code>); «media local» ⇒ lo mismo con la imagen sin umbral.</div>
+    </div>
+  </div>
+  <aside class="notes">La solución son dos líneas. El astype(float) es necesario porque convolve con un array booleano daría un resultado booleano o un error de tipo, según la versión. La comparación final con minCount devuelve una máscara booleana del mismo tamaño que la imagen.</aside>
+</section>
+
+<section class="slide" id="e2-num" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: ejemplo numérico">
+  <header class="s-head"><p class="kicker">ejercicio 2 · ejemplo inventado</p><h2 class="s-title">Conteo con unos 3×3</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[0,1,1,0,0],[1,1,0,0,1],[0,1,0,1,1],[0,0,0,1,0],[1,0,1,1,1]]' data-k='[[1,1,1],[1,1,1],[1,1,1]]' data-mode="conv" data-pad="zero" data-dec="0" style="height:500px"></div>
+    <p class="txt" data-seq="1">Matriz binaria inventada (1 = <i>im &lt; thr</i>). Cada salida es la <b>suma</b> de su ventana 3×3, es decir, el número de unos.</p>
+  </div>
+  <aside class="notes">Comprueba el centro a mano: la ventana 3x3 alrededor de la posición (2,2), contando desde 0, contiene las filas 1,0,0 / 1,0,1 / 0,0,1, es decir cuatro unos, y la salida vale 4. Es la suma de la ventana. Los bordes se rellenan con ceros, por eso las esquinas valen menos.</aside>
+</section>
+
+<section class="slide" id="e2-umbral" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: umbral final">
+  <header class="s-head"><p class="kicker">ejercicio 2 · ejemplo inventado</p><h2 class="s-title">Conteo ≥ minCount</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[3,4,3,2,1],[4,5,5,4,3],[3,3,4,4,4],[2,3,5,6,5],[1,2,3,4,3]]' data-dec="0" style="height:420px"></div>
+      <p class="hcap">c = convolve(b, np.ones((3,3)))</p>
+    </div>
+    <div class="vstack" data-seq="1">
+      <div class="vc-heat" data-m='[[0,1,0,0,0],[1,1,1,1,0],[0,0,1,1,1],[0,0,1,1,1],[0,0,0,1,0]]' data-dec="0" style="height:420px"></div>
+      <p class="hcap">c &gt;= 4 (1 = True)</p>
+    </div>
+  </div>
+  <aside class="notes">Segunda operación puntual: comparar cada conteo con minCount = 4. Los conteos de 4, 5 y 6 pasan a True. Conteos calculados con scipy y mode constant (relleno con ceros), como en la animación anterior.</aside>
+</section>
+
+<section class="slide" id="e2-real" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: resultado real">
+  <header class="s-head"><p class="kicker">ejercicio 2 · cat256, thr = 60, ventana 9×9, minCount = 30</p><h2 class="s-title">Resultado real</h2></header>
+  <div class="s-body vstack">
+    <div class="ops" style="grid-template-columns:1fr auto 1fr auto 1fr">
+      <figure class="fig sm"><img src="assets/ci_in.png" alt="cat256"><figcaption>im</figcaption></figure><span class="op" data-seq="1">→</span>
+      <figure class="fig sm" data-seq="1"><img src="assets/ci_th.png" alt="umbral"><figcaption>im &lt; 60 (puntual)</figcaption></figure><span class="op" data-seq="2">→</span>
+      <figure class="fig sm" data-seq="2"><img src="assets/ci_out.png" alt="conteo"><figcaption>conteo 9×9 ≥ 30</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="3">El conteo elimina los píxeles oscuros aislados (bigotes, textura) y deja solo las zonas donde la oscuridad es mayoritaria.</p>
+  </div>
+  <aside class="notes">Ejecutado con countIm(cat, 60, 9, 9, 30) en gen_assets.py. 30 de 81 píxeles es algo más de un tercio de la ventana: es un filtro de «mayoría» que limpia el umbral.</aside>
+</section>
+
+<section class="slide" id="e2-det" data-fx="vc" data-section="Ejercicio 2" data-title="countIm: detalles">
+  <header class="s-head"><p class="kicker">ejercicio 2 · detalles</p><h2 class="s-title">Filas, bordes y bucles</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt" data-seq="1"><b>¿sX son filas o columnas?</b> <code>np.ones((sX, sY))</code> tiene <code>sX</code> filas y <code>sY</code> columnas.</p>
+      <p class="txt" data-seq="2"><b>Bordes:</b> <code>mode='reflect'</code> (por defecto) cuenta píxeles reflejados; <code>mode='constant'</code> trata el exterior como 0.</p>
+      <div class="trap" data-seq="3"><b>real</b>En <i>cat256</i> con 3×3, <code>thr=60</code> y <code>minCount=4</code>, los dos modos difieren en 19 de 65 536 píxeles, todos en el borde.</div>
+    </div>
+    <div class="vstack struck" data-seq="4">
+<pre class="code sm">def countIm(im, thr, sX, sY, minCount):
+    out = np.zeros(im.shape, bool)
+    for i in range(im.shape[0]):
+        for j in range(im.shape[1]):
+            w = im[max(0,i-sX//2):i+sX//2+1,
+                   max(0,j-sY//2):j+sY//2+1]
+            out[i,j] = (w &lt; thr).sum() &gt;= minCount
+    return out</pre>
+    </div>
+  </div>
+  <aside class="notes">La versión con bucles equivale a mode='constant' y es válida, pero lenta (Python puro, un píxel cada vez) y más larga. En el examen se acepta, pero la vectorizada es la que se espera.</aside>
+</section>
+
+<!-- ============ BLOQUE E · EJERCICIO 3 ============ -->
+<section class="slide is-plain divider" id="d-e3" data-fx="backdrop" data-seed="14" data-section="Ejercicio 3" data-title="blurFgBk">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">ejercicio 3 · mezcla por máscara</p>
+    <h1 class="s-title xl">blurFgBk</h1>
+    <p class="lead">Emborronar objeto o fondo con una combinación convexa por píxel.</p>
+  </div>
+</section>
+
+<section class="slide" id="e3-enun" data-fx="vc" data-section="Ejercicio 3" data-title="blurFgBk: enunciado">
+  <header class="s-head"><p class="kicker">ejercicio 3 · mezcla por máscara</p><h2 class="s-title">blurFgBk</h2></header>
+  <div class="s-body vstack">
+    <p class="txt">Dada <code>im</code> y <code>fgMask</code> (True = objeto, False = fondo), devuelve una imagen con el <b>objeto</b> emborronado (si <code>bFg</code> es True) o el <b>fondo</b> (si no), con un gaussiano de desviación <code>sigma</code>.</p>
+    <div class="ops" data-seq="1">
+      <figure class="fig"><img src="assets/bf_in.png" alt="imagen"><figcaption>im</figcaption></figure><span class="op">→</span>
+      <figure class="fig"><img src="assets/bf_mask.png" alt="máscara"><figcaption>fgMask</figcaption></figure><span class="op">→</span>
+      <figure class="fig"><img src="assets/bf_obj.png" alt="objeto borroso"><figcaption>bFg = True</figcaption></figure><span class="op">·</span>
+      <figure class="fig"><img src="assets/bf_fondo.png" alt="fondo borroso"><figcaption>bFg = False</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">Resultados reales con boat256, una elipse como máscara y sigma = 4. Con bFg True se emborrona el interior de la elipse; con False, todo lo demás.</aside>
+</section>
+
+<section class="slide" id="e3-sol" data-fx="vc" data-section="Ejercicio 3" data-title="blurFgBk: solución">
+  <header class="s-head"><p class="kicker">ejercicio 3 · combinación convexa</p><h2 class="s-title">Combinación convexa</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+<pre class="code sm" data-seq="1">def blurFgBk(im, fgMask, bFg, sigma):
+    im_f = gaussian_filter(im, sigma)
+    if bFg:
+        a, b = 1 - fgMask, fgMask
+    else:
+        a, b = fgMask, 1 - fgMask
+    return a*im + b*im_f</pre>
+<pre class="code sm" data-seq="3">def blurFgBk(im, fgMask, bFg, sigma):
+    im_f = gaussian_filter(im, sigma)
+    return np.where(fgMask == bFg, im_f, im)</pre>
+    </div>
+    <div class="vstack">
+      <div class="eq" data-seq="2">$$out = a\cdot im + b\cdot im_f,\quad a+b=1$$</div>
+      <p class="txt" data-seq="2">Por píxel, \(a,b\in\{0,1\}\): se elige <i>im</i> o <i>im_f</i>. Con <code>bFg=True</code>, \(b=\)máscara: el objeto sale borroso.</p>
+      <div class="tip" data-seq="4"><b>comprobado</b>Ambas versiones dan el mismo resultado (<code>np.allclose</code>) para <code>bFg=True</code> y <code>False</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Una combinación convexa mezcla dos imágenes con pesos que suman 1. Con una máscara binaria, a y b son 0 o 1, así que en cada píxel solo queda una de las dos. Con una máscara suave (valores entre 0 y 1) se obtendría una transición gradual, que es lo que se hace en blending. np.where es la forma más corta, pero la combinación convexa generaliza.</aside>
+</section>
+
+<section class="slide" id="e3-trampas" data-fx="vc" data-section="Ejercicio 3" data-title="blurFgBk: trampas">
+  <header class="s-head"><p class="kicker">ejercicio 3 · trampas</p><h2 class="s-title">Trampas de blurFgBk</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="trap" data-seq="1"><b>booleanos</b><code>1 - fgMask</code> funciona (bool pasa a int), pero <code>fgMask - fgMask</code> da <code>TypeError</code>. Con booleanos, <code>~fgMask</code> es más claro.</div>
+      <div class="trap" data-seq="2"><b>color</b>La solución oficial solo vale en gris: <code>a</code> es (m,n) e <code>im</code> es (m,n,3), y falla con <code>ValueError</code> (<i>operands could not be broadcast</i>).</div>
+      <div class="trap" data-seq="3"><b>canales</b><code>gaussian_filter(im, sigma)</code> en color también desenfoca <b>entre canales</b> (diferencia máxima 0,44 en <i>peppers</i>).</div>
+    </div>
+<pre class="code sm" data-seq="4">def blurFgBk(im, fgMask, bFg, sigma):
+    im_f = gaussian_filter(im, (sigma, sigma, 0))
+    sel = (fgMask == bFg)[..., None]
+    return np.where(sel, im_f, im)</pre>
+  </div>
+  <aside class="notes">Ejecutado sobre peppers.ppm normalizada. La versión de color añade un eje a la máscara con [..., None] para que NumPy la propague a los tres canales, y usa sigma 0 en el eje de canales para no mezclarlos. Comprobado canal a canal contra la versión de gris.</aside>
+</section>
+
+<!-- ============ BLOQUE F · EJERCICIO 4 ============ -->
+<section class="slide is-plain divider" id="d-e4" data-fx="backdrop" data-seed="15" data-section="Ejercicio 4" data-title="Gamma y rgb2gray">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">ejercicio 4 · realce puntual</p>
+    <h1 class="s-title xl">Gamma y rgb2gray</h1>
+    <p class="lead">Dos formas idénticas de convertir a gris, y una errata en el coeficiente G.</p>
+  </div>
+</section>
+
+<section class="slide" id="e4-teoria" data-fx="vc" data-section="Ejercicio 4" data-title="Corrección gamma">
+  <header class="s-head"><p class="kicker">ejercicio 4 · realce puntual (T1)</p><h2 class="s-title">Corrección gamma</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq big" data-seq="1">$$s = a\cdot r^{\gamma}$$</div>
+      <p class="txt" data-seq="2">Con \(\gamma = 1/2.2\) y \(r\in[0,1]\): \(0{,}5\mapsto 0{,}73\), \(0{,}25\mapsto 0{,}53\). <b>Aclara</b>.</p>
+      <p class="txt" data-seq="3">\(\gamma>1\) oscurece. Solo vale en [0, 1]: si la imagen está en [0, 255], primero divide entre 255.</p>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,1" data-y="0,1" data-xl="r" data-yl="s" data-fns='[{"f":"x=>Math.pow(x,1/2.2)","label":"γ = 1/2,2"},{"f":"x=>x","label":"γ = 1","dash":"6 6"},{"f":"x=>Math.pow(x,2.2)","label":"γ = 2,2"}]' style="height:540px"></div>
+  </div>
+  <aside class="notes">Una curva por encima de la diagonal aclara; por debajo, oscurece. Con gamma menor que 1 se amplían los grises oscuros, de ahí que sea la corrección típica de pantalla. Valores calculados: 0.5 elevado a 1/2.2 es 0.7297 y 0.25 elevado a 1/2.2 es 0.5325.</aside>
+</section>
+
+<section class="slide" id="e4-sol" data-fx="vc" data-section="Ejercicio 4" data-title="gamma y rgb2gray: solución">
+  <header class="s-head"><p class="kicker">ejercicio 4 · solución</p><h2 class="s-title">gamma y rgb2gray</h2></header>
+  <div class="s-body g2">
+<pre class="code sm" data-seq="1">def gamma_correction(im, a, gamma):
+    return a * im**gamma
+
+def rgb2gray(im_rgb):
+    coeffs = np.array([0.2126, 0.7512, 0.0722])
+    gamma = 1 / 2.2
+    # opción 1: corregir y luego ponderar
+    im_g = gamma_correction(im_rgb, 1, gamma)
+    return (coeffs[0]*im_g[:,:,0]
+          + coeffs[1]*im_g[:,:,1]
+          + coeffs[2]*im_g[:,:,2])</pre>
+<pre class="code sm" data-seq="2">    # opción 2: el peso va en el parámetro a
+    R, G, B = (im_rgb[:,:,k] for k in range(3))
+    return (gamma_correction(R, coeffs[0], gamma)
+          + gamma_correction(G, coeffs[1], gamma)
+          + gamma_correction(B, coeffs[2], gamma))</pre>
+  </div>
+  <aside class="notes">El enunciado da los coeficientes y la gamma. La opción 1 aplica gamma con a = 1 a los tres canales a la vez y después pondera. La opción 2 llama a gamma_correction canal por canal usando a como peso. Ejecutadas ambas sobre peppers: np.allclose da True.</aside>
+</section>
+
+<section class="slide" id="e4-pref" data-fx="vc" data-section="Ejercicio 4" data-title="¿Cuál prefieres? ¿Por qué?">
+  <header class="s-head"><p class="kicker">ejercicio 4 · «which one do you prefer?»</p><h2 class="s-title">¿Cuál prefieres?</h2></header>
+  <div class="s-body g2">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 320px"><span>$$I_1=\sum_k c_k\,(1\cdot R_k^{\gamma})$$</span><span class="why">opción 1: corregir con a = 1 y ponderar</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr 320px"><span>$$I_2=\sum_k a_k\,R_k^{\gamma}$$</span><span class="why">opción 2: a_k = c_k</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 320px"><span>$$I_1=I_2$$</span><span class="why">son matemáticamente idénticas</span></div>
+    </div>
+    <div class="vstack">
+      <div class="exam" data-seq="4"><b>respuesta modelo</b>Prefiero la 1: son idénticas, \(c\cdot R^{\gamma}\), pero la 1 corrige los 3 canales en una sola llamada vectorizada y separa «corregir» de «ponderar», que es más legible.</div>
+<pre class="code sm" data-seq="5">sum(gamma_correction(im[:,:,k], c[k], g)
+    for k in range(im.shape[2]))
+im @ coeffs   # sobre im**gamma, N bandas</pre>
+      <p class="txt" data-seq="5">Para imágenes multiespectrales (decenas de bandas) se generaliza con un bucle o con <code>np.tensordot</code>.</p>
+    </div>
+  </div>
+  <aside class="notes">La pregunta admite cualquiera de las dos si lo justificas. Lo importante es demostrar que son iguales: en la 1, el 1 multiplica y no cambia nada; en la 2, el peso c_k entra como a. Se comprobó numéricamente con np.allclose, y también la versión (im**gamma) @ coeffs y la de tensordot.</aside>
+</section>
+
+<section class="slide" id="e4-errata" data-fx="vc" data-section="Ejercicio 4" data-title="Errata: coeficiente G">
+  <header class="s-head"><p class="kicker">ejercicio 4 · errata detectada</p><h2 class="s-title">Errata: coeficiente G</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t" data-seq="1">
+        <tr><th></th><th>R</th><th>G</th><th>B</th><th>suma</th></tr>
+        <tr><td>enunciado</td><td>0,2126</td><td class="err">0,7512</td><td>0,0722</td><td class="err">1,036</td></tr>
+        <tr><td>BT.709</td><td>0,2126</td><td class="ok">0,7152</td><td>0,0722</td><td class="ok">1,000</td></tr>
+      </table>
+      <p class="txt" data-seq="2">Con 0,7512, un píxel blanco (1, 1, 1) da <b>1,036</b>: el blanco se pasa de 1 y puede saturar.</p>
+      <div class="trap" data-seq="3"><b>errata</b>El estándar es 0,7152. Los coeficientes de luminancia deben sumar 1.</div>
+      <div class="exam" data-seq="4"><b>en el examen</b>Usa el valor del enunciado, pero sabe el porqué y, si te dejan, apunta la errata.</div>
+    </div>
+    <div class="fx" data-role="plot" data-x="0,1" data-y="0,1.2" data-xl="gris de entrada r (R = G = B)" data-yl="rgb2gray" data-legend="br" data-fns='[{"f":"x=>1.036*Math.pow(x,1/2.2)","label":"enunciado: 1,036"},{"f":"x=>Math.pow(x,1/2.2)","label":"BT.709: 1"},{"f":"x=>1","label":"máximo","dash":"6 6"}]' style="height:560px"></div>
+  </div>
+  <aside class="notes">0.2126 + 0.7152 + 0.0722 = 1. El 0.7512 es una transposición de dígitos. Se comprobó ejecutando rgb2gray sobre un píxel blanco: devuelve 1.036.</aside>
+</section>
+
+<!-- ============ BLOQUE G · EJERCICIO 5 ============ -->
+<section class="slide is-plain divider" id="d-e5" data-fx="backdrop" data-seed="16" data-section="Ejercicio 5" data-title="Ruido TLA">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">ejercicio 5 ★ el difícil</p>
+    <h1 class="s-title xl">Ruido TLA</h1>
+    <p class="lead">Añadir ruido de color con indexación booleana y quitarlo con la mediana.</p>
+  </div>
+</section>
+
+<section class="slide" id="e5-enun" data-fx="vc" data-section="Ejercicio 5" data-title="Ruido TLA: enunciado">
+  <header class="s-head"><p class="kicker">ejercicio 5 ★ el difícil</p><h2 class="s-title">Ruido TLA</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <p class="txt">«Tomate, lechuga, berenjena»: un sensor que afecta a cada píxel con probabilidad <i>p</i>. Cada tipo ocurre con probabilidad <i>p/3</i>; el resto de píxeles conserva su valor.</p>
+      <p class="txt" data-seq="1"><b>(a)</b> <code>add_TLA_noise(im, p)</code>, a ser posible sin <code>flatten</code>, <code>ravel</code> ni <code>reshape</code>.</p>
+      <p class="txt" data-seq="2"><b>(b)</b> <code>remove_TLA_noise(im_noisy)</code> y una breve explicación que justifique el procedimiento.</p>
+    <table class="t" data-seq="3">
+      <tr><th>tipo</th><th>nombre</th><th>RGB</th><th>prob.</th></tr>
+      <tr><td>T</td><td>tomate</td><td>[1, 0, 0]</td><td>p/3</td></tr>
+      <tr><td>L</td><td>lechuga</td><td>[0, 1, 0]</td><td>p/3</td></tr>
+      <tr><td>A</td><td>berenjena</td><td>[½, 0, ½]</td><td>p/3</td></tr>
+      <tr><td></td><td>sin ruido</td><td>valor original</td><td>1 − p</td></tr>
+    </table>
+    </div>
+    <figure class="fig" data-seq="4"><img src="assets/tla_zoom.png" alt="zoom del ruido TLA" style="image-rendering:pixelated"><figcaption>zoom 48×48 de peppers, p = 0,1: puntos rojos (T), verdes (L) y berenjena (A)</figcaption></figure>
+  </div>
+  <aside class="notes">Con probabilidad p el píxel se ve afectado; si lo está, elegimos T, L o A de forma uniforme, así que cada uno tiene probabilidad p por un tercio. Los valores RGB están en [0, 1]: normalizar con entre 255.0.</aside>
+</section>
+
+<section class="slide" id="e5-a" data-fx="vc" data-section="Ejercicio 5" data-title="5a: línea a línea">
+  <header class="s-head"><p class="kicker">ejercicio 5a · solución explicada</p><h2 class="s-title">5a línea a línea</h2></header>
+  <div class="s-body g21">
+<pre class="code sm" data-seq="1">def add_TLA_noise(im, p=0.1):
+    im = im.copy()
+    t, l, a = 1, 2, 3
+    pattern = {t:[1,0,0], l:[0,1,0], a:[0.5,0,0.5]}
+    m, n, k = im.shape
+    where = np.random.rand(m, n) &lt; p
+    which = np.random.randint(t, a+1, (m, n))
+    which_where = which * where
+    for nt in [t, l, a]:
+        im[which_where == nt, :] = pattern[nt]
+    return im</pre>
+    <div class="api" data-seq="2"><table>
+      <tr><td>where</td><td>(m,n) bool: píxel afectado, con probabilidad <i>p</i></td></tr>
+      <tr><td>which</td><td>(m,n) en {1,2,3}: tipo, uniforme ⇒ <i>p/3</i> cada uno</td></tr>
+      <tr><td>which*where</td><td>0 si no afectado; si no, su tipo</td></tr>
+      <tr><td>im[mask,:]</td><td>máscara 2D elige filas (N,3); el vector RGB se propaga</td></tr>
+    </table></div>
+  </div>
+  <aside class="notes">Truco central: multiplicar el tipo por la máscara booleana deja un 0 donde no hay ruido y el número del tipo donde sí. Indexar con una máscara 2D sobre una imagen (m,n,3) selecciona los píxeles completos, y asignar un vector de longitud 3 se propaga por broadcasting a los tres canales. Por eso no hacen falta flatten ni reshape. Ojo: randint excluye el extremo superior, de ahí el a+1.</aside>
+</section>
+
+<section class="slide" id="e5-trampas" data-fx="vc" data-section="Ejercicio 5" data-title="5a: trampas">
+  <header class="s-head"><p class="kicker">ejercicio 5a · trampas verificadas</p><h2 class="s-title">Trampas de 5a</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="trap" data-seq="1"><b>modifica la entrada</b>La solución oficial escribe en <code>im</code> en el sitio y devuelve el mismo objeto. Se comprobó: la imagen original cambia. Añade <code>im = im.copy()</code>.</div>
+      <div class="trap" data-seq="2"><b>errata del test</b>El test del PDF dibuja <code>im_tlb</code>, que no existe; es <code>im_tla</code>.</div>
+      <div class="trap" data-seq="3"><b>randint</b><code>randint(1, 4)</code> da 1, 2 o 3: el extremo superior se excluye.</div>
+    </div>
+    <div class="vstack">
+      <pre class="out" data-seq="4">peppers, p = 0,1:
+  píxeles cambiados   = 0,1007
+
+1000×1000 aleatoria, p = 0,1:
+  T = 0,0336   L = 0,0334   A = 0,0331
+  p/3 = 0,0333</pre>
+      <p class="txt" data-seq="5">La proporción afectada ≈ <i>p</i>. Si un píxel ya valía el patrón, no cambia, y por eso sale marginalmente menos.</p>
+    </div>
+  </div>
+  <aside class="notes">Resultados medidos ejecutando el código con una semilla fija. Las proporciones coinciden con p y p/3 salvo ruido estadístico. En la práctica, el efecto de modificar la entrada sorprende: si llamas a la función dos veces con la misma imagen, la segunda ya está contaminada.</aside>
+</section>
+
+<section class="slide" id="e5-b" data-fx="vc" data-section="Ejercicio 5" data-title="5b: quitar el ruido">
+  <header class="s-head"><p class="kicker">ejercicio 5b · justificación</p><h2 class="s-title">5b: la mediana</h2></header>
+  <div class="s-body g2">
+<pre class="code sm" data-seq="1">def remove_TLA_noise(im_noisy):
+    im = np.copy(im_noisy)
+    for k in range(im.shape[2]):
+        im[:, :, k] = medfilt2d(im_noisy[:, :, k])
+    return im</pre>
+    <div class="vstack">
+      <p class="txt" data-seq="2"><b>T y L</b> son, por canal, ruido impulsivo: sal en un canal y pimienta en los otros. La mediana lo elimina.</p>
+      <p class="txt" data-seq="3"><b>A</b> (valor ½) no es extremo, pero la mediana quita los valores <b>poco representativos de la vecindad</b>, aunque no sean extremos.</p>
+      <div class="tip" data-seq="4"><b>¿por qué no la media?</b> Un impulso se reparte entre los vecinos: extiende el ruido en vez de quitarlo (T2, lab 2).</div>
+    </div>
+  </div>
+  <aside class="notes">Es la respuesta del profesor, parafraseada. Se aplica por canal porque el ruido es de color pero cada canal por separado se comporta como sal y pimienta. Una alternativa robusta, fuera del alcance del ejercicio, sería convertir los valores intermedios a extremos antes de filtrar.</aside>
+</section>
+
+<section class="slide" id="e5-med" data-fx="vc" data-section="Ejercicio 5" data-title="5b: mediana canal a canal">
+  <header class="s-head"><p class="kicker">ejercicio 5b · ventanas 3×3 de ejemplo</p><h2 class="s-title">Mediana canal a canal</h2></header>
+  <div class="s-body vstack">
+    <div class="g4" style="display:grid;grid-template-columns:repeat(4,1fr);gap:28px">
+      <div class="vstack" data-seq="1"><div class="vc-heat" data-m='[[0.6,0.7,0.6],[0.7,1,0.6],[0.7,0.6,0.7]]' data-dec="1" style="height:290px"></div><p class="hcap">R con T: 1 → 0,7</p></div>
+      <div class="vstack" data-seq="2"><div class="vc-heat" data-m='[[0.3,0.4,0.3],[0.4,0,0.3],[0.3,0.4,0.4]]' data-dec="1" style="height:290px"></div><p class="hcap">G con T: 0 → 0,3</p></div>
+      <div class="vstack" data-seq="3"><div class="vc-heat" data-m='[[0.1,0.2,0.1],[0.1,0.5,0.2],[0.2,0.1,0.1]]' data-dec="1" style="height:290px"></div><p class="hcap">B con A: 0,5 → 0,1</p></div>
+      <div class="vstack" data-seq="4"><div class="vc-heat" data-m='[[0.1,0.9,0.5],[0.1,0.5,0.9],[0.5,0.1,0.9]]' data-dec="1" style="height:290px"></div><p class="hcap">límite: se queda 0,5</p></div>
+    </div>
+    <p class="txt" data-seq="5">El valor central se sustituye por el 5.º de los 9 ordenados. Un valor <b>poco representativo de la vecindad</b> nunca llega al centro de la lista, sea extremo (0 o 1) o no (½).</p>
+    <div class="trap" data-seq="6"><b>límite</b>Si la vecindad se reparte a ambos lados de ½ (tres 0,1, tres 0,5 y tres 0,9), la mediana es 0,5 y el píxel A sobrevive.</div>
+  </div>
+  <aside class="notes">Números inventados para la explicación, comprobados con np.median: 0,7, 0,3, 0,1 y 0,5. Por canal, el ruido T es un 1 en el rojo y un 0 en verde y azul: sal en un canal y pimienta en los otros. El caso A es interesante porque 0,5 no es extremo, pero si los vecinos son oscuros o claros queda fuera del centro de la lista ordenada.</aside>
+</section>
+
+<section class="slide" id="e5-real" data-fx="vc" data-section="Ejercicio 5" data-title="5: resultado real">
+  <header class="s-head"><p class="kicker">ejercicio 5 · peppers.ppm, p = 0,1</p><h2 class="s-title">Resultado real</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <figure class="fig"><img src="assets/tla_orig.png" alt="original"><figcaption>original</figcaption></figure>
+      <figure class="fig"><img src="assets/tla_ruido.png" alt="con ruido TLA"><figcaption>ruido TLA · PSNR ≈ 16,8 dB</figcaption></figure>
+      <figure class="fig"><img src="assets/tla_limpia.png" alt="filtrada"><figcaption>mediana · PSNR ≈ 30,4 dB</figcaption></figure>
+    </div>
+    <p class="txt" data-seq="1">Para comparar: una media 3×3 por canal queda en ≈ 24 dB. La mediana elimina los impulsos; la media los difumina.</p>
+  </div>
+  <aside class="notes">PSNR calculado con el original en [0, 1]: 10 log10(1 / MSE). Imagen peppers de lab1. Los valores varían unas décimas con la semilla.</aside>
+</section>
+
+<!-- ============ BLOQUE H · V/F ============ -->
+<section class="slide is-plain divider" id="d-vf" data-fx="backdrop" data-seed="17" data-section="Verdadero/falso" data-title="Verdadero / falso">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque h</p>
+    <h1 class="s-title xl">Verdadero / falso</h1>
+    <p class="lead">La pregunta del teorema de la convolución, con sus matices, y 12 más.</p>
+  </div>
+</section>
+
+<section class="slide" id="vf-conv" data-fx="vc" data-section="Verdadero/falso" data-title="V/F: teorema convolución">
+  <header class="s-head"><p class="kicker">pregunta V/F del examen</p><h2 class="s-title">Teorema de la convolución</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt">«The convolution theorem offers the possibility of speeding up image filtering.»</p>
+      <div class="big-num" data-seq="1" data-a="pop" style="font-size:96px">VERDADERO</div>
+    </div>
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="2" style="grid-template-columns:1fr 330px"><span>$$f*h=\mathcal F^{-1}\{F\cdot H\}$$</span><span class="why">1. convolución = producto en frecuencia</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr 330px"><span>$$O(MN\log MN)+O(MN)$$</span><span class="why">2. FFT y producto</span></div>
+      <div data-seq="4" style="grid-template-columns:1fr 330px"><span>$$O(MN\,mn)$$</span><span class="why">3. coste espacial: crece con el núcleo</span></div>
+    </div>
+  </div>
+  <aside class="notes">Razonamiento en tres pasos. Uno: el teorema dice que la transformada de la convolución es el producto de transformadas. Dos: la FFT cuesta M N log M N y el producto, M N. Tres: filtrar directamente cuesta M N por m n, que crece con el tamaño del núcleo. Si el núcleo es grande, la frecuencia gana.</aside>
+</section>
+
+<section class="slide" id="vf-coste" data-fx="vc" data-section="Verdadero/falso" data-title="V/F: matices del coste">
+  <header class="s-head"><p class="kicker">justificación completa</p><h2 class="s-title">Matices del coste</h2></header>
+  <div class="s-body g2">
+    <div class="fx" data-role="plot" data-x="0,12" data-y="0,4" data-xl="lado m del núcleo (imagen 512²)" data-yl="coste / coste FFT" data-pts='[[6,1,"m = 6: empate"]]' data-fns='[{"f":"x=>x*x/36","label":"espacial m×m"},{"f":"x=>1","label":"FFT","dash":"6 6"},{"f":"x=>2*x/36","label":"separable 2m"}]' style="height:560px"></div>
+    <div class="vstack">
+      <div class="eq sm" data-seq="1">$$m^2\ \text{vs}\ 2\log_2(MN)=2\cdot18\Rightarrow m\approx 6$$</div>
+      <p class="txt" data-seq="2"><b>Solo con núcleos grandes:</b> hasta m = 6 gana el espacial; desde m = 7, la FFT. Un núcleo separable (2m) no cede hasta m = 18.</p>
+      <p class="txt" data-seq="3"><b>Solo filtros lineales e invariantes:</b> la mediana no es lineal.</p>
+      <p class="txt" data-seq="4"><b>DFT = convolución circular:</b> hay que rellenar (<i>padding</i>) para igualar la lineal.</p>
+    </div>
+  </div>
+  <aside class="notes">Comparamos M N m n frente a 2 M N log2(M N), la cuenta de la diapositiva 17 de la lección 3. Para 512 por 512, log2 de M N es 18, así que 2 por 18 es 36 y m al cuadrado igual a 36 da m = 6. Comprobado también que fftconvolve y convolve coinciden, y que la DFT directa difiere de la lineal en el borde.</aside>
+</section>
+
+<section class="slide" id="vf-1" data-fx="vc" data-section="Verdadero/falso" data-title="Otras V/F probables (1/2)">
+  <header class="s-head"><p class="kicker">una por tema</p><h2 class="s-title">Otras V/F (1/2)</h2></header>
+  <div class="s-body vf">
+    <div class="it"><span>La ecualización aumenta la entropía</span><span class="v f" data-seq="1" data-a="pop">FALSO</span><span class="why2" data-seq="1">no la aumenta; <i>iglesia</i>: 5,975 → 5,918 bits</span></div>
+    <div class="it"><span>El filtro de mediana es lineal</span><span class="v f" data-seq="2" data-a="pop">FALSO</span><span class="why2" data-seq="2">med(x+y) ≠ med(x)+med(y)</span></div>
+    <div class="it"><span>Conv y corr coinciden con núcleos simétricos</span><span class="v t" data-seq="3" data-a="pop">VERDADERO</span><span class="why2" data-seq="3">girar 180° no cambia el núcleo</span></div>
+    <div class="it"><span>La gaussiana es separable</span><span class="v t" data-seq="4" data-a="pop">VERDADERO</span><span class="why2" data-seq="4">producto de dos gaussianas 1D</span></div>
+    <div class="it"><span>γ &gt; 1 aclara la imagen en [0, 1]</span><span class="v f" data-seq="5" data-a="pop">FALSO</span><span class="why2" data-seq="5">oscura: 0,5² = 0,25</span></div>
+    <div class="it"><span>El espectro de magnitud es invariante a la traslación</span><span class="v t" data-seq="6" data-a="pop">VERDADERO</span><span class="why2" data-seq="6">la traslación solo cambia la fase</span></div>
+  </div>
+  <aside class="notes">Entropía: ejecutado con histEq sobre iglesia.pgm: baja de 5.975 a 5.918 bits, porque ecualizar fusiona niveles de gris y nunca crea información. Magnitud invariante a la traslación: comprobado con np.roll y fft2.</aside>
+</section>
+
+<section class="slide" id="vf-2" data-fx="vc" data-section="Verdadero/falso" data-title="Otras V/F probables (2/2)">
+  <header class="s-head"><p class="kicker">una por tema</p><h2 class="s-title">Otras V/F (2/2)</h2></header>
+  <div class="s-body vf">
+    <div class="it"><span>La fase contiene la mayor parte de la información estructural</span><span class="v t" data-seq="1" data-a="pop">VERDADERO</span><span class="why2" data-seq="1">la fase lleva la estructura</span></div>
+    <div class="it"><span>El paso bajo ideal produce <i>ringing</i></span><span class="v t" data-seq="2" data-a="pop">VERDADERO</span><span class="why2" data-seq="2">su respuesta impulsional es un sinc</span></div>
+    <div class="it"><span>|gx| + |gy| es isótropo</span><span class="v f" data-seq="3" data-a="pop">FALSO</span><span class="why2" data-seq="3">en 45° da 1,41 frente a 1 en 0°</span></div>
+    <div class="it"><span>La derivada amplifica el ruido</span><span class="v t" data-seq="4" data-a="pop">VERDADERO</span><span class="why2" data-seq="4">realza altas frecuencias</span></div>
+    <div class="it"><span>Canny usa dos umbrales</span><span class="v t" data-seq="5" data-a="pop">VERDADERO</span><span class="why2" data-seq="5">histéresis: alto y bajo</span></div>
+    <div class="it"><span>En Hough un punto se convierte en una sinusoide</span><span class="v t" data-seq="6" data-a="pop">VERDADERO</span><span class="why2" data-seq="6">\(\rho = x\cos\theta + y\sin\theta\)</span></div>
+  </div>
+  <aside class="notes">Para |gx|+|gy|: un gradiente unitario a 45° tiene gx = gy = cos 45 = 0.707, así que la suma vale 1.41, mientras que a 0 grados vale 1. La norma L2, hypot, siempre vale 1. Cuidado con las erratas de los apuntes: los bordes están en altas frecuencias y la fase lleva la estructura.</aside>
+</section>
+
+<!-- ============ BLOQUE I · PRÁCTICA ============ -->
+<section class="slide is-plain divider" id="d-pr" data-fx="backdrop" data-seed="18" data-section="Práctica" data-title="Practica tú">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque i · ejercicios inventados</p>
+    <h1 class="s-title xl">Practica tú</h1>
+    <p class="lead">Cinco ejercicios con el estilo del examen. Intenta escribirlos antes de revelar la solución.</p>
+  </div>
+</section>
+
+<section class="slide" id="p1" data-fx="vc" data-section="Práctica" data-title="Práctica 1: localMeanDiff">
+  <header class="s-head"><p class="kicker">de práctica · T2 + T4</p><h2 class="s-title">localMeanDiff</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <span class="pr-tag">ejercicio de práctica</span>
+      <p class="txt">Escribe <code>localMeanDiff(im, n)</code>: la diferencia entre la imagen y su media local <i>n×n</i>.</p>
+      <div class="tip"><b>pista</b>Paso alto = original − paso bajo: \(f - f*\text{box}\).</div>
+<pre class="code sm" data-seq="1">def localMeanDiff(im, n):
+    box = np.ones((n, n)) / n**2
+    return im - convolve(im.astype(float), box)</pre>
+      <p class="txt" data-seq="2">Equivale a <code>im - uniform_filter(im, n)</code>. La media de la salida es ≈ 0.</p>
+    </div>
+    <figure class="fig" data-seq="2"><img src="assets/pr1.png" alt="resultado"><figcaption>cat256, n = 5: bordes y textura</figcaption></figure>
+  </div>
+  <aside class="notes">Verificado: ambas versiones coinciden y la media de la salida es 1e-15. Es un filtro paso alto con núcleo delta menos caja, que suma 0. Enlace con la lección 2 y la lección 4.</aside>
+</section>
+
+<section class="slide" id="p2" data-fx="vc" data-section="Práctica" data-title="Práctica 2: lowpassFreq">
+  <header class="s-head"><p class="kicker">de práctica · T3 / lab 3</p><h2 class="s-title">lowpassFreq</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <span class="pr-tag">ejercicio de práctica</span>
+      <p class="txt">Escribe <code>lowpassFreq(im, r)</code>: paso bajo ideal de radio <i>r</i> en el dominio de la frecuencia.</p>
+      <div class="tip"><b>pista</b><code>fft2</code>, <code>fftshift</code>, <code>meshgrid</code> para el círculo, y deshacer en orden inverso.</div>
+<pre class="code sm" data-seq="1">def lowpassFreq(im, r):
+    m, n = im.shape
+    F = np.fft.fftshift(np.fft.fft2(im))
+    y, x = np.meshgrid(np.arange(m) - m//2,
+                       np.arange(n) - n//2, indexing='ij')
+    H = (x**2 + y**2) &lt;= r**2
+    return np.fft.ifft2(np.fft.ifftshift(F*H)).real</pre>
+    </div>
+    <figure class="fig" data-seq="2"><img src="assets/pr2.png" alt="resultado"><figcaption>cat256, r = 30: borroso con <i>ringing</i></figcaption></figure>
+  </div>
+  <aside class="notes">Comprobado: con r enorme devuelve la imagen original y con r = 30 conserva la media. Se toma la parte real porque la imaginaria es ruido numérico (la máscara es simétrica). El borde brusco del círculo causa ringing: pruébalo con una gaussiana.</aside>
+</section>
+
+<section class="slide" id="p3" data-fx="vc" data-section="Práctica" data-title="Práctica 3: edgeMap">
+  <header class="s-head"><p class="kicker">de práctica · T4 / lab 4</p><h2 class="s-title">edgeMap</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <span class="pr-tag">ejercicio de práctica</span>
+      <p class="txt">Escribe <code>edgeMap(im, sigma, t)</code>: suaviza, calcula Sobel en x e y, la magnitud y umbraliza con un umbral <b>relativo</b> <i>t</i>.</p>
+      <div class="tip"><b>pista</b>Relativo = fracción del máximo de la magnitud.</div>
+<pre class="code sm" data-seq="1">def edgeMap(im, sigma, t):
+    s = gaussian_filter(im.astype(float), sigma)
+    gx = sobel(s, axis=1)
+    gy = sobel(s, axis=0)
+    mag = np.hypot(gx, gy)
+    return mag &gt; t * mag.max()</pre>
+    </div>
+    <figure class="fig" data-seq="2"><img src="assets/pr3.png" alt="resultado"><figcaption>cat256, σ = 1,5 · t = 0,3</figcaption></figure>
+  </div>
+  <aside class="notes">Se suaviza antes porque la derivada amplifica el ruido. En scipy, axis=1 deriva en horizontal (gx) y axis=0 en vertical (gy). La magnitud hypot es isótropa, al contrario que la suma de valores absolutos. Un umbral relativo se adapta al contraste de cada imagen.</aside>
+</section>
+
+<section class="slide" id="p4" data-fx="vc" data-section="Práctica" data-title="Práctica 4: histEq">
+  <header class="s-head"><p class="kicker">de práctica · T1 / lab 1</p><h2 class="s-title">histEq con una LUT</h2></header>
+  <div class="s-body vstack">
+    <span class="pr-tag">ejercicio de práctica</span>
+    <div class="g2" style="grid-template-columns:1.12fr .88fr">
+      <div class="vstack">
+        <p class="txt">Escribe <code>histEq(im)</code> en 3 líneas para una imagen uint8.</p>
+        <div class="tip"><b>pista</b>Histograma, CDF escalada a [0, 255] y tabla de consulta (LUT).</div>
+<pre class="code sm" data-seq="1">def histEq(im):
+    h = np.bincount(im.ravel(), minlength=256)
+    T = np.round(255*np.cumsum(h)/im.size).astype(np.uint8)
+    return T[im]</pre>
+      </div>
+      <figure class="fig" data-seq="2"><img src="assets/pr4.png" alt="iglesia antes y después"><figcaption>iglesia antes y después · entropía 5,975 → 5,918 bits</figcaption></figure>
+    </div>
+  </div>
+  <aside class="notes">T[im] indexa la tabla con la propia imagen: cada píxel se sustituye por T de su nivel. La entropía no sube, baja un poco: es la errata de los apuntes que hay que corregir. Resultado ejecutado con iglesia.pgm.</aside>
+</section>
+
+<section class="slide" id="p5" data-fx="vc" data-section="Práctica" data-title="Práctica 5: bordes por ventana">
+  <header class="s-head"><p class="kicker">de práctica · T2 + T4</p><h2 class="s-title">edgeDensity</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <span class="pr-tag">ejercicio de práctica</span>
+      <p class="txt">Escribe <code>edgeDensity(im, sigma, n, frac)</code>: marca las posiciones donde, en una ventana <i>n×n</i>, al menos una fracción <i>frac</i> de los píxeles son de borde.</p>
+      <div class="tip"><b>pista</b>Canny da una máscara booleana; contar en una ventana = convolución con unos.</div>
+<pre class="code sm" data-seq="1">def edgeDensity(im, sigma, n, frac):
+    ed = feature.canny(im.astype(float), sigma=sigma)
+    box = np.ones((n, n)) / n**2
+    return convolve(ed.astype(float), box,
+                    mode='constant') &gt;= frac</pre>
+    </div>
+    <figure class="fig" data-seq="2"><img src="assets/pr5.png" alt="resultado"><figcaption>cat256, σ = 2 · n = 15 · frac = 0,1</figcaption></figure>
+  </div>
+  <aside class="notes">Combina bordes (lección 4) con el conteo en ventana del ejercicio 2. Dividir entre n al cuadrado convierte el conteo en porcentaje. Verificado igual a uniform_filter con mode constant.</aside>
+</section>
+
+<!-- ============ BLOQUE J · CIERRE ============ -->
+<section class="slide is-plain divider" id="d-cierre" data-fx="backdrop" data-seed="19" data-section="Cierre" data-title="Para llevarte">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque j</p>
+    <h1 class="s-title xl">Para llevarte</h1>
+    <p class="lead">Cómo encajan los temas, la lista de comprobación y la chuleta final.</p>
+  </div>
+</section>
+
+<section class="slide" id="mapa" data-fx="vc" data-section="Cierre" data-title="Mapa de los temas">
+  <header class="s-head"><p class="kicker">cómo se conectan</p><h2 class="s-title">Mapa de los temas</h2></header>
+  <div class="s-body">
+    <svg class="map" viewBox="0 0 1664 600" width="1664" height="600" role="img" aria-label="Mapa de relaciones entre los temas">
+      <g><rect x="10" y="230" width="280" height="130"/><text x="150" y="285" text-anchor="middle">T1 realce</text><text class="s" x="150" y="325" text-anchor="middle">puntual</text></g>
+      <path data-seq="1" data-a="draw" d="M290 295 H370 M355 285 L370 295 L355 305"/>
+      <g data-seq="1"><rect x="370" y="230" width="300" height="130"/><text x="520" y="285" text-anchor="middle">T2 espacial</text><text class="s" x="520" y="325" text-anchor="middle">convolución</text><text class="s" x="330" y="215" text-anchor="middle">pesos locales</text></g>
+      <path data-seq="2" data-a="draw" d="M670 260 L760 110 M740 112 L760 110 L752 128"/><path data-seq="2" data-a="draw" d="M760 135 L670 285 M672 267 L670 285 L688 280"/>
+      <g data-seq="2"><rect x="760" y="30" width="300" height="130"/><text x="910" y="85" text-anchor="middle">T3 frecuencia</text><text class="s" x="910" y="125" text-anchor="middle">Fourier</text><text class="s" x="790" y="235" text-anchor="start">teorema conv.</text></g>
+      <path data-seq="3" data-a="draw" d="M670 330 L760 480 M752 462 L760 480 L742 478"/>
+      <g data-seq="3"><rect x="760" y="430" width="300" height="130"/><text x="910" y="485" text-anchor="middle">T4 bordes</text><text class="s" x="910" y="525" text-anchor="middle">derivadas</text><text class="s" x="790" y="405" text-anchor="start">gaussiana + derivada</text></g>
+      <path data-seq="4" data-a="draw" d="M1060 495 H1350 M1335 485 L1350 495 L1335 505"/>
+      <g data-seq="4"><rect x="1350" y="430" width="300" height="130"/><text x="1500" y="485" text-anchor="middle">T5 contornos</text><text class="s" x="1500" y="525" text-anchor="middle">Hough</text><text class="s" x="1205" y="470" text-anchor="middle">bordes → rectas</text></g>
+      <text class="hd" data-seq="5" x="1100" y="200" text-anchor="start">T2 ⇄ T3: el mismo filtro,</text>
+      <text class="hd" data-seq="5" x="1100" y="235" text-anchor="start">en dos dominios</text>
+    </svg>
+  </div>
+  <aside class="notes">Realce puntual: cada píxel por separado. Filtrado espacial: pesos sobre una vecindad, es decir, convolución. El teorema de la convolución la convierte en un producto en frecuencia, y viceversa. Los bordes son derivadas, que son convoluciones, normalmente tras suavizar con una gaussiana, que es un paso bajo. Los contornos usan los bordes como entrada del voto de Hough.</aside>
+</section>
+
+<section class="slide" id="checklist" data-fx="vc" data-section="Cierre" data-title="Antes de entregar">
+  <header class="s-head"><p class="kicker">30 segundos por ejercicio</p><h2 class="s-title">Antes de entregar</h2></header>
+  <div class="s-body check">
+    <div class="row" data-seq="1"><span class="k">✓</span><span><b>dtype:</b> ¿hay negativos o decimales? Entonces <code>im.astype(float)</code> o <code>/ 255.0</code> (ej. 1 y 4).</span></div>
+    <div class="row" data-seq="2"><span class="k">✓</span><span><b>Entrada intacta:</b> si asignas con <code>im[...] = …</code>, empieza con <code>im = im.copy()</code> (ej. 5a).</span></div>
+    <div class="row" data-seq="3"><span class="k">✓</span><span><b>Forma:</b> la salida tiene el tamaño de <code>im</code>; <code>ndimage.convolve</code>, no <code>convolve2d</code> en modo <code>'full'</code>.</span></div>
+    <div class="row" data-seq="4"><span class="k">✓</span><span><b>Canales:</b> máscara <code>[..., None]</code>, <code>sigma=(s, s, 0)</code> o un bucle sobre <code>k</code> (ej. 3 y 5b).</span></div>
+    <div class="row" data-seq="5"><span class="k">✓</span><span><b>Rangos:</b> <code>randint(a, b)</code> excluye <code>b</code>; <code>np.ones((sX, sY))</code> son sX filas.</span></div>
+    <div class="row" data-seq="6"><span class="k">✓</span><span><b>Justificación:</b> nombra la teoría en una frase: «la mediana elimina impulsos», «convolución con unos = conteo».</span></div>
+  </div>
+  <aside class="notes">Esta lista resume todas las trampas vistas en los cinco ejercicios. Repásala con cada respuesta antes de pasar a la siguiente: son los errores que no dan excepción y por eso no se ven.</aside>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="Cierre" data-title="Chuleta final">
+  <header class="s-head"><p class="kicker">15 funciones imprescindibles</p><h2 class="s-title">Chuleta final</h2></header>
+  <div class="s-body g2">
+    <table class="t">
+      <tr><th>firma mínima</th><th>módulo</th></tr>
+      <tr><td><code>np.where(c, a, b)</code></td><td>numpy</td></tr>
+      <tr><td><code>np.clip(a, lo, hi)</code></td><td>numpy</td></tr>
+      <tr><td><code>a.astype(float)</code></td><td>numpy</td></tr>
+      <tr><td><code>np.bincount(im.ravel(), minlength=256)</code></td><td>numpy</td></tr>
+      <tr><td><code>np.cumsum(h)</code></td><td>numpy</td></tr>
+      <tr><td><code>convolve(im, mask)</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>gaussian_filter(im, sigma)</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>medfilt2d(im, 3)</code></td><td>scipy.signal</td></tr>
+    </table>
+    <table class="t">
+      <tr><th>firma mínima</th><th>módulo</th></tr>
+      <tr><td><code>np.random.rand(m,n)</code> · <code>randint</code> · <code>normal</code></td><td>numpy.random</td></tr>
+      <tr><td><code>fft2</code> · <code>ifft2</code> · <code>fftshift</code> · <code>ifftshift</code></td><td>numpy.fft</td></tr>
+      <tr><td><code>np.meshgrid(x, y)</code></td><td>numpy</td></tr>
+      <tr><td><code>sobel(im, axis=0|1)</code></td><td>scipy.ndimage</td></tr>
+      <tr><td><code>np.hypot(gx, gy)</code> · <code>np.arctan2(gy, gx)</code></td><td>numpy</td></tr>
+      <tr><td><code>feature.canny(im, sigma)</code></td><td>skimage</td></tr>
+      <tr><td><code>hough_line(ed)</code> · <code>hough_line_peaks(h, ang, d)</code></td><td>skimage.transform</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Una sola diapositiva para repasar antes de entrar. Si recuerdas estas quince funciones y el árbol de decisión, puedes resolver cualquier ejercicio del estilo del ejemplo. Suerte.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

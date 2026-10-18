@@ -2,6 +2,7 @@
 // de errores de consola y de elementos que se salen del lienzo.
 // Uso: node tools/verificar.mjs <nombre> [estilo1,estilo2] [--out=<carpeta>]   (con el servidor en :8000)
 // Capturas en <carpeta de salida>/capturas/<nombre>/ (output/ por defecto; ver tools/salida.mjs).
+// VERIF_REDUCED=1 captura con movimiento reducido (estado final de las animaciones).
 // Requiere playwright (npm i -D playwright). CHROMIUM_PATH=/ruta/chrome usa un navegador ya instalado.
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,7 +15,7 @@ const base = `http://localhost:8000/decks/${deck}/`;
 fs.mkdirSync(dir, { recursive: true });
 const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 for (const style of styles) for (const mode of ['light', 'dark']) {
-  const p = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+  const p = await b.newPage({ viewport: { width: 1920, height: 1080 }, ...(process.env.VERIF_REDUCED ? { reducedMotion: 'reduce' } : {}) });
   await p.addInitScript(([s, m]) => { localStorage.setItem('motor:style', s); localStorage.setItem('motor:mode', m); }, [style, mode]);
   p.on('console', (msg) => msg.type() === 'error' && console.log(`[${style}/${mode}] consola:`, msg.text()));
   p.on('pageerror', (e) => console.log(`[${style}/${mode}] página:`, e.message));

@@ -1,0 +1,799 @@
+<!doctype html>
+<html lang="es" data-style="noche" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>VC · T2 Filtrado espacial</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="../vc-base/vc.css">
+<link rel="stylesheet" href="deck.css">
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ============ A · SISTEMAS LINEALES ============ -->
+<section class="slide is-plain divider" id="portada" data-fx="backdrop" data-seed="5" data-section="Inicio" data-title="Filtrado espacial">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">visión por computador · sjk002 · lección 002</p>
+    <h1 class="s-title xl">Filtrado espacial lineal y no lineal</h1>
+    <p class="lead">Convolución, correlación, ruido, suavizado y filtros de orden.</p>
+  </div>
+  <aside class="notes">Esta presentación cubre la lección 002 completa: qué es un sistema lineal, la diferencia entre convolución y correlación, cómo se tratan los bordes en SciPy, los modelos de ruido y los filtros lineales (media, gaussiano) y no lineales (mediana, mínimo, máximo). Al final hay una chuleta y preguntas de verdadero o falso.</aside>
+</section>
+
+<section class="slide" id="funcion" data-fx="vc" data-section="Sistemas lineales" data-title="La imagen como función">
+  <header class="s-head"><p class="kicker">punto de partida</p><h2 class="s-title">La imagen es una matriz</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <p class="txt">Una imagen en grises es una función discreta de dos índices (cada celda es la intensidad de un píxel):</p>
+      <div class="eq big">$$f[n,m]\in\{0,\dots,L-1\}$$</div>
+      <p class="txt">Filtrar es aplicar un sistema \(\mathcal{T}\) que transforma una imagen en otra:</p>
+      <div class="eq big">$$g=\mathcal{T}(f)\qquad g[n,m]=\mathcal{T}(f)[n,m]$$</div>
+      <p class="txt">En NumPy: <code>f[n, m]</code> es la fila <code>n</code> y la columna <code>m</code>. <b>Ojo</b>: en las diapositivas del curso <code>n</code> es horizontal; en NumPy el primer índice es la fila.</p>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[12,40,41,40],[10,38,200,42],[11,37,201,39],[9,36,40,41]]' data-dec="0" style="height:420px"></div>
+      <p class="txt muted" style="text-align:center">matriz 4×4 de ejemplo: un borde vertical entre las columnas 1 y 2</p>
+    </div>
+  </div>
+  <aside class="notes">La imagen es solo una tabla de números. Filtrar significa definir una regla que, para cada posición de salida, produce un valor a partir de las entradas. La matriz de ejemplo es inventada. Atención a la convención de ejes: las diapositivas dibujan n en horizontal, pero en NumPy el primer índice recorre filas.</aside>
+</section>
+
+<section class="slide" id="lineal" data-fx="vc" data-section="Sistemas lineales" data-title="Sistema lineal">
+  <header class="s-head"><p class="kicker">definición</p><h2 class="s-title">Sistema lineal</h2></header>
+  <div class="s-body vstack">
+    <div class="eq big" data-seq="1">$$g[n,m]=\sum_{k,l}h[n,m,k,l]\,f[k,l]$$</div>
+    <p class="txt" data-seq="1">Forma general: cada salida es una combinación con pesos \(h\) de <b>todas</b> las entradas (salida = pesos · entrada).</p>
+    <div class="eq big" data-seq="2">$$\mathcal{T}(a f_1+b f_2)=a\,\mathcal{T}(f_1)+b\,\mathcal{T}(f_2)$$</div>
+    <p class="txt" data-seq="2">Definición por <b>superposición</b>: la salida de una mezcla es la mezcla de las salidas. Contiene dos propiedades: homogeneidad (\(\mathcal{T}(af)=a\mathcal{T}f\)) y aditividad.</p>
+    <div class="tip" data-seq="3"><b>truco</b>Un sistema lineal siempre cumple \(\mathcal{T}(0)=0\). Si la entrada nula no da salida nula, no es lineal.</div>
+  </div>
+  <aside class="notes">Un sistema lineal es, en el fondo, una multiplicación por una matriz enorme: si aplanamos la imagen en un vector, la salida es H por f. Los pesos h pueden cambiar con la posición de salida. La definición por superposición es la que se usa para demostrar que algo no es lineal: basta con un contraejemplo. La comprobación T(0)=0 descarta rápido los sistemas afines como g = f + 5.</aside>
+</section>
+
+<section class="slide" id="cuales" data-fx="vc" data-step-ms="1100" data-section="Sistemas lineales" data-title="¿Cuáles son lineales?">
+  <header class="s-head"><p class="kicker">ejercicio de la diapositiva 7</p><h2 class="s-title">¿Cuáles son lineales?</h2></header>
+  <div class="s-body g21">
+    <table class="t lg">
+      <tr><th>sistema</th><th>¿lineal?</th><th>por qué</th></tr>
+      <tr><td>media local</td><td class="ok" data-seq="1">sí</td><td data-seq="1">suma ponderada</td></tr>
+      <tr><td>mediana</td><td class="err" data-seq="2">no</td><td data-seq="2">ordena (contraejemplo)</td></tr>
+      <tr><td>\(g=f^2\)</td><td class="err" data-seq="3">no</td><td data-seq="3">\((2f)^2\neq 2f^2\)</td></tr>
+      <tr><td>\(g=f+5\)</td><td class="err" data-seq="4">no</td><td data-seq="4">afín: \(\mathcal{T}(0)=5\)</td></tr>
+      <tr><td>umbral</td><td class="err" data-seq="5">no</td><td data-seq="5">\(\mathcal{T}(2f)\neq2\mathcal{T}(f)\)</td></tr>
+      <tr><td>traslación</td><td class="ok" data-seq="6">sí</td><td data-seq="6">reordena píxeles</td></tr>
+    </table>
+    <div class="vstack">
+      <div class="tip" data-seq="7"><b>también lineales (diapositiva 7)</b>rotación, escalado espacial, <code>rgb2gray</code> y desenfoque. Solo el desenfoque es además invariante a traslación (LTI).</div>
+      <div class="trap" data-seq="8"><b>trampa</b>«Afín» no es «lineal»: sumar una constante rompe la linealidad aunque la gráfica sea una recta.</div>
+    </div>
+  </div>
+  <aside class="notes">Los cuatro ejemplos de la diapositiva 7 (rotación, escalado, rgb2gray y desenfoque) son todos lineales porque cada píxel de salida es una combinación lineal de píxeles de entrada (con interpolación en rotación y escalado). Lo que cambia es si son invariantes a traslación: solo el desenfoque lo es. La traslación es lineal y también LTI.</aside>
+</section>
+
+<section class="slide" id="mediana-no" data-fx="vc" data-section="Sistemas lineales" data-title="La mediana no es lineal">
+  <header class="s-head"><p class="kicker">demostración por contraejemplo</p><h2 class="s-title">La mediana no es lineal</h2></header>
+  <div class="s-body g21">
+    <div class="deriv lg">
+      <div data-seq="1"><span>$$f_1=(1,2,9),\quad f_2=(5,0,0)$$</span><span class="why">dos entradas de ejemplo</span></div>
+      <div data-seq="2"><span>$$\operatorname{med}(f_1)+\operatorname{med}(f_2)=2+0=2$$</span><span class="why">ordenadas: (1,2,9)→2 y (0,0,5)→0</span></div>
+      <div data-seq="3"><span>$$f_1+f_2=(6,2,9)\Rightarrow\operatorname{med}=6$$</span><span class="why">ordenada (2,6,9) → 6</span></div>
+      <div data-seq="4"><span>$$2\neq 6\Rightarrow \mathcal{T}(f_1+f_2)\neq\mathcal{T}(f_1)+\mathcal{T}(f_2)$$</span><span class="why">falla la aditividad</span></div>
+    </div>
+    <div class="vstack">
+      <div class="exam" data-seq="5"><b>en el examen</b>Para demostrar que algo <b>no</b> es lineal, un contraejemplo numérico basta. Para demostrar que sí lo es, hay que probar la superposición en general.</div>
+    </div>
+  </div>
+  <aside class="notes">med(1,2,9)=2; med(5,0,0)=0 porque ordenado es (0,0,5). La suma elemento a elemento es (6,2,9), cuya mediana es 6. Como 2 es distinto de 6, la mediana viola la aditividad. Consecuencia: no se puede escribir como convolución ni analizar con Fourier.</aside>
+</section>
+
+<section class="slide" id="lti" data-fx="vc" data-section="Sistemas lineales" data-title="LTI e invariancia">
+  <header class="s-head"><p class="kicker">linealidad + invariancia a traslación</p><h2 class="s-title">Sistemas LTI</h2></header>
+  <div class="s-body g2">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr"><span>$$g[n,m]=\sum_{k,l}h[n,m,k,l]\,f[k,l]$$</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$h[n,m,k,l]=h[n-k,\,m-l]$$</span><span class="why">invariancia: los pesos solo dependen de la diferencia de posiciones</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$g[n,m]=\sum_{k,l}h[n-k,m-l]\,f[k,l]=(h\ast f)[n,m]$$</span><span class="why">eso es una convolución</span></div>
+    </div>
+    <div class="vstack">
+      <p class="txt" data-seq="2">Todos los píxeles se procesan <b>igual</b>, sin importar dónde estén: \(h\) es un único núcleo pequeño.</p>
+      <svg class="dg" viewBox="0 0 760 400" data-seq="3" aria-label="Conjuntos anidados: funciones, diferenciables, lineales, LTI">
+        <rect class="set" x="4" y="4" width="752" height="392" rx="22" style="stroke:var(--line-2)"/>
+        <text x="28" y="44">funciones</text>
+        <rect class="set" x="60" y="66" width="640" height="310" rx="20" style="stroke:var(--fg-3)"/>
+        <text x="84" y="106">diferenciables</text>
+        <rect class="set" x="116" y="128" width="528" height="228" rx="18" style="stroke:var(--cat-2)"/>
+        <text x="140" y="168">lineales  T(af+bg)=aTf+bTg</text>
+        <rect class="set" x="172" y="190" width="416" height="146" rx="16" style="stroke:var(--accent);fill:var(--bg-2)"/>
+        <text class="lbl" x="380" y="252" text-anchor="middle">LTI = convolución</text>
+        <text x="380" y="300" text-anchor="middle">g = h ∗ f</text>
+      </svg>
+    </div>
+  </div>
+  <aside class="notes">Si además de lineal el sistema trata igual todas las posiciones, los pesos de la forma general se simplifican: h[n,m,k,l] pasa a depender solo de n-k y m-l. Sustituyendo, aparece exactamente la definición de convolución. Por eso el filtrado espacial lineal e invariante es una convolución con un núcleo.</aside>
+</section>
+
+<section class="slide" id="equiv" data-fx="vc" data-step-ms="800" data-section="Sistemas lineales" data-title="Equivarianza e invariancia">
+  <header class="s-head"><p class="kicker">no confundir</p><h2 class="s-title">Equivarianza e invariancia</h2></header>
+  <div class="s-body vstack">
+    <div class="cmp">
+      <div class="card"><h3>invariancia</h3><div class="eq">$$f(T(x))=f(x)$$</div><p>La salida <b>no cambia</b> al trasladar la entrada. Ejemplo: un clasificador «¿hay un gato?».</p></div>
+      <div class="card"><h3>equivarianza</h3><div class="eq">$$f(g(x))=g(f(x))$$</div><p>La salida <b>se traslada igual</b> que la entrada. Ejemplo: un detector de bordes.</p></div>
+    </div>
+    <div class="g2" style="align-items:center">
+      <svg class="dg" viewBox="0 0 760 330" aria-label="Diagrama conmutativo: trasladar y filtrar en cualquier orden da lo mismo">
+        <defs><marker id="t2-ah1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+        <rect class="box" x="130" y="10" width="200" height="70" rx="10"/><text class="lbl" x="230" y="55" text-anchor="middle">f</text>
+        <rect class="box" x="530" y="10" width="200" height="70" rx="10"/><text class="lbl" x="630" y="55" text-anchor="middle">T<tspan baseline-shift="sub" style="font-size:22px">v</tspan> f</text>
+        <rect class="box" x="130" y="250" width="200" height="70" rx="10"/><text class="lbl" x="230" y="295" text-anchor="middle">h ∗ f</text>
+        <rect class="box hi" x="530" y="250" width="200" height="70" rx="10"/><text class="lbl" x="630" y="295" text-anchor="middle">T<tspan baseline-shift="sub" style="font-size:22px">v</tspan>(h∗f)</text>
+        <path class="arr" d="M335,45 H522" marker-end="url(#t2-ah1)" data-seq="1" data-a="draw"/><text x="430" y="32" text-anchor="middle" data-seq="1">trasladar</text>
+        <path class="arr" d="M630,85 V242" marker-end="url(#t2-ah1)" data-seq="2" data-a="draw"/><text x="615" y="172" text-anchor="end" data-seq="2">filtrar</text>
+        <path class="arr" d="M230,85 V242" marker-end="url(#t2-ah1)" data-seq="3" data-a="draw"/><text x="215" y="172" text-anchor="end" data-seq="3">filtrar</text>
+        <path class="arr" d="M335,285 H522" marker-end="url(#t2-ah1)" data-seq="4" data-a="draw"/><text x="430" y="272" text-anchor="middle" data-seq="4">trasladar</text>
+      </svg>
+      <div class="vstack">
+        <div class="eq" data-seq="5">$$h\ast(T_v f)=T_v(h\ast f)$$</div>
+        <div class="eq sm" data-seq="5">$$\textstyle\sum_{k,l}h[k,l]\,f[n{-}k{-}v_1,\,m{-}l{-}v_2]=(h\ast f)[n{-}v_1,\,m{-}v_2]$$</div>
+        <p class="txt" data-seq="5">Por los dos caminos se llega a la misma imagen.</p>
+        <div class="exam" data-seq="6"><b>en el examen</b>La convolución es <b>equivariante</b> a la traslación, no invariante. Las CNN lo aprovechan.</div>
+      </div>
+    </div>
+  </div>
+  <aside class="notes">Invarianza: f(T(x)) = f(x). Equivarianza: el orden de aplicar la traslación y el operador no importa. El filtrado por convolución es equivariante: desplazar la imagen y filtrar da el mismo resultado que filtrar y desplazar. Esta es la propiedad que se dice en el apunte (LTI: equivariant to translation). Demostración en una línea: (h * T_v f)[n,m] = suma de h[k,l] f[n-k-v1, m-l-v2] = (h*f)[n-v1, m-v2], es decir, el resultado filtrado desplazado v.</aside>
+</section>
+
+<section class="slide" id="ej10" data-fx="vc" data-section="Sistemas lineales" data-title="Ejemplo: media 5×5">
+  <header class="s-head"><p class="kicker">ejemplo de la diapositiva 10</p><h2 class="s-title">Un sistema LTI: media 5×5</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq big">$$g[n,m]=\frac{1}{25}\sum_{k=-2}^{2}\sum_{l=-2}^{2}f[n+k,\,m+l]$$</div>
+      <ul class="pts">
+        <li>Lineal: suma ponderada de entradas.</li>
+        <li>Invariante: el peso \(1/25\) no depende de \((n,m)\).</li>
+        <li>Pesos que suman \(25\cdot\tfrac1{25}=1\): conserva el brillo medio.</li>
+        <li>Núcleo cuadrado y simétrico: correlación y convolución dan lo mismo.</li>
+      </ul>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[0.04,0.04,0.04,0.04,0.04],[0.04,0.04,0.04,0.04,0.04],[0.04,0.04,0.04,0.04,0.04],[0.04,0.04,0.04,0.04,0.04],[0.04,0.04,0.04,0.04,0.04]]' data-dec="2" style="height:440px"></div>
+      <p class="txt muted" style="text-align:center">núcleo \(h[k,l]=1/25=0{,}04\)</p>
+    </div>
+  </div>
+  <aside class="notes">La diapositiva escribe la media 5x5 como suma con n+k, m+l, es decir en forma de correlación. Como el núcleo es constante, es simétrico y coincide con la convolución. Los pesos suman 1 para no cambiar el nivel medio de gris.</aside>
+</section>
+
+<!-- ============ B · CONVOLUCIÓN FRENTE A CORRELACIÓN ============ -->
+<section class="slide is-plain divider" id="div-b" data-fx="backdrop" data-seed="11" data-section="Convolución y correlación" data-title="Convolución y correlación">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque b</p>
+    <h1 class="s-title xl">Convolución y correlación</h1>
+    <p class="lead">Dos formas de deslizar un núcleo: girarlo o no girarlo.</p>
+  </div>
+</section>
+
+<section class="slide" id="defs" data-fx="vc" data-section="Convolución y correlación" data-title="Definiciones">
+  <header class="s-head"><p class="kicker">las dos operaciones</p><h2 class="s-title">Convolución y correlación</h2></header>
+  <div class="s-body vstack">
+    <div class="cmp">
+      <div class="card"><h3>convolución</h3><div class="eq">$$g[n,m]=\sum_{k,l}f[n-k,\,m-l]\,h[k,l]$$</div><p>El núcleo se <b>gira 180°</b> antes de deslizarlo.</p></div>
+      <div class="card"><h3>correlación</h3><div class="eq">$$g[n,m]=\sum_{k,l}f[n+k,\,m+l]\,h[k,l]$$</div><p>El núcleo se desliza <b>sin girar</b>.</p></div>
+    </div>
+    <div class="g2" style="align-items:center">
+      <div class="kpair" data-seq="1">
+        <div><div class="vc-heat" data-m='[[1,2,0],[0,0,0],[0,0,-1]]' data-signed="1" data-dec="0" style="height:200px;min-height:0"></div><p class="cap">h (de ejemplo)</p></div>
+        <div class="arrow">giro<br>180°<br>→</div>
+        <div><div class="vc-heat" data-m='[[-1,0,0],[0,0,0],[0,2,1]]' data-signed="1" data-dec="0" style="height:200px;min-height:0"></div><p class="cap">h[−k, −l]</p></div>
+      </div>
+      <p class="txt" data-seq="1">Mismo núcleo \(h\): convolucionar con \(h\) es correlar con \(h\) girado 180° (invertir filas y columnas: <code>h[::-1, ::-1]</code>).</p>
+    </div>
+    <div class="trap" data-seq="2"><b>trampa</b>Las CNN (PyTorch, TensorFlow) llaman «convolución» a lo que en realidad es <b>correlación</b>. En visión clásica y en SciPy la distinción importa: <code>convolve</code> y <code>correlate</code>.</div>
+  </div>
+  <aside class="notes">La única diferencia es el signo de los índices del píxel de entrada: n-k frente a n+k. Con n-k, el núcleo se recorre al revés. Para núcleos simétricos no hay diferencia. En aprendizaje profundo la capa llamada convolución calcula correlación, pero como los pesos se aprenden, da igual.</aside>
+</section>
+
+<section class="slide" id="conv-anim" data-fx="vc" data-section="Convolución y correlación" data-title="Convolución paso a paso">
+  <header class="s-head"><p class="kicker">ejemplo numérico · datos de ejemplo</p><h2 class="s-title">Convolución paso a paso</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[1,2,0,1,3],[0,1,2,3,1],[2,1,0,1,2],[1,0,3,2,0],[3,1,1,0,2]]' data-k='[[1,2,0],[0,0,0],[0,0,-1]]' data-mode="conv" data-pad="zero" data-dec="0" style="height:630px"></div>
+  </div>
+  <aside class="notes">Núcleo asimétrico, relleno con ceros fuera de la imagen. En modo convolución el núcleo se gira antes de deslizarse. Calculado de verdad: la celda central vale 7. Compárese con la siguiente diapositiva, que usa el mismo núcleo en modo correlación.</aside>
+</section>
+
+<section class="slide" id="corr-anim" data-fx="vc" data-section="Convolución y correlación" data-title="Correlación paso a paso">
+  <header class="s-head"><p class="kicker">mismo núcleo · mismos datos de ejemplo</p><h2 class="s-title">Correlación paso a paso</h2></header>
+  <div class="s-body vstack">
+    <div class="vc-conv" data-img='[[1,2,0,1,3],[0,1,2,3,1],[2,1,0,1,2],[1,0,3,2,0],[3,1,1,0,2]]' data-k='[[1,2,0],[0,0,0],[0,0,-1]]' data-mode="corr" data-pad="zero" data-dec="0" style="height:630px"></div>
+  </div>
+  <aside class="notes">Con el mismo núcleo y la misma imagen, el resultado es distinto porque el núcleo no se gira. La celda central vale ahora 3, frente a 7 en la convolución.</aside>
+</section>
+
+<section class="slide" id="mano" data-fx="vc" data-section="Convolución y correlación" data-title="Una celda a mano" data-step-ms="1000">
+  <header class="s-head"><p class="kicker">celda central (2,2) · datos de ejemplo</p><h2 class="s-title">Una celda, a mano</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+    <div class="g3">
+      <div><div class="vc-heat" data-m='[[1,2,3],[1,0,1],[0,3,2]]' data-dec="0" style="height:220px;min-height:0"></div><p class="cap">W en (2,2)</p></div>
+      <div><div class="vc-heat" data-m='[[1,2,0],[0,0,0],[0,0,-1]]' data-signed="1" data-dec="0" style="height:220px;min-height:0"></div><p class="cap">h</p></div>
+      <div><div class="vc-heat" data-m='[[-1,0,0],[0,0,0],[0,2,1]]' data-signed="1" data-dec="0" style="height:220px;min-height:0"></div><p class="cap">h girado 180°</p></div>
+    </div>
+    <p class="txt">Correlación: \(W\odot h\). Convolución: \(W\odot h_{180}\). Se multiplica casilla a casilla y se suma.</p>
+    </div>
+    <div class="vstack">
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr"><span>$$g_{\text{corr}}=1\cdot1+2\cdot2+0\cdot3+(-1)\cdot2=3$$</span><span class="why">W ⊙ h: solo cuentan los pesos ≠ 0</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$g_{\text{conv}}=(-1)\cdot1+2\cdot3+1\cdot2=7$$</span><span class="why">W ⊙ h girado</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$3\neq 7$$</span><span class="why">igual que la animación (comprobado con <code>scipy.ndimage</code>)</span></div>
+    </div>
+    <div class="exam" data-seq="4"><b>en el examen</b>Multiplica y suma; gira el núcleo <b>solo</b> para la convolución.</div>
+    </div>
+  </div>
+  <aside class="notes">Correlación: producto elemento a elemento de la ventana y el núcleo: 1·1 + 2·2 + (-1)·2 = 3 (los demás pesos son cero). Convolución: se usa el núcleo girado 180 grados: el 1 de arriba a la izquierda pasa a abajo a la derecha, etc. Queda -1·1 (arriba izquierda) + 2·3 (abajo centro) + 1·2 (abajo derecha) = 7.</aside>
+</section>
+
+<section class="slide" id="impulso" data-fx="vc" data-section="Convolución y correlación" data-title="Respuesta al impulso">
+  <header class="s-head"><p class="kicker">por qué h es la «respuesta al impulso»</p><h2 class="s-title">Respuesta al impulso</h2></header>
+  <div class="s-body vstack">
+    <div class="g2">
+      <div class="vc-conv" data-img='[[0,0,0],[0,1,0],[0,0,0]]' data-k='[[1,2,3],[4,5,6],[7,8,9]]' data-mode="conv" data-pad="zero" data-dec="0" style="height:400px"></div>
+      <div class="vc-conv" data-img='[[0,0,0],[0,1,0],[0,0,0]]' data-k='[[1,2,3],[4,5,6],[7,8,9]]' data-mode="corr" data-pad="zero" data-dec="0" style="height:400px"></div>
+    </div>
+    <div class="g2">
+      <p class="txt"><b>Convolución</b>: \(\delta\ast h=h\). Devuelve el núcleo tal cual.</p>
+      <p class="txt"><b>Correlación</b>: \(\delta\star h=h[-k,-l]\). Devuelve el núcleo girado 180°.</p>
+    </div>
+    <p class="txt muted">Por eso a \(h\) se le llama respuesta al impulso: es lo que produce el sistema ante un único píxel encendido.</p>
+  </div>
+  <aside class="notes">Un impulso es una imagen de ceros con un solo 1. Con la convolución, la salida reproduce el núcleo (9 en la esquina inferior derecha, 1 en la superior izquierda). Con la correlación aparece girado. Es la razón por la que la convolución es la operación natural para describir sistemas LTI.</aside>
+</section>
+
+<section class="slide" id="props" data-fx="vc" data-section="Convolución y correlación" data-title="Propiedades">
+  <header class="s-head"><p class="kicker">conmutatividad y asociatividad</p><h2 class="s-title">Propiedades</h2></header>
+  <div class="s-body vstack">
+    <table class="t lg">
+      <tr><th>propiedad</th><th>convolución</th><th>correlación</th></tr>
+      <tr><td>conmutativa \(f\ast h=h\ast f\)</td><td class="ok">sí</td><td class="err">no</td></tr>
+      <tr><td>asociativa \((f\ast h_1)\ast h_2=f\ast(h_1\ast h_2)\)</td><td class="ok">sí</td><td class="err">no</td></tr>
+      <tr><td>con núcleo de simetría central</td><td class="ok">sí, igual a la correlación</td><td class="ok">sí, igual a la convolución</td></tr>
+    </table>
+    <div class="deriv">
+      <div data-seq="1"><span>$$\delta\star h=h[-k,-l]\quad\text{pero}\quad h\star\delta=h$$</span><span class="why">contraejemplo con el impulso: la correlación no conmuta</span></div>
+      <div data-seq="2"><span>$$h[k,l]=h[-k,-l]\;\Longrightarrow\; f\ast h=f\star h$$</span><span class="why">si girar no cambia h, da igual girarlo</span></div>
+    </div>
+    <div class="exam" data-seq="3"><b>en el examen</b>«Convolución = correlación si el núcleo es simétrico respecto al centro»: <b>verdadero</b>. La asociatividad es la base de la separabilidad.</div>
+  </div>
+  <aside class="notes">La conmutatividad y la asociatividad solo valen para la convolución. Si el núcleo tiene simetría central (invariante al giro de 180 grados), girarlo no lo cambia y las dos operaciones coinciden.</aside>
+</section>
+
+<section class="slide" id="simetria" data-fx="vc" data-section="Convolución y correlación" data-title="Simetría central: examen">
+  <header class="s-head"><p class="kicker">ejercicio 1 del examen</p><h2 class="s-title">Máscara simétrica</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[-1,-1,2],[-1,2,-1],[2,-1,-1]]' data-signed="1" data-dec="0" style="height:340px"></div>
+      <p class="txt muted" style="text-align:center">máscara \(h\) del examen</p>
+    </div>
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr"><span>$$h_{180}[k,l]=h[-k,-l]$$</span><span class="why">giro de 180°: invertir filas y columnas</span></div>
+      <div data-seq="2" style="grid-template-columns:1fr"><span>$$h_{180}=\begin{pmatrix}-1&-1&2\\-1&2&-1\\2&-1&-1\end{pmatrix}=h$$</span><span class="why">invertir filas y columnas devuelve la misma matriz</span></div>
+      <div data-seq="3" style="grid-template-columns:1fr"><span>$$\Rightarrow\; f\ast h=f\star h$$</span><span class="why">da igual usar <code>convolve</code> o <code>correlate</code></span></div>
+    </div>
+  </div>
+  <aside class="notes">Se gira la matriz 180 grados: la primera fila (-1,-1,2) invertida es (2,-1,-1) y pasa a la última fila; la fila central (-1,2,-1) se queda; y la última fila (2,-1,-1) invertida es (-1,-1,2). Resultado: la misma matriz. Comprobado numéricamente.</aside>
+</section>
+
+<section class="slide" id="template" data-fx="vc" data-section="Convolución y correlación" data-title="Template matching">
+  <header class="s-head"><p class="kicker">diapositivas 13–14 · imagen real boat256</p><h2 class="s-title">Template matching</h2></header>
+  <div class="s-body vstack">
+    <div class="g3" style="width:1240px;margin:0 auto">
+      <figure class="fig"><img src="assets/tm_img.png" alt="boat256 con el parche marcado"><figcaption>imagen y parche 28×28 (amarillo)</figcaption></figure>
+      <figure class="fig"><img src="assets/tm_raw.png" alt="correlación sin normalizar"><figcaption>correlación cruda: máx. en la zona clara (49, 87)</figcaption></figure>
+      <figure class="fig"><img src="assets/tm_ncc.png" alt="correlación normalizada"><figcaption>correlación normalizada: máx. en el parche (164, 114)</figcaption></figure>
+    </div>
+    <p class="txt">La correlación responde fuerte donde la imagen <b>se parece</b> al patrón, pero sin normalizar el producto escalar también crece con el brillo local: gana una zona clara cualquiera. Hay que restar la media y dividir por la norma (<code>skimage.feature.match_template</code>).</p>
+  </div>
+  <aside class="notes">En la diapositiva 13 se pregunta por qué la respuesta más fuerte no está siempre sobre el patrón. Respuesta: la correlación sin normalizar es un producto escalar, que depende de la energía de la ventana. Una zona brillante da un valor alto aunque no se parezca. La versión normalizada (NCC) vale 1 exactamente donde la ventana es igual al patrón. Las coordenadas son (fila, columna) en la imagen original de 256 píxeles.</aside>
+</section>
+
+<section class="slide" id="son-conv" data-fx="vc" data-step-ms="1000" data-section="Convolución y correlación" data-title="¿Qué es una convolución?">
+  <header class="s-head"><p class="kicker">diapositiva 15</p><h2 class="s-title">¿Qué es una convolución?</h2></header>
+  <div class="s-body g21">
+    <table class="t lg">
+      <tr><th>transformación</th><th>¿convolución?</th><th>núcleo / motivo</th></tr>
+      <tr><td>traslación</td><td class="ok" data-seq="1">sí</td><td data-seq="1">impulso desplazado</td></tr>
+      <tr><td>escalado de intensidad \(af\)</td><td class="ok" data-seq="2">sí</td><td data-seq="2">impulso por \(a\)</td></tr>
+      <tr><td>media local</td><td class="ok" data-seq="3">sí</td><td data-seq="3">\(\mathbf{1}/(mn)\)</td></tr>
+      <tr><td>desenfoque</td><td class="ok" data-seq="4">sí</td><td data-seq="4">núcleo gaussiano</td></tr>
+      <tr><td>rotación de la imagen</td><td class="err" data-seq="5">no</td><td data-seq="5">no es invariante a traslación</td></tr>
+      <tr><td>\(f^2\)</td><td class="err" data-seq="6">no</td><td data-seq="6">no es lineal</td></tr>
+    </table>
+    <div class="vstack">
+      <div class="eq">$$h=a\,\delta[n-n_0,\,m-m_0]$$</div>
+      <p class="txt muted" style="text-align:center">núcleo de la traslación + escalado</p>
+      <p class="txt" data-seq="7">Criterio: es convolución si y solo si es <b>lineal e invariante a traslación</b>.</p>
+      <p class="txt muted" data-seq="7">La rotación es lineal, pero cada píxel se procesa con pesos distintos según su posición.</p>
+    </div>
+  </div>
+  <aside class="notes">En la diapositiva 15 se compara el desenfoque (cada píxel de salida sale de una vecindad con los mismos pesos) con la rotación (la relación entre entrada y salida depende de la posición). Un impulso multiplicado por a y desplazado produce un escalado y una traslación, ambos convoluciones.</aside>
+</section>
+
+<!-- ============ C · BORDES ============ -->
+<section class="slide is-plain divider" id="div-c" data-fx="backdrop" data-seed="17" data-section="Bordes" data-title="Bordes de la imagen">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque c</p>
+    <h1 class="s-title xl">Bordes de la imagen</h1>
+    <p class="lead">Qué valores lee el núcleo fuera de la imagen, y la trampa del dtype.</p>
+  </div>
+</section>
+
+<section class="slide" id="bordes" data-fx="vc" data-step-ms="900" data-section="Bordes" data-title="Modos de borde">
+  <header class="s-head"><p class="kicker">scipy.ndimage.convolve(input, weights, mode=…)</p><h2 class="s-title">Modos de borde</h2></header>
+  <div class="s-body vstack">
+    <div class="pad lg"><div class="row" data-seq="1"><span class="nm">reflect</span><div class="cells"><span class="c ">d</span><span class="c ">c</span><span class="c ">b</span><span class="c ">a</span><span class="sep">|</span><span class="c in">a</span><span class="c in">b</span><span class="c in">c</span><span class="c in">d</span><span class="sep">|</span><span class="c ">d</span><span class="c ">c</span><span class="c ">b</span><span class="c ">a</span></div></div><div class="row" data-seq="2"><span class="nm">mirror</span><div class="cells"><span class="c ">c</span><span class="c ">d</span><span class="c ">c</span><span class="c ">b</span><span class="sep">|</span><span class="c in">a</span><span class="c in">b</span><span class="c in">c</span><span class="c in">d</span><span class="sep">|</span><span class="c ">c</span><span class="c ">b</span><span class="c ">a</span><span class="c ">b</span></div></div><div class="row" data-seq="3"><span class="nm">nearest</span><div class="cells"><span class="c ">a</span><span class="c ">a</span><span class="c ">a</span><span class="c ">a</span><span class="sep">|</span><span class="c in">a</span><span class="c in">b</span><span class="c in">c</span><span class="c in">d</span><span class="sep">|</span><span class="c ">d</span><span class="c ">d</span><span class="c ">d</span><span class="c ">d</span></div></div><div class="row" data-seq="4"><span class="nm">constant</span><div class="cells"><span class="c ">k</span><span class="c ">k</span><span class="c ">k</span><span class="c ">k</span><span class="sep">|</span><span class="c in">a</span><span class="c in">b</span><span class="c in">c</span><span class="c in">d</span><span class="sep">|</span><span class="c ">k</span><span class="c ">k</span><span class="c ">k</span><span class="c ">k</span></div></div><div class="row" data-seq="5"><span class="nm">wrap</span><div class="cells"><span class="c ">a</span><span class="c ">b</span><span class="c ">c</span><span class="c ">d</span><span class="sep">|</span><span class="c in">a</span><span class="c in">b</span><span class="c in">c</span><span class="c in">d</span><span class="sep">|</span><span class="c ">a</span><span class="c ">b</span><span class="c ">c</span><span class="c ">d</span></div></div></div>
+    <p class="txt" data-seq="6">Los cuatro valores a cada lado se leen fuera de la imagen \(a\,b\,c\,d\). Con <code>mode='constant'</code>, <code>k</code> es <code>cval</code> (0 por defecto). El modo por defecto es <code>reflect</code>.</p>
+    <div class="trap" data-seq="7"><b>no confundir</b><code>reflect</code> repite el píxel del borde (a a); <code>mirror</code> no lo repite (b a b).</div>
+  </div>
+  <aside class="notes">Tabla de la documentación de SciPy, comprobada con un núcleo delta. reflect repite el píxel del borde (d c b a | a b c d | d c b a). mirror refleja sin repetirlo (c d c b | a b c d | c b a b). nearest repite el último valor. constant rellena con cval. wrap trata la imagen como periódica. Con el relleno de ceros de la animación anterior se corresponde mode='constant'.</aside>
+</section>
+
+<section class="slide" id="api-conv" data-fx="vc" data-section="Bordes" data-title="Ficha: ndimage.convolve">
+  <header class="s-head"><p class="kicker">ficha de función</p><h2 class="s-title">scipy.ndimage.convolve</h2></header>
+  <div class="s-body vstack">
+    <div class="api"><div class="sig">convolve(input, weights, output=None, mode='reflect', cval=0.0, origin=0)</div>
+    <table>
+      <tr><th>parámetro</th><th>qué es</th><th>valor típico / trampa</th></tr>
+      <tr><td>input</td><td>imagen (array n-D)</td><td>conviértela a <code>float</code></td></tr>
+      <tr><td>weights</td><td>núcleo, misma dimensión que input</td><td>2D: <code>np.ones((n,n))/n**2</code></td></tr>
+      <tr><td>output</td><td>array o dtype de salida</td><td>si es <code>None</code>: mismo dtype que <code>input</code></td></tr>
+      <tr><td>mode</td><td>tratamiento del borde</td><td>'reflect' (defecto), 'constant', 'nearest'…</td></tr>
+      <tr><td>cval</td><td>valor de relleno para 'constant'</td><td>0.0</td></tr>
+      <tr><td>origin</td><td>desplaza el centro del núcleo</td><td>0 = centrado</td></tr>
+    </table></div>
+    <div class="tip"><b>truco</b><code>correlate</code> tiene la misma firma: solo cambia que no gira el núcleo.</div>
+  </div>
+  <aside class="notes">Los seis parámetros de ndimage.convolve. El que más problemas da es output: si no se indica, el resultado se guarda con el tipo de la entrada. Con una imagen uint8 eso significa saturar o desbordar.</aside>
+</section>
+
+<section class="slide" id="uint8" data-fx="vc" data-section="Bordes" data-title="Trampa: uint8">
+  <header class="s-head"><p class="kicker">error típico</p><h2 class="s-title">Trampa del dtype uint8</h2></header>
+  <div class="s-body g2">
+<pre class="code" data-seq="1">im = np.array([[10,200,10]]*3, np.uint8)
+k  = np.array([[1,0,-1]]*3)
+
+convolve(im, k)
+# [[ 58   0 198]   &lt;- ¡desborda!
+#  ...]
+convolve(im.astype(float), k)
+# [[ 570.   0. -570.]
+#  ...]</pre>
+    <div class="vstack">
+      <div class="trap" data-seq="2"><b>trampa</b>La salida es <code>uint8</code>: \(570 \bmod 256 = 58\) y \(-570 \bmod 256 = 198\). Con núcleos con valores negativos (bordes) el resultado es basura.</div>
+      <div class="tip" data-seq="3"><b>solución</b>Convierte antes: <code>convolve(im.astype(float), k)</code>, o pasa <code>output=float</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Comprobado con SciPy 1.18. Con float, la columna central da 0 y las columnas de los extremos dan 570 y -570 (3 filas por 190, con el borde reflejado). Con uint8 esos valores se envuelven módulo 256: 570 pasa a 58 y -570 pasa a 198. Con float no hay problema.</aside>
+</section>
+
+<!-- ============ D · RUIDO ============ -->
+<section class="slide is-plain divider" id="div-d" data-fx="backdrop" data-seed="23" data-section="Ruido" data-title="Ruido">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque d</p>
+    <h1 class="s-title xl">Ruido</h1>
+    <p class="lead">Gaussiano frente a impulsivo, y el modelo de degradación.</p>
+  </div>
+</section>
+
+<section class="slide" id="modelos" data-fx="vc" data-section="Ruido" data-title="Modelos de ruido">
+  <header class="s-head"><p class="kicker">dos modelos de la lección</p><h2 class="s-title">Ruido gaussiano e impulsivo</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq">$$p(z)=\frac{1}{\sqrt{2\pi}\,\sigma}\,e^{-(z-\mu)^2/2\sigma^2}$$</div>
+      <p class="txt"><b>Gaussiano</b>, aditivo: \(g=f+\eta\). Lo causa el sensor y la temperatura.</p>
+      <div data-role="plot" data-x="-6,6" data-y="0,0.4" data-xl="z (μ = 0)" data-yl="p(z)" data-fns='[{"f":"x=>Math.exp(-x*x/2)/Math.sqrt(2*Math.PI)","label":"σ = 1"},{"f":"x=>Math.exp(-x*x/8)/(2*Math.sqrt(2*Math.PI))","label":"σ = 2"}]' style="height:280px;min-height:0"></div>
+    </div>
+    <div class="vstack">
+      <div class="eq">$$p(z)=\begin{cases}P_a & z=a\\ P_b & z=b\\ 0&\text{resto}\end{cases}$$</div>
+      <p class="txt"><b>Impulsivo</b> (sal y pimienta): \(a=0\) (pimienta, prob. \(P_a\)) y \(b=L-1\) (sal, prob. \(P_b\)).</p>
+      <div data-role="plot" data-x="0,255" data-y="0,0.4" data-xl="z (ejemplo: Pa = 0,3 · Pb = 0,2)" data-yl="p(z)" data-bars='[0.3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.2]' style="height:280px;min-height:0"></div>
+    </div>
+  </div>
+  <aside class="notes">El ruido gaussiano perturba todos los píxeles con un valor pequeño aleatorio. El impulsivo afecta a pocos píxeles pero los pone en 0 o en 255. Los valores Pa y Pb del gráfico son inventados para ilustrar.</aside>
+</section>
+
+<section class="slide" id="degrad" data-fx="vc" data-section="Ruido" data-title="Modelo de degradación">
+  <header class="s-head"><p class="kicker">restauración</p><h2 class="s-title">Modelo de degradación</h2></header>
+  <div class="s-body vstack">
+    <div class="eq big">$$g = h\ast f+\eta$$</div>
+    <svg class="dg" viewBox="0 0 1600 230" aria-label="Diagrama de bloques: f pasa por h, se suma el ruido eta y sale g">
+      <defs><marker id="t2-ah2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path class="ah" d="M0,0 L10,5 L0,10 z"/></marker></defs>
+      <text class="lbl" x="70" y="88" text-anchor="middle">f</text><text x="70" y="128" text-anchor="middle">original</text>
+      <path class="arr" d="M110,80 H330" marker-end="url(#t2-ah2)"/>
+      <rect class="box" x="340" y="30" width="360" height="100" rx="12"/><text class="lbl" x="520" y="78" text-anchor="middle">h ∗ ·</text><text x="520" y="114" text-anchor="middle">desenfoque, movimiento</text>
+      <path class="arr" d="M700,80 H880" marker-end="url(#t2-ah2)"/>
+      <circle class="box hi" cx="930" cy="80" r="44"/><text class="lbl" x="930" y="90" text-anchor="middle">+</text>
+      <path class="arr" d="M930,205 V134" marker-end="url(#t2-ah2)"/><text class="lbl" x="960" y="210">η</text><text x="1000" y="210">ruido aditivo</text>
+      <path class="arr" d="M974,80 H1200" marker-end="url(#t2-ah2)"/>
+      <text class="lbl acc" x="1240" y="88">g</text><text x="1280" y="88">observada</text>
+    </svg>
+    <div class="deriv" style="grid-template-columns:1fr">
+      <div data-seq="1" style="grid-template-columns:1fr 520px"><span>$$h=\delta\;\Rightarrow\; g=f+\eta$$</span><span class="why">solo ruido aditivo</span></div>
+    </div>
+    <p class="txt" data-seq="2">Si solo hay ruido (\(h=\delta\)), la herramienta de restauración es el <b>filtrado espacial</b>: se estima \(\hat f\) a partir de \(g\) con una ventana alrededor de cada píxel.</p>
+  </div>
+  <aside class="notes">El modelo general de degradación: la imagen se desenfoca y además se contamina con ruido. Cuando solo hay ruido, la respuesta al impulso es una delta y basta con filtrar el vecindario de cada píxel.</aside>
+</section>
+
+<section class="slide" id="real-g" data-fx="vc" data-section="Ruido" data-title="Ruido gaussiano real">
+  <header class="s-head"><p class="kicker">imagen real arch256</p><h2 class="s-title">Ruido gaussiano real</h2></header>
+  <div class="s-body vstack">
+    <div class="g4">
+      <figure class="fig"><img src="assets/arch.png" alt="original"><figcaption>original</figcaption></figure>
+      <figure class="fig"><img src="assets/arch_g5.png" alt="sigma 5"><figcaption>σ = 5</figcaption></figure>
+      <figure class="fig"><img src="assets/arch_g10.png" alt="sigma 10"><figcaption>σ = 10</figcaption></figure>
+      <figure class="fig"><img src="assets/arch_g20.png" alt="sigma 20"><figcaption>σ = 20</figcaption></figure>
+    </div>
+    <p class="txt">Ruido aditivo \(g=\operatorname{clip}(f+\eta)\) con \(\eta\sim\mathcal{N}(0,\sigma^2)\), recortado a [0, 255]. Todos los píxeles cambian un poco.</p>
+  </div>
+  <aside class="notes">Las cuatro imágenes se generaron con addGaussianNoise del lab 2. A σ = 5 casi no se aprecia; a σ = 20 el grano es evidente.</aside>
+</section>
+
+<section class="slide" id="real-sp" data-fx="vc" data-section="Ruido" data-title="Sal y pimienta real">
+  <header class="s-head"><p class="kicker">imagen real arch256</p><h2 class="s-title">Sal y pimienta real</h2></header>
+  <div class="s-body vstack">
+    <div class="g3">
+      <figure class="fig"><img src="assets/arch.png" alt="original"><figcaption>original</figcaption></figure>
+      <figure class="fig"><img src="assets/arch_sp3.png" alt="3 por ciento"><figcaption>3 % de píxeles afectados</figcaption></figure>
+      <figure class="fig"><img src="assets/arch_sp10.png" alt="10 por ciento"><figcaption>10 % de píxeles afectados</figcaption></figure>
+    </div>
+    <p class="txt">Pocos píxeles se alteran, pero cada uno se pone a 0 o a 255 con probabilidad 1/2. Valores extremos: se llaman <b>outliers</b>.</p>
+  </div>
+  <aside class="notes">Con addSPNoise se eligen m = porcentaje·N posiciones al azar y se les asigna 0 o 255. Por el azar pueden repetirse posiciones, así que el porcentaje real es algo menor.</aside>
+</section>
+
+<!-- ============ E · FILTROS LINEALES DE SUAVIZADO ============ -->
+<section class="slide is-plain divider" id="div-e" data-fx="backdrop" data-seed="29" data-section="Suavizado lineal" data-title="Suavizado lineal">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque e</p>
+    <h1 class="s-title xl">Suavizado lineal</h1>
+    <p class="lead">Media y gaussiano: convoluciones, separabilidad y coste.</p>
+  </div>
+</section>
+
+<section class="slide" id="media" data-fx="vc" data-section="Suavizado lineal" data-title="Media aritmética">
+  <header class="s-head"><p class="kicker">filtro lineal de suavizado</p><h2 class="s-title">Media aritmética</h2></header>
+  <div class="s-body g21">
+    <div class="vstack">
+      <div class="eq big">$$\hat f(x,y)=\frac{1}{mn}\sum_{(s,t)\in S_{xy}}g(s,t)$$</div>
+<pre class="code">def averageFilter(im, n):
+    mask = np.ones((n, n)) / n**2    # suma = 1
+    return convolve(im, mask)</pre>
+      <p class="txt"><b>¿Por qué suman 1 los pesos?</b> Si la zona es constante, \(g=c\): la salida es \(\tfrac{1}{mn}\cdot mn\cdot c=c\). Se conserva el brillo medio.</p>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[0.11,0.11,0.11],[0.11,0.11,0.11],[0.11,0.11,0.11]]' data-dec="2" style="height:360px"></div>
+      <p class="txt muted">núcleo 3×3: \(1/9\approx0{,}11\)</p>
+      <p class="txt muted">Otras medias (solo citadas): geométrica, armónica y contraarmónica.</p>
+    </div>
+  </div>
+  <aside class="notes">S_xy es la ventana alrededor del píxel. La media aritmética es una convolución con un núcleo de unos dividido entre m·n. Si los pesos no sumaran 1, la imagen resultante sería más clara u oscura. Las medias geométrica, armónica y contraarmónica aparecen en la lección pero no se desarrollan.</aside>
+</section>
+
+<section class="slide" id="gauss" data-fx="vc" data-section="Suavizado lineal" data-title="Filtro gaussiano">
+  <header class="s-head"><p class="kicker">peso decreciente con la distancia</p><h2 class="s-title">Filtro gaussiano</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq big">$$G_\sigma(x,y)=\frac{1}{2\pi\sigma^2}\,e^{-\frac{x^2+y^2}{2\sigma^2}}$$</div>
+      <div class="eq">$$\hat f = g\ast G_\sigma$$</div>
+      <p class="txt">A la derecha, la <b>aproximación entera</b> con \(\sigma=1\) de la diapositiva 24 (5×5, normalizada a suma 1).</p>
+      <div class="tip"><b>ojo</b>Es una aproximación redondeada (tabla de HIPR2): con los valores exactos de \(G\), normalizados y multiplicados por 273, el centro sería 44,3 y no 41.</div>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[1,4,7,4,1],[4,16,26,16,4],[7,26,41,26,7],[4,16,26,16,4],[1,4,7,4,1]]' data-dec="0" style="height:440px"></div>
+      <p class="txt" style="text-align:center">\(\dfrac{1}{273}\times\) esta matriz (la suma es 273)</p>
+    </div>
+  </div>
+  <aside class="notes">El gaussiano pondera más a los píxeles cercanos que a los lejanos, así que suaviza sin el artefacto cuadrado de la media. La matriz entera de la diapositiva 24 suma 273. Los valores exactos de la fórmula con σ=1, multiplicados por 273 y renormalizados, son 0,8 3,6 6 ... y 44,3 en el centro: la tabla del curso es una aproximación con redondeos, no los valores exactos.</aside>
+</section>
+
+<section class="slide" id="gauss-tam" data-fx="vc" data-section="Suavizado lineal" data-title="Tamaño del núcleo gaussiano">
+  <header class="s-head"><p class="kicker">cuánto núcleo hace falta</p><h2 class="s-title">Tamaño del gaussiano</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq">$$\text{tamaño}\approx 6\sigma\quad(\pm3\sigma)$$</div>
+      <p class="txt">Más allá de \(3\sigma\) los pesos son despreciables (\(\approx1\) % del máximo).</p>
+<pre class="code sm">from scipy.ndimage import gaussian_filter
+out = gaussian_filter(im, sigma)
+# truncate=4.0 por defecto:
+r = int(4.0*sigma + 0.5)
+n = 2*r + 1          # sigma=1 -> 9 pesos</pre>
+      <div class="tip"><b>truco</b>1D con \(\sigma=1\) (7 pesos): .006 .061 .242 .383 .242 .061 .006 (diapositiva 24).</div>
+    </div>
+    <div data-role="plot" data-x="-4,4" data-y="0,0.4" data-xl="x" data-yl="G(x)" data-fns='[{"f":"x=>Math.exp(-x*x/2)/Math.sqrt(2*Math.PI)","label":"σ = 1"}]' data-pts='[[-3,0.0044,"−3σ"],[0,0.3989],[3,0.0044,"3σ"]]' style="height:500px"></div>
+  </div>
+  <aside class="notes">La regla práctica del curso es usar unos 6σ de ancho (±3σ). SciPy usa truncate=4.0 por defecto, es decir un radio de 4σ redondeado, 2r+1 píxeles. El filtro gaussiano 1D con σ=1 tiene los valores .006 .061 .242 .383 .242 .061 .006 (valores de la diapositiva).</aside>
+</section>
+
+<section class="slide" id="suav-real" data-fx="vc" data-section="Suavizado lineal" data-title="Suavizado real">
+  <header class="s-head"><p class="kicker">imagen real arch256 · ruido gaussiano σ = 20</p><h2 class="s-title">Media frente a gaussiano</h2></header>
+  <div class="s-body vstack">
+    <div class="g4">
+      <figure class="fig"><img src="assets/sm_g20.png" alt="ruidosa"><figcaption>ruidosa, σ = 20</figcaption></figure>
+      <figure class="fig"><img src="assets/sm_gauss1.png" alt="gaussiano"><figcaption>gaussiano σ = 1</figcaption></figure>
+      <figure class="fig"><img src="assets/sm_mean5.png" alt="media 5x5"><figcaption>media 5×5</figcaption></figure>
+      <figure class="fig"><img src="assets/sm_mean11.png" alt="media 11x11"><figcaption>media 11×11</figcaption></figure>
+    </div>
+    <p class="txt">Los dos reducen el grano. Cuanto mayor es la ventana, más se emborronan los bordes (11×11). El gaussiano pesa más el centro: suaviza sin el artefacto «cuadrado» de la media.</p>
+  </div>
+  <aside class="notes">Resultados reales con scipy.ndimage: convolve con np.ones((n,n))/n² y gaussian_filter con sigma 1. El ruido gaussiano es de media cero, así que promediar vecinos reduce su varianza (con n² vecinos independientes, la varianza baja n² veces). El precio es perder detalle: los bordes también se promedian.</aside>
+</section>
+
+<section class="slide" id="separable" data-fx="vc" data-section="Suavizado lineal" data-title="Separabilidad">
+  <header class="s-head"><p class="kicker">demostración completa</p><h2 class="s-title">La gaussiana es separable</h2></header>
+  <div class="s-body vstack">
+    <div class="deriv" style="font-size:32px;gap:4px">
+      <div data-seq="1"><span>$$e^{-\frac{x^2+y^2}{2\sigma^2}}=e^{-\frac{x^2}{2\sigma^2}}\;e^{-\frac{y^2}{2\sigma^2}}$$</span><span class="why">\(e^{a+b}=e^ae^b\)</span></div>
+      <div data-seq="2"><span>$$G(x,y)=G_1(x)\,G_2(y),\quad G_1(x)=\tfrac{1}{\sqrt{2\pi}\sigma}e^{-x^2/2\sigma^2}$$</span><span class="why">\(\tfrac1{2\pi\sigma^2}=\tfrac1{\sqrt{2\pi}\sigma}\cdot\tfrac1{\sqrt{2\pi}\sigma}\)</span></div>
+      <div data-seq="3"><span>$$(f\ast G)[n,m]=\sum_{k,l}f[n-k,m-l]\,G_1[k]\,G_2[l]$$</span><span class="why">sustituimos el núcleo</span></div>
+      <div data-seq="4"><span>$$=\sum_{l}G_2[l]\Big(\sum_{k}f[n-k,m-l]\,G_1[k]\Big)=\big((f\ast G_1)\ast G_2\big)[n,m]$$</span><span class="why">asociatividad: el paréntesis es una convolución 1D en n</span></div>
+    </div>
+  </div>
+  <aside class="notes">La demostración usa la propiedad de la exponencial y reordena las sumas; esto se identifica con la asociatividad de la convolución: f * (G1 * G2) = (f * G1) * G2, donde G1 es un núcleo columna y G2 un núcleo fila. La media también es separable: la matriz de unos entre n² es el producto exterior de dos vectores.</aside>
+</section>
+
+<section class="slide" id="sep-codigo" data-fx="vc" data-section="Suavizado lineal" data-title="Separable en código" data-step-ms="1000">
+  <header class="s-head"><p class="kicker">para escribirlo a mano</p><h2 class="s-title">Separable en código</h2></header>
+  <div class="s-body g2">
+<pre class="code" data-seq="1">from scipy.signal.windows import gaussian
+from scipy.ndimage import convolve
+
+def gaussianFilterSep(im, sigma):
+    n = 2*int(3*sigma) + 1          # ~6σ
+    gv = gaussian(n, sigma).reshape(n, 1)
+    gv /= gv.sum()                  # suma 1
+    im = im.astype(float)
+    tmp = convolve(im, gv)          # columna
+    return convolve(tmp, gv.T)      # fila</pre>
+    <div class="vstack">
+      <p class="txt" data-seq="2">Dos pasadas 1D (columna y luego fila) dan lo mismo que una 2D con \(G=g_v\,g_v^T\), por la <b>asociatividad</b>.</p>
+      <div class="eq" data-seq="3">$$\tfrac{1}{n^2}\mathbf{1}_{n\times n}=\Big(\tfrac1n\mathbf{1}_n\Big)\Big(\tfrac1n\mathbf{1}_n\Big)^{T}$$</div>
+      <p class="txt" data-seq="3">La media también es separable: <code>np.outer(np.ones(n)/n, np.ones(n)/n)</code>.</p>
+      <div class="trap" data-seq="4"><b>trampa</b><code>gv</code> debe ser 2D (n×1) para <code>ndimage.convolve</code>: <code>weights</code> tiene que tener las mismas dimensiones que la imagen.</div>
+    </div>
+  </div>
+  <aside class="notes">La función construye un vector gaussiano de unos 6σ de largo con scipy.signal.windows.gaussian, lo normaliza para que sume 1 y lo convierte en columna. La primera convolución suaviza a lo largo de las filas (vertical) y la segunda, con el vector traspuesto, a lo largo de las columnas. El resultado coincide (salvo redondeo) con convolucionar con el núcleo 2D np.outer(g, g). Comprobado en Python: la diferencia máxima con el 2D es del orden de 1e-13.</aside>
+</section>
+
+<section class="slide" id="coste" data-fx="vc" data-section="Suavizado lineal" data-title="Coste de la separabilidad">
+  <header class="s-head"><p class="kicker">implicación práctica</p><h2 class="s-title">Coste: 2D frente a separable</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <table class="t lg">
+        <tr><th>método</th><th>operaciones</th><th>512², 15×15</th></tr>
+        <tr><td>núcleo 2D</td><td>\(MN\,mn\)</td><td class="warn">58 982 400</td></tr>
+        <tr><td>dos pasadas 1D</td><td>\(MN\,(m+n)\)</td><td class="ok">7 864 320</td></tr>
+      </table>
+      <div class="deriv" style="grid-template-columns:1fr">
+        <div data-seq="1" style="grid-template-columns:1fr"><span>$$512^2\cdot15^2=262\,144\cdot225=58\,982\,400$$</span></div>
+        <div data-seq="2" style="grid-template-columns:1fr"><span>$$512^2\cdot30=7\,864\,320\;\Rightarrow\;\tfrac{225}{30}=7{,}5\times$$</span></div>
+      </div>
+      <p class="txt" data-seq="3">La ganancia crece con el tamaño: \(n^2\) frente a \(2n\), es decir \(n/2\) veces menos operaciones.</p>
+    </div>
+    <div class="vstack">
+      <div data-role="plot" data-x="0,32" data-y="0,1024" data-xl="lado del núcleo n" data-yl="operaciones por píxel" data-legend="tl" data-fns='[{"f":"x=>x*x","label":"2D: n²"},{"f":"x=>2*x","label":"separable: 2n"}]' data-pts='[[15,225,"225"],[15,30,"30"]]' style="height:540px"></div>
+    </div>
+  </div>
+  <aside class="notes">262144 por 225 es 58 982 400. Con el núcleo separable son 262144 por 30, o sea 7 864 320 multiplicaciones-sumas: 7,5 veces menos. Para un núcleo n×n, la ganancia es n²/(2n) = n/2. En la práctica el tiempo medido no coincide exactamente con el recuento de operaciones.</aside>
+</section>
+
+<section class="slide" id="rango1" data-fx="vc" data-section="Suavizado lineal" data-title="Separable ⇔ rango 1">
+  <header class="s-head"><p class="kicker">criterio algebraico</p><h2 class="s-title">Núcleo separable = rango 1</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq">$$H=\mathbf{u}\,\mathbf{v}^{T}\;\Longleftrightarrow\;\operatorname{rango}(H)=1$$</div>
+<pre class="code sm">np.linalg.matrix_rank(H) == 1
+# u, v: columna y fila del filtro
+# H = np.outer(u, v)</pre>
+      <p class="txt">Ejemplo, el Sobel horizontal:</p>
+      <div class="eq">$$\begin{pmatrix}1&0&-1\\2&0&-2\\1&0&-1\end{pmatrix}=\begin{pmatrix}1\\2\\1\end{pmatrix}\begin{pmatrix}1&0&-1\end{pmatrix}$$</div>
+    </div>
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[1,0,-1],[2,0,-2],[1,0,-1]]' data-signed="1" data-dec="0" style="height:340px"></div>
+      <div class="exam"><b>en el examen</b>Rango 1 ⇔ todas las filas son múltiplo de una sola. El Sobel se aplica con dos pasadas 1D: suavizado \([1,2,1]^T\) y derivada \([1,0,-1]\).</div>
+    </div>
+  </div>
+  <aside class="notes">Un núcleo m×n es separable si y solo si es el producto exterior de un vector columna y uno fila, lo cual equivale a que su matriz tenga rango 1. En el Sobel, la columna [1,2,1] suaviza y la fila [1,0,-1] deriva. Comprobado: np.linalg.matrix_rank devuelve 1.</aside>
+</section>
+
+<!-- ============ F · FILTROS NO LINEALES DE ORDEN ============ -->
+<section class="slide is-plain divider" id="div-f" data-fx="backdrop" data-seed="31" data-section="Filtros de orden" data-title="Filtros de orden">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque f</p>
+    <h1 class="s-title xl">Filtros de orden</h1>
+    <p class="lead">Mediana, mínimo y máximo: no lineales y robustos a los outliers.</p>
+  </div>
+</section>
+
+<section class="slide" id="orden" data-fx="vc" data-step-ms="1000" data-section="Filtros de orden" data-title="Filtros de orden">
+  <header class="s-head"><p class="kicker">ventana 3×3 con un valor atípico · datos de ejemplo</p><h2 class="s-title">Filtros de orden</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="vc-heat" data-m='[[10,12,11],[13,255,12],[11,10,0]]' data-dec="0" style="height:300px"></div>
+      <div class="eq sm" data-seq="3">$$\text{media}=\tfrac{334}{9}\approx37\qquad\text{mediana}=11$$</div>
+      <p class="txt" data-seq="3">El 255 arrastra a la media; a la mediana no.</p>
+    </div>
+    <div class="vstack">
+      <table class="t sm" data-seq="1">
+        <tr><th>orden</th><th>0</th><th>10</th><th>10</th><th>11</th><th>11</th><th>12</th><th>12</th><th>13</th><th>255</th></tr>
+        <tr><td>pos.</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr>
+      </table>
+      <table class="t sm" data-seq="2">
+        <tr><th>filtro</th><th>valor</th></tr>
+        <tr><td>mínimo</td><td>0</td></tr>
+        <tr><td>máximo</td><td>255</td></tr>
+        <tr><td>mediana (5.º)</td><td>11</td></tr>
+        <tr><td>punto medio \((\min+\max)/2\)</td><td>127,5</td></tr>
+      </table>
+      <div class="trap" data-seq="4"><b>trampa</b>Son <b>no lineales</b> (contraejemplo anterior) y no se implementan como convolución; usa <code>medfilt2d</code> o <code>median_filter</code>.</div>
+    </div>
+  </div>
+  <aside class="notes">Ventana: 10 12 11 / 13 255 12 / 11 10 0. Suma: 334, media aproximada 37,1. Ordenada: 0 10 10 11 11 12 12 13 255; la mediana (quinto valor) es 11. Mínimo 0, máximo 255, punto medio 127,5. Los datos son de ejemplo.</aside>
+</section>
+
+<section class="slide" id="perfil" data-fx="vc" data-section="Filtros de orden" data-title="Perfil 1D: media y mediana">
+  <header class="s-head"><p class="kicker">señal 1D de ejemplo: borde + sal + pimienta</p><h2 class="s-title">Perfil 1D: media y mediana</h2></header>
+  <div class="s-body g21">
+    <div data-role="plot" data-x="0,23" data-y="0,260" data-xl="posición" data-yl="intensidad" data-legend="tl" data-fns='[{"f": "x=>[40,40,40,40,40,255,40,40,40,40,40,40,200,200,200,200,200,200,0,200,200,200,200,200][Math.min(23,Math.max(0,Math.round(x)))]", "label": "se\u00f1al f", "c": "fg-3", "dash": "6 6"}, {"f": "x=>[40,40,40,40,112,112,112,40,40,40,40,93,147,200,200,200,200,133,133,133,200,200,200,200][Math.min(23,Math.max(0,Math.round(x)))]", "label": "media 3"}, {"f": "x=>[40,40,40,40,40,40,40,40,40,40,40,40,200,200,200,200,200,200,200,200,200,200,200,200][Math.min(23,Math.max(0,Math.round(x)))]", "label": "mediana 3"}]' style="height:600px"></div>
+    <div class="vstack">
+      <p class="txt"><b>Media 3</b>: cada impulso se convierte en una meseta de 3 píxeles (112 y 133) y el borde se vuelve una rampa (93, 147).</p>
+      <p class="txt"><b>Mediana 3</b>: los impulsos desaparecen y el borde sigue siendo un escalón limpio.</p>
+      <div class="tip"><b>idea clave</b>La mediana descarta los outliers en lugar de repartirlos, y conserva los bordes.</div>
+    </div>
+  </div>
+  <aside class="notes">Señal de ejemplo de 24 muestras: 40 a la izquierda, 200 a la derecha, un 255 (sal) en la posición 5 y un 0 (pimienta) en la 18. Valores calculados con scipy.ndimage (uniform_filter1d y median_filter de tamaño 3, modo nearest), redondeados. La media reparte el impulso entre sus vecinos: (40+255+40)/3 ≈ 112. En el borde, (40+40+200)/3 ≈ 93 y (40+200+200)/3 ≈ 147. La mediana de (40,255,40) es 40 y la de (200,0,200) es 200; en el borde, la mediana de (40,40,200) es 40: el escalón se conserva.</aside>
+</section>
+
+<section class="slide" id="mediana" data-fx="vc" data-section="Filtros de orden" data-title="Mediana contra sal y pimienta">
+  <header class="s-head"><p class="kicker">imagen real arch256 con 10 % de ruido</p><h2 class="s-title">Mediana frente a S&amp;P</h2></header>
+  <div class="s-body vstack">
+    <div class="g5">
+      <figure class="fig"><img src="assets/arch_sp10.png" alt="ruidosa"><figcaption>ruidosa</figcaption></figure>
+      <figure class="fig"><img src="assets/media3_sp10.png" alt="media 3x3"><figcaption>media 3×3</figcaption></figure>
+      <figure class="fig"><img src="assets/med_1.png" alt="mediana 1 pasada"><figcaption>mediana 3×3, 1 pasada</figcaption></figure>
+      <figure class="fig"><img src="assets/med_3.png" alt="mediana 3 pasadas"><figcaption>mediana 3×3, 3 pasadas</figcaption></figure>
+      <figure class="fig"><img src="assets/med_big.png" alt="mediana 15x15"><figcaption>mediana 15×15</figcaption></figure>
+    </div>
+    <p class="txt">La mediana <b>elimina</b> los outliers (no los reparte, como la media). Una pasada deja restos con 10 %; tres casi todo. Una ventana grande <b>emborrona</b> y borra detalle fino.</p>
+  </div>
+  <aside class="notes">La media 3x3 convierte cada impulso en una mancha gris. La mediana lo descarta porque un valor extremo nunca ocupa la posición central de la ventana ordenada, salvo que haya más de la mitad de la ventana corrompida. Con la ventana de 15 se pierde detalle.</aside>
+</section>
+
+<section class="slide" id="maxmin" data-fx="vc" data-section="Filtros de orden" data-title="Máximo y mínimo">
+  <header class="s-head"><p class="kicker">imagen real arch256 con 5 % de ruido</p><h2 class="s-title">Máximo y mínimo</h2></header>
+  <div class="s-body vstack">
+    <div class="g4">
+      <figure class="fig"><img src="assets/pep.png" alt="pimienta"><figcaption>solo pimienta 5 %</figcaption></figure>
+      <figure class="fig"><img src="assets/pep_max.png" alt="maximo"><figcaption>máximo 3×3</figcaption></figure>
+      <figure class="fig"><img src="assets/sal.png" alt="sal"><figcaption>solo sal 5 %</figcaption></figure>
+      <figure class="fig"><img src="assets/sal_min.png" alt="minimo"><figcaption>mínimo 3×3</figcaption></figure>
+    </div>
+    <p class="txt">Cada filtro elimina el extremo <b>contrario</b>, pero también borra los píxeles negros (con el máximo) o blancos (con el mínimo) <b>verdaderos</b>, y agranda los claros u oscuros.</p>
+  </div>
+  <aside class="notes">El máximo toma el valor más claro de la vecindad, así que los píxeles de pimienta (0) desaparecen. Pero también erosiona las zonas oscuras de la imagen original. Con el mínimo ocurre lo contrario.</aside>
+</section>
+
+<section class="slide" id="tabla" data-fx="vc" data-section="Filtros de orden" data-title="Ruido por filtro">
+  <header class="s-head"><p class="kicker">ejercicio 1 del lab 2</p><h2 class="s-title">Tabla ruido × filtro</h2></header>
+  <div class="s-body vstack">
+    <table class="t">
+      <tr><th>filtro</th><th>gaussiano</th><th>sal y pimienta</th><th>solo sal</th><th>solo pimienta</th></tr>
+      <tr><td>media</td><td class="ok">sí: reduce</td><td class="err">no: reparte impulsos</td><td class="err">no: manchas claras</td><td class="err">no: manchas oscuras</td></tr>
+      <tr><td>gaussiano</td><td class="ok">sí: reduce</td><td class="warn">poco: manchas</td><td class="warn">poco: manchas</td><td class="warn">poco: manchas</td></tr>
+      <tr><td>mediana</td><td class="warn">algo: emborrona bordes</td><td class="ok">sí: elimina</td><td class="ok">sí: elimina</td><td class="ok">sí: elimina</td></tr>
+      <tr><td>mínimo</td><td class="err">no: oscurece</td><td class="err">no: agranda pimienta</td><td class="ok">sí: quita sal</td><td class="err">no: agranda pimienta</td></tr>
+      <tr><td>máximo</td><td class="err">no: aclara</td><td class="err">no: agranda sal</td><td class="err">no: agranda sal</td><td class="ok">sí: quita pimienta</td></tr>
+    </table>
+    <p class="txt muted">Resumen cualitativo; para cuantificarlo se usa el PSNR de la imagen filtrada frente a la original.</p>
+  </div>
+  <aside class="notes">Es una versión cualitativa del experimento del lab 2: se aplican cinco filtros a cuatro tipos de ruido. El filtro de media y el gaussiano son los mejores para ruido gaussiano; la mediana, para sal y pimienta; el mínimo solo mejora la sal; el máximo solo la pimienta.</aside>
+</section>
+
+<!-- ============ G · CIERRE ============ -->
+<section class="slide" id="psnr" data-fx="vc" data-section="Filtros de orden" data-title="PSNR medido">
+  <header class="s-head"><p class="kicker">imagen real arch256 · PSNR en dB (más es mejor)</p><h2 class="s-title">La tabla, medida en PSNR</h2></header>
+  <div class="s-body g21">
+    <div class="heatlab">
+      <span></span>
+      <div class="cl" style="grid-template-columns:repeat(4,88px)"><span>gauss<br>σ=20</span><span>S&amp;P<br>10 %</span><span>sal<br>5 %</span><span>pim.<br>5 %</span></div>
+      <div class="rl" style="grid-template-rows:repeat(6,88px)"><span style="height:88px">sin filtrar</span><span style="height:88px">media 3×3</span><span style="height:88px">gaussiano σ=1</span><span style="height:88px">mediana 3×3</span><span style="height:88px">mínimo 3×3</span><span style="height:88px">máximo 3×3</span></div>
+      <div class="vc-heat" data-m='[[22.3, 15.1, 16.4, 21.2], [25.6, 22.0, 22.3, 24.7], [25.9, 22.7, 22.9, 25.0], [25.3, 26.9, 27.3, 27.1], [15.9, 12.0, 19.6, 12.0], [15.4, 7.5, 7.5, 19.0]]' data-dec="1" style="width:352px;height:528px;min-height:0"></div>
+    </div>
+    <div class="vstack">
+      <div class="eq sm">$$\mathrm{PSNR}=10\log_{10}\frac{255^2}{\mathrm{MSE}}$$</div>
+      <p class="txt">Gaussiano: media y gaussiano ganan unos 3,5 dB. Impulsos: la <b>mediana</b> es la mejor en las tres columnas.</p>
+      <div class="trap"><b>sorpresa</b>Mínimo y máximo quitan los impulsos de su tipo, pero deforman toda la imagen: el máximo contra pimienta <b>baja</b> el PSNR (21,2 → 19,0).</div>
+    </div>
+  </div>
+  <aside class="notes">Valores reales calculados en gen_assets.py: imagen arch256, ruido gaussiano de σ = 20, sal y pimienta al 10 %, solo sal al 5 % y solo pimienta al 5 %; filtros con scipy.ndimage (convolve, gaussian_filter, median_filter, minimum_filter y maximum_filter, ventanas 3×3). La fila «sin filtrar» es la referencia. El máximo elimina la pimienta, pero también aclara (dilata) todas las zonas claras de la imagen, y eso aumenta el error cuadrático medio. Por eso en el lab conviene medir y no solo mirar.</aside>
+</section>
+
+<section class="slide is-plain divider" id="div-g" data-fx="backdrop" data-seed="37" data-section="Cierre" data-title="Repaso final">
+  <div class="fx-bg"></div>
+  <div class="cover-body">
+    <p class="kicker">bloque g</p>
+    <h1 class="s-title xl">Repaso final</h1>
+    <p class="lead">Chuleta y verdadero o falso.</p>
+  </div>
+</section>
+
+<section class="slide" id="chuleta" data-fx="vc" data-section="Cierre" data-title="Chuleta">
+  <header class="s-head"><p class="kicker">para el examen</p><h2 class="s-title">Chuleta</h2></header>
+  <div class="s-body g2">
+    <div class="vstack">
+      <div class="eq">$$\text{conv: }f[n-k,m-l]\qquad\text{corr: }f[n+k,m+l]$$</div>
+      <div class="eq">$$h=h_{180}\Rightarrow\text{conv}=\text{corr}$$</div>
+      <div class="eq">$$G_\sigma=\tfrac{1}{2\pi\sigma^2}e^{-\frac{x^2+y^2}{2\sigma^2}}\;\text{separable}$$</div>
+      <div class="eq">$$MN\,mn\;\to\;MN\,(m+n)$$</div>
+<pre class="code">convolve(im.astype(float), np.ones((n,n))/n**2)
+gaussian_filter(im, sigma)   # truncate=4.0
+medfilt2d(im, n)             # n impar</pre>
+    </div>
+    <table class="t lg">
+      <tr><th>situación</th><th>qué usar / recordar</th></tr>
+      <tr><td>ruido gaussiano</td><td>media o gaussiano</td></tr>
+      <tr><td>sal y pimienta</td><td>mediana</td></tr>
+      <tr><td>solo sal / solo pimienta</td><td>mínimo / máximo (mejor la mediana)</td></tr>
+      <tr><td>¿es convolución?</td><td>lineal + invariante a traslación</td></tr>
+      <tr><td>¿no lineal?</td><td>un contraejemplo basta</td></tr>
+      <tr><td>bordes en SciPy</td><td><code>mode='reflect'</code> por defecto</td></tr>
+      <tr><td>imagen <code>uint8</code></td><td>pasa a <code>float</code> antes de filtrar</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Resumen de la lección. Lo que más suele caer: reconocer si un sistema es lineal, distinguir convolución y correlación, escribir averageFilter y la versión separable, y elegir el filtro adecuado según el ruido.</aside>
+</section>
+
+<section class="slide" id="vf" data-fx="vc" data-step-ms="1600" data-section="Cierre" data-title="Verdadero o falso">
+  <header class="s-head"><p class="kicker">práctica</p><h2 class="s-title">Verdadero o falso</h2></header>
+  <div class="s-body vstack">
+    <table class="t lg">
+      <tr><th>afirmación</th><th>respuesta</th><th>por qué</th></tr>
+      <tr><td>La mediana es lineal.</td><td class="err" data-seq="1">falso</td><td data-seq="1">contraejemplo (1,2,9)+(5,0,0)</td></tr>
+      <tr><td>conv = corr si el núcleo es simétrico respecto al centro.</td><td class="ok" data-seq="2">verdadero</td><td data-seq="2">\(h=h_{180}\)</td></tr>
+      <tr><td>El gaussiano es separable.</td><td class="ok" data-seq="3">verdadero</td><td data-seq="3">\(e^{a+b}=e^ae^b\)</td></tr>
+      <tr><td>Aplicar dos 1D cuesta \(MN(m+n)\).</td><td class="ok" data-seq="4">verdadero</td><td data-seq="4">frente a \(MN\,mn\)</td></tr>
+      <tr><td>El filtro de media es eficaz contra sal y pimienta.</td><td class="err" data-seq="5">falso</td><td data-seq="5">emborrona y extiende los impulsos</td></tr>
+      <tr><td>La convolución es invariante a la traslación.</td><td class="err" data-seq="6">falso</td><td data-seq="6">es <b>equivariante</b></td></tr>
+      <tr><td>El máximo 3×3 siempre mejora una imagen con pimienta.</td><td class="err" data-seq="7">falso</td><td data-seq="7">quita la pimienta, pero el PSNR puede bajar</td></tr>
+    </table>
+  </div>
+  <aside class="notes">Las siete afirmaciones y sus justificaciones. Para un examen de verdadero o falso, merece la pena pensar el matiz: la media reduce la varianza del ruido gaussiano pero no es robusta a outliers.</aside>
+</section>
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['noche'];</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+</body>
+</html>

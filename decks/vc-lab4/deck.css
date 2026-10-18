@@ -1,0 +1,39 @@
+:root { --folio: "VC.LAB4 // "; }
+.shot { display: block; max-width: 100%; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); }
+.cap { font: 400 22px/1.35 var(--font-mono); color: var(--fg-3); margin: 8px 0 0; }
+.imgcol { display: grid; gap: 6px; justify-items: center; align-content: start; }
+.imgcol .shot { width: auto; }
+.api table { font-size: 22px; }
+.api td:first-child { white-space: normal; }
+table.t.sm { font-size: 22px; }
+table.t.sm th, table.t.sm td { padding: 7px 14px; }
+table.t td code, .api td code { font-size: .95em; }
+.k { font-family: var(--font-mono); color: var(--accent); }
+.out { color: var(--fg-3); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; align-items: start; }
+.lead-eq { text-align: center; }
+.slide aside.notes { display: none; }
+.hogp[data-role="plot"] { min-height: 0; }
+/* pase de revisión: mínimos de 22 px y tamaños más legibles */
+table.t th, .api th { font-size: 22px; }
+.tip b:first-child, .trap b:first-child, .exam b:first-child { font-size: 22px; }
+.api table { font-size: 24px; }
+table.t.sm { font-size: 24px; }
+table.t.md { font-size: 26px; }
+table.t.md th, table.t.md td { padding: 10px 16px; }
+.plot-s[data-role="plot"] { min-height: 0; }
+.vf td:first-child { width: 62%; }
+table.t.vf th, table.t.vf td { padding: 18px 16px; font-size: 28px; }
+table.t.vf th { font-size: 22px; }
+.vf td.ans { font-weight: 600; }
+.diag { width: 100%; height: auto; display: block; }
+.diag text { font-family: var(--font-mono); font-size: 24px; fill: var(--fg-2); }
+.diag .ax { stroke: var(--fg-3); stroke-width: 2.5; fill: none; }
+.diag .vec { stroke: var(--accent); stroke-width: 5; fill: none; }
+.diag .cmp { stroke: var(--cat-2); stroke-width: 3; stroke-dasharray: 8 6; fill: none; }
+.diag .edge { stroke: var(--cat-3); stroke-width: 4; stroke-dasharray: 3 7; fill: none; }
+.diag .arc { stroke: var(--cat-4); stroke-width: 3; fill: none; }
+/* etiqueta del pico en hough-sinus: arriba a la izquierda del punto (zona libre, ρ > 83) */
+.pk-wrap { position: relative; }
+.pk-lab { position: absolute; top: 22px; left: calc(120px + 0.75 * (100% - 150px) - 14px); transform: translateX(-100%);
+  font: 500 24px var(--font-mono); color: var(--fg); background: var(--bg-2); padding: 2px 8px; border: 1px solid var(--line); }

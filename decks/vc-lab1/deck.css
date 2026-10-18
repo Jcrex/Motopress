@@ -1,0 +1,69 @@
+:root { --folio: "VC.LAB1 // "; }
+
+/* --- tamaños de lectura (segundo pase): texto 26–28, código 24–26, tablas 25–26 --- */
+.slide pre.code { font-size: 26px; line-height: 1.45; }
+.slide pre.code.sm { font-size: 24px; line-height: 1.42; }
+.slide table.t { font-size: 26px; }
+.slide table.t th, .slide .api th { font-size: 22px; }
+.slide table.t td, .slide table.t th { padding: 9px 16px; }
+.slide .api table { font-size: 25px; }
+.slide .api td { padding: 8px 16px; }
+.slide .tip, .slide .trap, .slide .exam { font-size: 26px; }
+.slide .tip b:first-child, .slide .trap b:first-child, .slide .exam b:first-child { font-size: 22px; }
+.slide p.txt { font-size: 28px; }
+.slide .deriv .why { font-size: 23px; }
+
+.fig { display: grid; justify-items: center; align-content: start; gap: 12px; }
+.fig img { max-width: 100%; max-height: 560px; display: block; }
+.fig.tall img { max-height: 570px; }
+.cap { font-size: 24px; color: var(--fg-3); margin: 0; text-align: center; }
+.mono { font-family: var(--font-mono); color: var(--accent); }
+table.t td.m, table.t th.m { font-family: var(--font-mono); font-size: 25px; }
+table.t.sm td, table.t.sm th { padding: 9px 16px; font-size: 25px; }
+table.t.sm th { font-size: 22px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; align-items: start; }
+
+/* diagramas SVG en línea */
+svg.dg { width: 100%; height: auto; display: block; overflow: visible; }
+svg.dg text { font-family: var(--font-mono); font-size: 26px; fill: var(--fg-2); }
+svg.dg text.h { fill: var(--fg); font-weight: 600; }
+svg.dg text.a { fill: var(--accent); }
+svg.dg text.ok { fill: var(--ok); }
+svg.dg text.err { fill: var(--err); }
+svg.dg text.s { font-size: 23px; fill: var(--fg-3); }
+svg.dg .box { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 2; }
+svg.dg .box.acc { stroke: var(--accent); }
+svg.dg .box.err { stroke: var(--err); }
+svg.dg .box.ok { stroke: var(--ok); }
+svg.dg .ln { stroke: var(--line-2); stroke-width: 2; fill: none; }
+svg.dg .ln.acc { stroke: var(--accent); stroke-width: 3; }
+svg.dg .cell { fill: var(--bg-2); stroke: var(--accent); stroke-width: 2; }
+svg.dg .cell.on { fill: var(--bg-3); }
+
+/* barras de tiempo (vectorizar) */
+.tbar { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 16px; font: 500 24px var(--font-mono); color: var(--fg-2); }
+.tbar .b { height: 40px; background: var(--cat-2); border-radius: 3px; }
+.tbar .b.np { background: var(--accent); width: 4px; }
+
+/* verdadero / falso */
+.vf { display: grid; grid-template-columns: 1fr 640px; gap: 28px; align-items: center; padding: 14px 0; border-bottom: var(--stroke) solid var(--line); }
+.vf p { margin: 0; font-size: 27px; line-height: 1.35; color: var(--fg); }
+.vf .ans { font-size: 24px; line-height: 1.35; color: var(--fg-2); border-left: 6px solid var(--line-2); padding-left: 16px; }
+.vf .ans b { font-family: var(--font-mono); margin-right: 8px; }
+.vf .ans.f { border-left-color: var(--err); }
+.vf .ans.f b { color: var(--err); }
+.vf .ans.v { border-left-color: var(--ok); }
+.vf .ans.v b { color: var(--ok); }
+
+/* ajustes de relleno (segundo pase) */
+#chuleta-1 table.t td, #chuleta-2 table.t td, #chuleta-3 table.t td { padding: 12px 18px; font-size: 28px; }
+#chuleta-1 table.t td.m, #chuleta-2 table.t td.m, #chuleta-3 table.t td.m { font-size: 27px; }
+#mini-1 pre.code, #mini-2 pre.code { font-size: 28px; }
+#mini-1 p.txt, #mini-2 p.txt { font-size: 30px; }
+.vf { padding: 22px 0; }
+.vf p { font-size: 29px; }
+.vf .ans { font-size: 26px; }
+/* evitar que los bloques de código se compriman en columnas flex */
+.slide pre.code { flex-shrink: 0; }
+#histeq-codigo pre.code { font-size: 24px; }
+#histeq-codigo table.t td, #histeq-codigo table.t th { padding: 7px 16px; }

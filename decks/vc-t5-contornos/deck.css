@@ -1,0 +1,81 @@
+:root { --folio: "VC.T5 // "; }
+
+.fig { margin: 0; display: grid; gap: 8px; justify-items: center; align-content: start; }
+.fig img { width: 100%; height: auto; display: block; border: var(--stroke) solid var(--line); border-radius: var(--radius); background: var(--bg-2); }
+.fig img.px { image-rendering: pixelated; }
+.fig figcaption { font: 500 22px/1.3 var(--font-mono); color: var(--fg-3); text-align: center; }
+.imgrow { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+.cap-small { font: 400 22px/1.4 var(--font-mono); color: var(--fg-3); margin: 0; }
+.chain { font: 600 40px/1.3 var(--font-mono); letter-spacing: .18em; color: var(--fg); word-break: break-all; }
+.chain b { color: var(--accent-3); font-weight: 600; }
+.chain.sm { font-size: 32px; letter-spacing: .12em; }
+.lab { font: 500 20px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 4px; }
+table.t td.mono, table.t th.mono { font-family: var(--font-mono); }
+table.t td.c { color: var(--fg); }
+.pill { display: inline-block; padding: 2px 12px; border: var(--stroke) solid var(--accent); color: var(--accent); font: 600 22px var(--font-mono); border-radius: var(--radius); }
+.big-eq { font-size: 56px; text-align: center; margin: 0; }
+.slide aside.notes { display: none !important; }
+
+/* ---- revisión: tamaños mínimos ---- */
+.lab { font-size: 22px; }
+table.t th, .api th { font-size: 22px; }
+.tip b:first-child, .trap b:first-child, .exam b:first-child { font-size: 22px; }
+.fig figcaption { font-size: 22px; }
+table.t.lg { font-size: 26px; }
+table.t.lg td, table.t.lg th { padding: 14px 18px; }
+
+/* ---- diagramas SVG en línea (colores solo con tokens) ---- */
+.dg { width: 100%; height: auto; display: block; overflow: visible; }
+.dg text { font: 500 24px var(--font-mono); fill: var(--fg-2); text-anchor: middle; }
+.dg .cell { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 1.5; }
+.dg .on { fill: color-mix(in srgb, var(--accent) 30%, var(--bg-2)); stroke: var(--line-2); stroke-width: 1.5; }
+.dg .filled { fill: color-mix(in srgb, var(--accent-3) 45%, var(--bg-2)); stroke: var(--accent-3); stroke-width: 2; }
+.dg text.one { font-size: 26px; fill: var(--fg); }
+.dg text.bit { font-size: 24px; fill: var(--fg); }
+.dg text.lb { font-size: 28px; font-weight: 700; }
+.dg text.lb2 { font-size: 26px; fill: var(--fg); }
+.dg text.lb3 { font-size: 22px; fill: var(--fg-3); }
+.dg text.ok, .dg text.vk { fill: var(--ok); }
+.dg text.err, .dg text.vn { fill: var(--err); }
+.dg text.vk, .dg text.vn { font-size: 24px; font-weight: 700; }
+.dg text.code-n { font-size: 30px; font-weight: 700; fill: var(--ok); }
+.dg text.nm { font-size: 22px; fill: var(--fg-3); }
+.dg .arr, .dg .scan, .dg .g-c, .dg .g-n, .dg .ray, .dg .edge, .dg .trace { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.dg .arr { stroke: var(--accent-3); stroke-width: 4; }
+.dg .arr-h { fill: var(--accent-3); }
+.dg .scan { stroke: var(--accent); stroke-width: 3; }
+.dg .scan-h { fill: var(--accent); }
+.dg .g-c { stroke: var(--accent); stroke-width: 5; }
+.dg .g-c-h { fill: var(--accent); }
+.dg .g-n { stroke: var(--fg-2); stroke-width: 4; }
+.dg .g-n-h { fill: var(--fg-2); }
+.dg .v-ok { fill: none; stroke: var(--ok); stroke-width: 4; }
+.dg .v-no { fill: none; stroke: var(--err); stroke-width: 3; stroke-dasharray: 10 8; }
+.dg .v-c { fill: none; stroke: var(--accent); stroke-width: 4; }
+.dg .edge { stroke: var(--accent-3); stroke-width: 6; }
+.dg .gl { stroke: var(--line); stroke-width: 1; }
+.dg .trace { stroke: var(--accent); stroke-width: 5; }
+.dg .t-r { fill: var(--accent-3); } .dg .t-l { fill: var(--ok); } .dg .t-s { fill: var(--fg); }
+.dg .real { fill: none; stroke: var(--fg-3); stroke-width: 2; stroke-dasharray: 8 8; }
+.dg .vote { fill: none; stroke: var(--accent); stroke-width: 3; opacity: .85; }
+.dg .ray { stroke: var(--accent-3); stroke-width: 3; stroke-dasharray: 6 6; }
+.dg .pt { fill: var(--fg); }
+.dg .hit { fill: var(--accent-3); stroke: var(--bg); stroke-width: 3; }
+.dg .bar { fill: var(--accent); transform-box: fill-box; transform-origin: left center; }
+.dg .bar.ej { fill: var(--accent-2); }
+.dg .axis { stroke: var(--line-2); stroke-width: 1.5; }
+.leg { display: flex; gap: 28px; justify-content: center; font: 500 22px var(--font-mono); color: var(--fg-2); }
+.leg i { display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin-right: 8px; vertical-align: -2px; }
+.chain span { display: inline-block; }
+.imgrow3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 18px; }
+.pipe { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; align-items: start; }
+.pipe .st { display: grid; gap: 12px; }
+.pipe .st p { margin: 0; font-size: 24px; line-height: 1.35; color: var(--fg-2); min-height: 98px; }
+.pipe img { width: 100%; aspect-ratio: 1; object-fit: cover; border: var(--stroke) solid var(--line); border-radius: var(--radius); }
+.pipe .arrow-r { position: relative; }
+.dg text { font-size: 26px; }
+.dg tspan.sup { font-size: 22px; }
+#chuleta table.t.lg, #vf table.t.lg { font-size: 28px; }
+#chuleta table.t.lg td, #vf table.t.lg td { padding: 20px 18px; }
+#circ-grad .dg text.lb2 { font-size: 30px; }
+#circ-grad .dg text.lb3 { font-size: 24px; }

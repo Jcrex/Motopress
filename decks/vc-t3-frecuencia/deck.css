@@ -1,0 +1,56 @@
+:root { --folio: "VC.T3 // "; }
+.row { display: flex; gap: 24px; justify-content: center; align-items: flex-start; }
+figure.f { margin: 0; text-align: center; }
+figure.f img { display: block; height: var(--h, 320px); width: auto; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); background: var(--bg-2); margin: 0 auto; }
+figure.f figcaption { font: 400 22px/1.3 var(--font-mono); color: var(--fg-2); margin-top: 10px; }
+.deriv .katex-display { margin: 2px 0; }
+.eq .katex-display { margin: 6px 0; }
+.card { padding: 18px 24px; border: var(--stroke) solid var(--line-2); border-radius: var(--radius); font-size: 24px; line-height: 1.4; color: var(--fg-2); }
+.card b:first-child { display: block; font: 600 20px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; color: var(--accent); }
+.verdict { font: 600 84px/1 var(--font-display); color: var(--ok); }
+ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 24px; line-height: 1.35; color: var(--fg-2); }
+ol.steps li { display: grid; grid-template-columns: 56px 1fr; align-items: center; }
+.tight p.txt { font-size: 24px; }
+table.t td, table.t th { padding: 8px 14px; }
+table.t.sm { font-size: 22px; }
+.slide aside.notes { display: none; }
+
+/* --- pase de revisión: tamaños mínimos de 22 px en etiquetas comunes --- */
+table.t th { font-size: 22px; }
+.tip b:first-child, .trap b:first-child, .exam b:first-child, .card b:first-child { font-size: 22px; }
+.eq.sm { font-size: 32px; }
+table.t.big { font-size: 27px; }
+table.t.big td { padding: 12px 18px; }
+table.t.vf { font-size: 26px; }
+table.t.vf td:nth-child(2) { white-space: nowrap; font-weight: 600; }
+ol.steps { font-size: 27px; gap: 14px; }
+.verdict { font-size: 96px; }
+.card { font-size: 25px; }
+
+/* --- diagramas SVG en línea (texto a tamaño real: width = viewBox) --- */
+svg.dia { display: block; max-width: 100%; height: auto; margin: 0 auto; overflow: visible; }
+svg.dia .lb { font: 400 24px var(--font-mono); fill: var(--fg-2); }
+svg.dia .lb.strong { fill: var(--fg); font-weight: 600; }
+svg.dia .lb.mid { text-anchor: middle; }
+svg.dia .lb.c1 { fill: var(--cat-1); } svg.dia .lb.c2 { fill: var(--cat-2); } svg.dia .lb.c3 { fill: var(--cat-3); }
+svg.dia .lb.err { fill: var(--err); } svg.dia .lb.ok { fill: var(--ok); }
+svg.dia .ax { stroke: var(--fg-3); stroke-width: 2; }
+svg.dia .circ { fill: none; stroke: var(--line-2); stroke-width: 3; }
+svg.dia .vec { stroke: var(--accent); stroke-width: 4; }
+svg.dia .vec.dash { stroke-dasharray: 10 8; }
+svg.dia .dot { fill: var(--accent); }
+svg.dia .arc { fill: none; stroke: var(--fg-2); stroke-width: 2; }
+svg.dia .sin { stroke: var(--cat-3); stroke-width: 4; stroke-dasharray: 8 6; }
+svg.dia .cos { stroke: var(--cat-2); stroke-width: 8; }
+svg.dia .wire { stroke: var(--cat-1); stroke-width: 2.5; }
+svg.dia .wire.c2 { stroke: var(--cat-2); }
+svg.dia .box { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 2; }
+svg.dia .img { fill: var(--bg-2); stroke: var(--fg-2); stroke-width: 2; }
+svg.dia .zero { fill: none; stroke: var(--fg-3); stroke-width: 2; stroke-dasharray: 8 6; }
+svg.dia .out { fill: var(--cat-1); opacity: .45; }
+svg.dia .clash { fill: var(--err); opacity: .35; stroke: var(--err); stroke-width: 2; }
+svg.dia .frame { fill: none; stroke: var(--fg-3); stroke-width: 2; }
+svg.dia .cell { fill: var(--bg-2); stroke: var(--line-2); stroke-width: 2; }
+svg.dia .cell.hi { fill: var(--accent); opacity: .6; }
+table.t.vf { font-size: 28px; }
+table.t.vf td { padding: 16px 16px; }
