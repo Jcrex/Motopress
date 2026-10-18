@@ -626,6 +626,68 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
     },
   };
 
+  /* ============================================================ GRANO (alternativo: data-painter="grano")
+     Degradado fluido bg → accent-2 → accent, más intenso a la derecha, con grano fino. */
+  const FS_GRANO = `precision highp float;
+uniform vec2 uRes; uniform float uT, uDark, uSeed; uniform vec3 uBg, uA, uB;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes, p = uv*vec2(uRes.x/uRes.y, 1.);
+  float t = uT*.05;
+  vec2 q = p + vec2(n(p*1.3 + t + uSeed), n(p*1.3 - t + 3.1 + uSeed))*.6;
+  float g = n(q*1.6 + vec2(t*.7, -t*.4));
+  float m = smoothstep(.42, 1.05, uv.x*.9 + g*.35 - uv.y*.12);
+  vec3 c = mix(uBg, uA, smoothstep(0., .55, m)*mix(.55, .45, uDark));
+  c = mix(c, uB, smoothstep(.5, 1., m)*mix(.5, .4, uDark));
+  c += (h(floor(gl_FragCoord.xy) + fract(uT*7.)*91.) - .5)*mix(.04, .07, uDark);
+  gl_FragColor = vec4(c, 1.);
+}`;
+  P.grano = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still, 24)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const L = glLayer(s, glScale(s, 0.6, 1));
+      const pg = L && program(L, 'grano', VS_FULL, FS_GRANO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uDark: api.dark ? 1 : 0, uSeed: (s.seed % 17) * 0.37, uBg: rgb(api.tok('bg')), uA: rgb(api.tok('accent-2')), uB: rgb(api.tok('accent')) }); return; }
+      const g = ctx.createLinearGradient(w * 0.3, h, w, 0);
+      g.addColorStop(0, color.alpha(api.tok('accent-2'), 0)); g.addColorStop(0.6, color.alpha(api.tok('accent-2'), 0.45)); g.addColorStop(1, color.alpha(api.tok('accent'), 0.75));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    },
+  };
+
+  /* ============================================================ HILOS (alternativo: data-painter="hilos")
+     Haz de líneas que entra junto por abajo a la izquierda y se deshilacha hacia la derecha. */
+  P.hilos = {
+    init(s, api) {
+      const N = 60, fg = api.tok(api.style === 'suizo' ? 'fg-2' : 'fg-3'), acc = api.tok('accent'), cats = api.cats(3);
+      s.n = api.noise2(s.seed + 5);
+      s.th = Array.from({ length: N }, (_, i) => {
+        const f = i / (N - 1);
+        const col = api.style === 'suizo' ? (i >= N - 3 ? acc : fg) : api.style === 'aurora' ? cats[Math.min(2, Math.floor(f * 3))] : color.mix(fg, acc, f);
+        return { f, col, lw: 2.5 - 2 * f, a: (api.dark ? 0.95 : 0.85) * (1 - 0.7 * Math.pow(f, 0.3)) * (api.style === 'suizo' && i >= N - 3 ? 1.6 : 1) };
+      });
+    },
+    frame(s, api, t) {
+      const { ctx, w, h, n } = s; ctx.clearRect(0, 0, w, h);
+      const A = [-0.04 * w, 0.96 * h], B = [1.04 * w, 0.3 * h], len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+      const d = [(B[0] - A[0]) / len, (B[1] - A[1]) / len], nr = [-d[1], d[0]], M = 120, tt = t * 0.6;
+      s.th.forEach((th, i) => {
+        const split = 0.22 + th.f * 0.3, amp = h * 0.42 * (0.35 + th.f);
+        ctx.strokeStyle = color.alpha(th.col, Math.min(1, th.a)); ctx.lineWidth = Math.max(0.5, th.lw);
+        ctx.beginPath();
+        for (let j = 0; j <= M; j++) {
+          const u = j / M, fr = Math.max(0, u - split) / (1 - split);
+          const off = Math.sin(u * 5 + tt * 0.8) * 12 + Math.pow(fr, 1.4) * amp * n(i * 0.11 + tt * 0.25, u * 2.6 + s.seed);
+          const x = A[0] + d[0] * len * u + nr[0] * off, y = A[1] + d[1] * len * u + nr[1] * off;
+          j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.stroke();
+      });
+    },
+  };
+
   /* ============================================================ MATRIZ */
   function ledSprite(hex, glow, R) {
     const S = 18, c = document.createElement('canvas'); c.width = c.height = Math.ceil(S * R);

@@ -58,6 +58,90 @@
   </div>
 </section>
 
+<section class="slide is-plain divider" id="grano" data-fx="backdrop" data-painter="grano" data-seed="13" data-section="Fondos" data-title="Pintor grano">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="grano"</p>
+    <h2 class="s-title xl">Degradado con grano</h2>
+    <p class="lead">Inspirado en Grainient: bg → accent-2 → accent.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="hilos" data-fx="backdrop" data-painter="hilos" data-seed="17" data-section="Fondos" data-title="Pintor hilos">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="hilos"</p>
+    <h2 class="s-title xl">Haz de hilos</h2>
+    <p class="lead">Inspirado en Threads: 60 líneas que se deshilachan.</p>
+  </div>
+</section>
+
+<section class="slide" id="cifras" data-title-fx="auto" data-section="Piezas" data-title="Cifras">
+  <header class="s-head"><p class="kicker">cifra · count, roll y dentro de un paso</p><h2 class="s-title">Cifras que cuentan</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:48px;align-content:center">
+    <div class="stack"><span class="cifra" data-value="97.3" data-suf=" %" data-mode="count"></span><p class="note">precisión · count</p></div>
+    <div class="stack"><span class="cifra" data-value="1240" data-suf=" h" data-mode="roll"></span><p class="note">horas · roll</p></div>
+    <div class="stack" data-step><span class="cifra" data-value="28.4" data-suf=" fps"></span><p class="note">auto (según estilo) · con →</p><span class="cifra-delta sube"><b>▲ sube</b> 4,1 fps</span></div>
+  </div>
+  <p class="note">Datos de ejemplo.</p>
+</section>
+
+<section class="slide" id="stepper" data-section="Piezas" data-title="Pasos">
+  <header class="s-head"><p class="kicker">ol.etapas · → marca cada fase como hecha</p><h2 class="s-title">Fases de un pipeline</h2></header>
+  <div class="s-body" style="align-content:center">
+    <ol class="etapas">
+      <li data-step><b>Percepción</b><small>LiDAR y cámara</small></li>
+      <li data-step><b>Localización</b><small>AMCL sobre el mapa</small></li>
+      <li data-step><b>Planificación</b><small>A* global, DWB local</small></li>
+      <li data-step><b>Control</b><small>/cmd_vel a 20 Hz</small></li>
+    </ol>
+  </div>
+</section>
+
+<section class="slide" id="lista" data-section="Piezas" data-title="Checklist">
+  <header class="s-head"><p class="kicker">ul.checklist · data-end="ok|warn|err"</p><h2 class="s-title">Antes de la demo</h2></header>
+  <div class="s-body cols even">
+    <ul class="checklist">
+      <li data-step>Mapa cargado</li>
+      <li data-step>TF completo: map → odom → base_link</li>
+      <li data-step data-end="warn">Batería al 41 %</li>
+      <li data-step data-end="err">Cámara frontal sin imagen</li>
+    </ul>
+    <ul class="checklist tacha">
+      <li data-step>colcon build</li>
+      <li data-step>pytest</li>
+      <li data-step>ros2 launch</li>
+    </ul>
+  </div>
+</section>
+
+<section class="slide" id="indice" data-section="Piezas" data-title="Agenda">
+  <header class="s-head"><p class="kicker">ol.agenda · sale de los data-section</p><h2 class="s-title">Dónde estamos</h2></header>
+  <div class="s-body cols even" style="align-items:center">
+    <ol class="agenda"></ol>
+    <ol class="agenda banda" data-current="Fondos"></ol>
+  </div>
+</section>
+
+<section class="slide" id="hud" data-section="Piezas" data-title="Retícula">
+  <header class="s-head"><p class="kicker">.reticula · data-target por paso</p><h2 class="s-title">Retícula por pasos</h2></header>
+  <div class="s-body reticula" style="display:grid;grid-template-columns:repeat(3,1fr);gap:56px;align-content:center">
+    <div class="panel" data-target="0" data-label="/scan · 10 Hz"><p class="label">sensor</p><p class="value">LiDAR</p></div>
+    <div class="panel" data-target="1" data-label="/map · latched"><p class="label">mapa</p><p class="value">map_server</p></div>
+    <div class="panel" data-target="2" data-label="/cmd_vel · 20 Hz"><p class="label">control</p><p class="value">DWB</p></div>
+    <span data-step hidden></span><span data-step hidden></span>
+  </div>
+</section>
+
+<section class="slide" id="revelados" data-section="Piezas" data-title="Revelados">
+  <header class="s-head"><p class="kicker">data-reveal="auto" · gesto del estilo</p><h2 class="s-title">Revelados por estilo</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:40px;align-content:center">
+    <div class="panel" data-step data-reveal="auto"><p class="label">uno</p><p class="value">auto</p></div>
+    <div class="panel" data-step data-reveal="auto"><p class="label">dos</p><p class="value">auto</p></div>
+    <div class="panel" data-step data-reveal="pixel"><p class="label">tres</p><p class="value">pixel</p></div>
+  </div>
+</section>
+
 <section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="9" data-section="Pasos" data-title="Cierre">
   <div class="fx-bg"></div>
   <div class="divider-body">
@@ -76,6 +160,7 @@
 <script src="../../engine/engine.js"></script>
 <script src="../../fx/sistema.js"></script>
 <script src="../../fx/fondos.js"></script>
+<script src="../../fx/piezas.js"></script>
 <script src="fx.js"></script>
 </body>
 </html>

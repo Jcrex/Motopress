@@ -75,8 +75,19 @@ motor/
 - Piezas: `.panel`, `.label`, `.value`, `.readout`, `.legend`, `.note`, `.chip`, `.keycap`, `.win` (ventana con `.win-bar` y `.win-body`), `.term`.
 - Portadas y separadores: `class="slide is-plain divider"` con `data-fx="backdrop"` y un `<div class="fx-bg">`.
   - `data-painter` cambia el fondo: `"hilos"` para todos los estilos, `"noche:escaner aurora:hilos"` solo para esos estilos (el resto usa el suyo) y `"none"` lo deja liso. En `<html>` vale para todo el deck; la diapositiva manda.
-- Entrada del título: `data-title-fx="auto"` (preset del estilo), `"none"` o el nombre de un preset (`rise`). Sin atributo, solo se anima en las diapositivas con `backdrop`. En `<html>` vale para todo el deck. Cromo y Térmica nunca parten el título (lo animan en CSS).
-- Pasos: añade `data-step` a cualquier elemento para revelarlo con →.
+- Fondos alternativos para `data-painter`: `grano` (degradado con grano, WebGL) y `hilos` (haz de líneas que se deshilacha).
+- Entrada del título: `data-title-fx="auto"` (preset del estilo), `"none"` o el nombre de un preset: `rise` (rice, nube), `descifra` (noche, matriz), `mask-lines` (suizo), `blur` (aurora), `pliega` (arcilla), `enfoca` (celula). Sin atributo, solo se anima en las diapositivas con `backdrop`. En `<html>` vale para todo el deck. Cromo y Térmica nunca parten el título (lo animan en CSS).
+- Pasos: añade `data-step` a cualquier elemento para revelarlo con →. Con `data-reveal="auto"` se revela con el gesto del estilo (inclinación en rice y arcilla, barrido en noche, cromo y nube, niebla en aurora, revelado en térmica, enfoque en célula, puntos en matriz, fundido en suizo); también vale un nombre fijo: `fade`, `wipe`, `wipe-x`, `focus`, `develop`, `mist`, `pixel`, `tilt`. En `<html>` vale para todo el deck.
+
+### Piezas (`fx/piezas.js`)
+
+Componentes por clase que se combinan en cualquier diapositiva, con o sin `data-fx`. Se ven completos sin animar (capturas, vista general, PDF).
+
+- `<span class="cifra" data-value="97.3" data-suf=" %"></span>`: número grande que cuenta (`data-mode="count"`) o rueda por dígitos (`"roll"`); por defecto, según el estilo. `data-dec`, `data-pre`, `data-from`. Dentro de un `data-step`, se anima al revelarse. Para la variación: `<span class="cifra-delta sube"><b>▲ sube</b> 4,1 fps</span>` (o `baja`).
+- `<ol class="etapas"><li data-step><b>Fase</b><small>detalle</small></li>…</ol>`: proceso lineal; cada → marca una fase como «hecho» y la siguiente como «en curso». `class="etapas v"` en vertical.
+- `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>`: hitos con marca y palabra (pendiente, en curso, hecho, revisar, falló). `class="checklist tacha"` tacha lo hecho.
+- `<ol class="agenda"></ol>`: índice generado con los `data-section`, con la sección actual destacada (o `data-current`); `data-skip="Inicio"` omite secciones; `class="agenda banda"` la rellena.
+- `<div class="reticula">` con hijos `data-target="0|1|2…"` y `data-label`: cuatro esquinas que saltan al objetivo de cada paso.
 
 ## Efectos
 

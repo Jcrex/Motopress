@@ -48,12 +48,13 @@ Crea `decks/<nombre>/index.html` con esta plantilla. Cambia solo lo marcado con 
 <script src="../../engine/engine.js"></script>
 <script src="../../fx/sistema.js"></script>
 <script src="../../fx/fondos.js"></script>
+<script src="../../fx/piezas.js"></script>
 <!-- Añade aquí los fx/ que uses: ../../fx/datos.js, ../../fx/ml.js, ../../fx/ros.js, ../../fx/arch.js -->
 </body>
 </html>
 ```
 
-Orden obligatorio de los `<script>`: `MOTOR_PICK` → librerías CDN → `themes/meta.js` → `engine/engine.js` → `fx/sistema.js` → `fx/fondos.js` → resto de `fx/`.
+Orden obligatorio de los `<script>`: `MOTOR_PICK` → librerías CDN → `themes/meta.js` → `engine/engine.js` → `fx/sistema.js` → `fx/fondos.js` → `fx/piezas.js` → resto de `fx/`.
 
 Estilos válidos (no inventes otros): `rice`, `noche`, `suizo`, `aurora`, `cromo`, `arcilla`, `nube`, `termica`, `celula`, `matriz`.
 
@@ -98,6 +99,8 @@ Piezas disponibles:
 - Revelar por pasos con →: añade `data-step` a un elemento.
 - Fondo de portada distinto: `data-painter="nombre"` (todos los estilos) o `data-painter="noche:nombre"` (solo ese estilo); `"none"` lo deja liso.
 - Entrada animada del título: `data-title-fx="auto"` en cualquier diapositiva; `"none"` la quita de una portada.
+- Revelado con el gesto del estilo: `data-reveal="auto"` en un elemento con `data-step`.
+- Piezas listas (sin `data-fx`, se combinan): número grande `<span class="cifra" data-value="97.3" data-suf=" %"></span>`; proceso `<ol class="etapas"><li data-step><b>Fase</b><small>detalle</small></li></ol>`; hitos `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>`; índice `<ol class="agenda"></ol>`; foco por pasos `<div class="reticula">` con hijos `data-target="0|1|…" data-label="…"`. Detalles en README.
 - Sin `data-fx`, la diapositiva es HTML estático. Es la opción más segura.
 
 Efectos ya hechos para `data-fx` (búscalos con `grep -n "Motor.fx('" fx/*.js`): `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, `refs`, `compare`, `rosgraph`, `lidar`, `astar`, `tftree`, `blueprint`, `scope`, `training`, `confusion`, `latent`, `nnet`, `clouds`, `ridge`, `calendar`, `sankey`, `kpis`, `desktop`, `fetch`. Reutilízalos antes de crear uno nuevo.

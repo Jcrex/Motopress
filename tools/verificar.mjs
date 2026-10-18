@@ -24,10 +24,13 @@ for (const style of styles) for (const mode of ['light', 'dark']) {
   for (const id of ids) {
     await p.goto(`${base}?v=${id}#${id}`); // la query fuerza la recarga
     await p.waitForTimeout(1200);
-    const over = await p.$eval(`#${id}`, (s) => [...s.querySelectorAll('*')].filter((e) => {
-      const r = e.getBoundingClientRect(), R = s.getBoundingClientRect();
-      return r.width && (r.right > R.right + 1 || r.bottom > R.bottom + 1);
-    }).length);
+    const over = await p.$eval(`#${id}`, (s) => {
+      const R = s.getBoundingClientRect();
+      const out = (r) => r.right > R.right + 1 || r.bottom > R.bottom + 1;
+      // lo recortado por un contenedor (overflow distinto de visible) que cabe en el lienzo no se ve fuera
+      const clipped = (e) => { for (let a = e.parentElement; a && a !== s; a = a.parentElement) { const cs = getComputedStyle(a); if ((cs.overflowX !== 'visible' || cs.overflowY !== 'visible') && !out(a.getBoundingClientRect())) return true; } return false; };
+      return [...s.querySelectorAll('*')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && out(r) && !clipped(e); }).length;
+    });
     if (over) console.log(`[${style}/${mode}] ${id}: ${over} elementos se salen del lienzo`);
     await p.screenshot({ path: path.join(dir, `${style}-${mode}-${id}.png`) });
   }

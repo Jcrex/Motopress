@@ -140,6 +140,108 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .slide [data-step] { opacity: 0; transform: translateY(14px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .slide [data-step].on { opacity: 1; transform: none; }
 
+/* Revelados por estilo: data-rv lo pone fx/sistema.js a partir de data-reveal. El estado .on es el final. */
+@property --rv { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --rvp { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.slide [data-step][data-rv] { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), filter var(--dur) var(--ease), --rv var(--dur) var(--ease), --rvp var(--dur) var(--ease); }
+.slide [data-step][data-rv="wipe"], .slide [data-step][data-rv="wipe-x"] { opacity: 1; transform: none; --rv: 0%; }
+.slide [data-step][data-rv="wipe"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); mask-image: linear-gradient(to bottom, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); }
+.slide [data-step][data-rv="wipe-x"] { -webkit-mask-image: linear-gradient(to right, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); mask-image: linear-gradient(to right, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); transition-timing-function: steps(8, end); }
+.slide [data-step][data-rv^="wipe"].on { --rv: 100%; }
+.slide [data-step][data-rv="focus"] { filter: blur(12px); transform: scale(.97); }
+.slide [data-step][data-rv="develop"] { filter: grayscale(1) contrast(.55) brightness(1.3); transform: none; transition-duration: calc(var(--dur) * .5), 0s, calc(var(--dur) * 2.2); }
+.slide [data-step][data-rv="mist"] { filter: blur(6px); transform: translateY(10px) scale(1.02); transition-duration: calc(var(--dur) * 1.4); }
+.slide [data-step][data-rv="pixel"] { opacity: 1; transform: none; --rvp: 0px; transition-timing-function: steps(6, end); -webkit-mask: radial-gradient(circle, #000 var(--rvp), transparent calc(var(--rvp) + .5px)) 0 0 / 12px 12px; mask: radial-gradient(circle, #000 var(--rvp), transparent calc(var(--rvp) + .5px)) 0 0 / 12px 12px; }
+.slide [data-step][data-rv="pixel"].on { --rvp: 9px; }
+.slide [data-step][data-rv="tilt"] { transform: perspective(900px) rotateX(-24deg) translateY(18px); transform-origin: 50% 100%; }
+.slide [data-step][data-rv].on { filter: none; transform: none; }
+
+/* ---------- piezas (fx/piezas.js completa cifra, agenda y retícula; etapas y checklist son solo CSS) ---------- */
+/* cifra: número grande que cuenta o rueda hasta su valor */
+.cifra { display: inline-flex; align-items: flex-end; white-space: nowrap; font: var(--title-weight) var(--cifra-size, 140px)/1.1 var(--font-display); color: var(--fg); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.cifra .pre, .cifra .u { font-size: .42em; font-weight: 500; color: var(--fg-2); padding-bottom: .12em; }
+.cifra .pre { margin-right: .12em; } .cifra .u { margin-left: .1em; }
+.cifra .dg { display: inline-block; height: 1.1em; overflow: hidden; }
+.cifra .dg > span { display: flex; flex-direction: column; transform: translateY(calc(var(--d, 0) * -1.1em)); }
+.cifra .dg > span > i { font-style: normal; height: 1.1em; }
+.cifra-delta { display: inline-flex; gap: 10px; align-items: baseline; font: 500 26px/1.2 var(--font-mono); color: var(--fg-2); }
+.cifra-delta b { font-weight: 600; } .cifra-delta.sube b { color: var(--ok); } .cifra-delta.baja b { color: var(--err); }
+
+/* etapas: proceso lineal; los [data-step] siempre se ven y .on marca «hecho» */
+.etapas { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); counter-reset: etapa; }
+.slide .etapas > [data-step] { opacity: 1; transform: none; }
+.etapas > li {
+  --fill: 0px; counter-increment: etapa; position: relative; display: flex; flex-direction: column; gap: 8px; padding: 92px 28px 0 0;
+  background: linear-gradient(var(--accent), var(--accent)) no-repeat 76px 31px / var(--fill) 3px, linear-gradient(var(--line-2), var(--line-2)) no-repeat 76px 31px / calc(100% - 88px) 3px;
+  transition: background-size var(--dur) var(--ease);
+}
+.etapas > li:last-child { background: none; }
+.etapas > li:has(+ li.on) { --fill: calc(100% - 88px); }
+.etapas > li::before {
+  content: counter(etapa); position: absolute; left: 0; top: 0; box-sizing: border-box; width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center; font: 600 26px/1 var(--font-mono); color: var(--fg-3);
+  background: var(--bg-3); border: 3px solid var(--line-2);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.etapas > li::after { content: "pendiente"; order: 9; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); }
+.etapas > li > b, .etapas > li > strong { font: 600 30px/1.2 var(--font-display); color: var(--fg-2); }
+.etapas > li > small { font-size: 22px; line-height: 1.35; color: var(--fg-3); }
+.etapas > li.on::before { content: "✓"; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.etapas > li.on::after { content: "hecho"; color: var(--fg-2); }
+.etapas > li.on > b, .etapas > li.on > strong { color: var(--fg); }
+.etapas > li.on > small { color: var(--fg-2); }
+.etapas > li:not(.on):first-child::before, .etapas > li.on + li:not(.on)::before { border-color: var(--accent); color: var(--accent-ink); transform: scale(1.08); }
+.etapas > li:not(.on):first-child::after, .etapas > li.on + li:not(.on)::after { content: "en curso"; color: var(--accent-ink); }
+.etapas > li:not(.on):first-child > b, .etapas > li.on + li:not(.on) > b { color: var(--fg); }
+.etapas.v { grid-auto-flow: row; grid-auto-rows: auto; gap: 0; }
+.etapas.v > li { padding: 0 0 28px 92px; min-height: 96px; background-position: 31px 76px, 31px 76px; background-size: 3px var(--fill), 3px calc(100% - 88px); }
+.etapas.v > li:has(+ li.on) { --fill: calc(100% - 88px); }
+
+/* checklist: hitos con marca y palabra de estado; data-end="ok|warn|err" fija el final (ok por defecto) */
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.slide .checklist > [data-step] { opacity: 1; transform: none; }
+.checklist > li { position: relative; display: block; min-height: 44px; padding: 2px 170px 0 70px; font-size: 30px; line-height: 1.35; color: var(--fg-2); text-decoration: line-through 2px transparent; transition: color var(--dur) var(--ease), text-decoration-color var(--dur) var(--ease); }
+.checklist > li::before {
+  content: ""; position: absolute; left: 0; top: 0; box-sizing: border-box; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--line-2);
+  display: grid; place-items: center; font: 700 26px/1 var(--font-text); color: transparent;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.checklist > li::after { content: "pendiente"; position: absolute; right: 0; top: 12px; font: 500 22px/1 var(--font-mono); color: var(--fg-3); }
+.checklist > li:not(.on):first-child, .checklist > li.on + li:not(.on) { color: var(--fg); }
+.checklist > li:not(.on):first-child::before, .checklist > li.on + li:not(.on)::before { border-color: var(--accent); border-style: dashed; }
+.checklist > li:not(.on):first-child::after, .checklist > li.on + li:not(.on)::after { content: "en curso"; color: var(--accent-ink); }
+.checklist > li.on { color: var(--fg); }
+.checklist > li.on::before { content: "✓"; border-color: var(--ok); color: var(--ok); transform: scale(1.06); }
+.checklist > li.on::after { content: "hecho"; color: var(--fg-2); }
+.checklist > li.on[data-end="warn"]::before { content: "!"; border-color: var(--warn); color: var(--warn); }
+.checklist > li.on[data-end="warn"]::after { content: "revisar"; }
+.checklist > li.on[data-end="err"]::before { content: "✕"; border-color: var(--err); color: var(--err); }
+.checklist > li.on[data-end="err"]::after { content: "falló"; }
+.checklist.tacha > li.on:not([data-end="err"]):not([data-end="warn"]) { color: var(--fg-3); text-decoration-color: var(--fg-3); }
+
+/* agenda: índice generado con las secciones (data-section) */
+.agenda { list-style: none; margin: 0; padding: 0; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.agenda > li { --k: 0; position: relative; display: grid; grid-template-columns: 72px 1fr; align-items: baseline; padding: 12px 0 12px 28px; font: 600 40px/1.15 var(--font-display); color: var(--fg-3); transform: translateX(calc(var(--k) * 36px)); opacity: calc(1 - var(--k) * .55); transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), color var(--dur) var(--ease); }
+.agenda > li > span { font: 500 24px/1 var(--font-mono); color: var(--fg-3); }
+.agenda > li.is-current { color: var(--fg); }
+.agenda > li.is-current > span { color: var(--accent-ink); }
+.agenda > .bar { position: absolute; left: 0; top: 0; width: 6px; border-radius: 3px; background: var(--accent); }
+.agenda.banda > li { padding-right: 28px; }
+.agenda.banda > li.is-current { color: var(--on-accent); }
+.agenda.banda > li.is-current > span { color: var(--on-accent); }
+.agenda.banda > .bar { width: 100%; border-radius: var(--radius); z-index: -1; }
+
+/* retícula: cuatro esquinas que saltan de un [data-target] a otro con los pasos */
+.reticula { position: relative; }
+.reticula > .rt { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; }
+.reticula > .rt > i { position: absolute; width: 28px; height: 28px; border: 0 solid var(--accent); }
+.reticula > .rt > i:nth-child(1) { left: -12px; top: -12px; border-width: 4px 0 0 4px; }
+.reticula > .rt > i:nth-child(2) { right: -12px; top: -12px; border-width: 4px 4px 0 0; }
+.reticula > .rt > i:nth-child(3) { left: -12px; bottom: -12px; border-width: 0 0 4px 4px; }
+.reticula > .rt > i:nth-child(4) { right: -12px; bottom: -12px; border-width: 0 4px 4px 0; }
+.reticula > .rt > b { position: absolute; left: -12px; top: calc(100% + 22px); white-space: nowrap; font: 500 22px/1 var(--font-mono); color: var(--fg-2); background: var(--bg); padding: 4px 8px; border-radius: 4px; }
+.reticula > .rt.arriba > b { top: auto; bottom: calc(100% + 22px); }
+
 /* ---------- decorado (lo enciende cada estilo) ---------- */
 .deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .deco > * { display: none; }
@@ -215,11 +317,11 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   outline: 0 solid var(--accent);
 }
 .viewport.is-overview .slide.is-active { outline-width: 14px; }
-.viewport.is-overview .slide [data-step] { opacity: 1; transform: none; }
+.viewport.is-overview .slide [data-step] { opacity: 1; transform: none; filter: none; -webkit-mask: none; mask: none; }
 
 /* ---------- movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .slide, .slide [data-step], .hud, .progress { transition: none !important; }
+  .slide, .slide [data-step], .slide [data-step]::before, .etapas > li, .agenda > li, .hud, .progress { transition: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   /* las animaciones CSS de los estilos saltan a su estado final */
   .slide *, .slide *::before, .slide *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; }
@@ -233,5 +335,5 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   .viewport { position: static; overflow: visible; }
   .stage { position: static; transform: none !important; width: 1920px; height: auto; }
   .slide { position: relative; visibility: visible; opacity: 1; break-after: page; }
-  .slide [data-step] { opacity: 1; transform: none; }
+  .slide [data-step] { opacity: 1; transform: none; filter: none; -webkit-mask: none; mask: none; }
 }

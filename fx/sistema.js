@@ -222,6 +222,55 @@
     gsap.fromTo(split.chars, { yPercent: 38, opacity: 0.12 }, { yPercent: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: api.style === 'aurora' ? 0.04 : 0.022, ease });
     return { revert() { gsap.killTweensOf(split.chars); split.revert(); } };
   });
+  // Líneas que suben desde detrás de una máscara (suizo: editorial, sin opacidades intermedias).
+  Motor.titleFx('mask-lines', (title, { api }) => {
+    const split = SplitText.create(title, { type: 'lines', mask: 'lines' });
+    gsap.from(split.lines, { yPercent: 105, duration: Math.max(0.5, api.dur / 1000 * 1.3), stagger: 0.1, ease: 'power3.out' });
+    return { revert() { gsap.killTweensOf(split.lines); split.revert(); } };
+  });
+  // Palabras que llegan desenfocadas (aurora: lento y orgánico).
+  Motor.titleFx('blur', (title, { api }) => {
+    const split = SplitText.create(title, { type: 'words' });
+    gsap.fromTo(split.words, { filter: 'blur(12px)', opacity: 0, y: 20 }, { filter: 'blur(0px)', opacity: 1, y: 0, duration: Math.max(0.8, api.dur / 1000 * 1.2), stagger: 0.08, ease: 'expo.out' });
+    return { revert() { gsap.killTweensOf(split.words); split.revert(); } };
+  });
+  // Letras que se levantan girando sobre su base (arcilla: plastilina con rebote).
+  Motor.titleFx('pliega', (title, { api, ease }) => {
+    const split = SplitText.create(title, { type: 'words,chars' });
+    gsap.fromTo(split.chars, { rotationX: -90, opacity: 0, transformOrigin: '50% 100%', transformPerspective: 600 }, { rotationX: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: 0.03, ease });
+    return { revert() { gsap.killTweensOf(split.chars); split.revert(); } };
+  });
+  // La línea entera pasa de desenfocada a nítida, sin partir (celula: enfocar el microscopio).
+  Motor.titleFx('enfoca', (title, { api }) => {
+    gsap.fromTo(title, { filter: 'blur(8px)', opacity: 0.3 }, { filter: 'blur(0px)', opacity: 1, duration: api.dur / 1000 * 1.4, ease: 'sine.out', clearProps: 'filter,opacity' });
+    return { revert() { gsap.killTweensOf(title); gsap.set(title, { clearProps: 'filter,opacity' }); } };
+  });
+  // Cada letra muestra glifos al azar hasta fijarse, de izquierda a derecha (noche y matriz).
+  const GLYPHS = { noche: '▚▞░▒<>/\\_', matriz: '·•●' };
+  Motor.titleFx('descifra', (title, { api }) => {
+    const split = SplitText.create(title, { type: 'words,chars' });
+    const chars = split.chars, real = chars.map((c) => c.textContent), n = chars.length;
+    const k = api.el.getBoundingClientRect().width / 1920 || 1, R = api.rng(n * 31 + 7);
+    const set = GLYPHS[api.style] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    // ancho fijo por letra para que el título no baile mientras cambia
+    chars.forEach((c) => { const w = c.getBoundingClientRect().width / k; c.style.display = 'inline-block'; c.style.width = w + 'px'; c.style.textAlign = 'center'; });
+    title.setAttribute('aria-label', real.join(''));
+    const span = Math.max(500, api.dur * 1.4), at = chars.map((_, i) => 120 + (i / Math.max(1, n - 1)) * span);
+    let dead = false, tick = -1;
+    api.raf((t) => {
+      if (dead) return false;
+      const fresh = Math.floor(t / 55) !== tick; tick = Math.floor(t / 55);
+      let left = 0;
+      chars.forEach((c, i) => {
+        if (t >= at[i]) { if (c.classList.contains('scr')) { c.textContent = real[i]; c.classList.remove('scr'); } return; }
+        left++;
+        if (fresh && real[i].trim()) { c.textContent = set[Math.floor(R() * set.length)]; c.classList.add('scr'); }
+      });
+      return left > 0;
+    });
+    return { revert() { dead = true; chars.forEach((c, i) => { c.textContent = real[i]; }); split.revert(); title.removeAttribute('aria-label'); } };
+  });
+  Object.assign(Motor.titleStyle, { rice: 'rise', noche: 'descifra', suizo: 'mask-lines', aurora: 'blur', arcilla: 'pliega', nube: 'rise', celula: 'enfoca', matriz: 'descifra' });
 
   function titlePreset(slide, style) {
     const own = slide.dataset.titleFx || document.documentElement.dataset.titleFx || (slide.dataset.fx === 'backdrop' ? 'auto' : 'none');
@@ -245,6 +294,26 @@
     if (!document.fonts || document.fonts.status === 'loaded') run(); else document.fonts.ready.then(run);
   });
   document.addEventListener('motor:leave', (e) => titleOut(e.detail.slide));
+
+  /* =================================================================
+     REVELADOS POR ESTILO
+     data-reveal en un [data-step] (o en <html> para todo el deck): «auto» usa el gesto del
+     estilo y un nombre lo fija: fade, wipe, wipe-x, focus, develop, mist, pixel, tilt.
+     El CSS (engine.css) anima según data-rv, que se resuelve al entrar en la diapositiva.
+     ================================================================= */
+  Motor.revealStyle = Object.assign({ rice: 'tilt', noche: 'wipe-x', suizo: 'fade', aurora: 'mist', cromo: 'wipe', arcilla: 'tilt', nube: 'wipe', termica: 'develop', celula: 'focus', matriz: 'pixel' }, Motor.revealStyle);
+  const REVEALS = ['fade', 'wipe', 'wipe-x', 'focus', 'develop', 'mist', 'pixel', 'tilt'];
+  function resolveReveals(slide, style) {
+    const deck = document.documentElement.dataset.reveal;
+    slide.querySelectorAll('[data-step]').forEach((el) => {
+      if (el.matches('.etapas > *, .checklist > *')) return; // piezas con su propio estado
+      const own = el.dataset.reveal || deck;
+      const kind = own === 'auto' ? Motor.revealStyle[style] || 'fade' : own;
+      if (kind && REVEALS.includes(kind)) el.dataset.rv = kind; else delete el.dataset.rv;
+      if (kind && !REVEALS.includes(kind) && kind !== 'none') console.warn('[motor] revelado desconocido: ' + kind);
+    });
+  }
+  document.addEventListener('motor:enter', (e) => resolveReveals(e.detail.slide, e.detail.api.style));
 
   /* =================================================================
      SEIS DIRECCIONES DE ARTE
