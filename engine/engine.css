@@ -48,7 +48,7 @@ body {
   contain: layout paint;
 }
 .slide.is-active { visibility: visible; opacity: 1; }
-.slide > :not(.deco):not(.fx-bg) { position: relative; z-index: 1; }
+.slide > :not(.deco):not(.fx-bg):not(.bordes) { position: relative; z-index: 1; }
 .slide.is-plain { grid-template-rows: minmax(0, 1fr); }
 
 /* Sin View Transitions: fundido simple */
@@ -242,6 +242,55 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .reticula > .rt > b { position: absolute; left: -12px; top: calc(100% + 22px); white-space: nowrap; font: 500 22px/1 var(--font-mono); color: var(--fg-2); background: var(--bg); padding: 4px 8px; border-radius: 4px; }
 .reticula > .rt.arriba > b { top: auto; bottom: calc(100% + 22px); }
 
+/* letras revueltas (preset descifra y pieza .descifra) */
+.scr { color: var(--accent-ink); }
+
+/* bento: rejilla de celdas; con data-step, la última celda encendida queda en foco */
+.bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 24px; height: 100%; }
+.bento > * { min-width: 0; min-height: 0; box-sizing: border-box; transition: opacity var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.bento > .w2 { grid-column: span 2; } .bento > .w3 { grid-column: span 3; } .bento > .h2 { grid-row: span 2; }
+.slide .bento > :is([data-step].on, [data-step]) { opacity: 1; transform: none; }
+.slide .bento:has(> .on) > :not(.on:not(:has(~ .on))) { opacity: .5; }
+.bento > .on:not(:has(~ .on)) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 24px 60px -24px color-mix(in oklab, var(--accent) 50%, transparent); background-image: radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 60%); }
+
+/* mazo: tarjetas apiladas; cada paso manda la delantera al fondo (data-step en todas menos la primera) */
+.mazo { position: relative; height: 100%; min-height: 440px; perspective: 1100px; --dx: 44px; --dy: 34px; --dz: 90px; }
+.slide .mazo > :is([data-step].on, [data-step], *) {
+  position: absolute; left: 0; bottom: 0; box-sizing: border-box; opacity: 1; background: var(--bg-3); border: var(--stroke) solid var(--line-2); padding: 28px 32px;
+  width: calc(100% - (var(--n, 3) - 1) * var(--dx)); height: calc(100% - (var(--n, 3) - 1) * var(--dy));
+  transform: translate3d(calc(var(--p, 0) * var(--dx)), calc(var(--p, 0) * var(--dy) * -1), calc(var(--p, 0) * var(--dz) * -1)) skewY(calc(var(--p, 0) * -1.2deg));
+  z-index: calc(20 - var(--p, 0)); filter: brightness(calc(1 - var(--p, 0) * .07));
+  transition: transform var(--dur) var(--ease), filter var(--dur) var(--ease);
+}
+:is([data-style="suizo"], [data-style="matriz"]) .slide .mazo > :is([data-step].on, [data-step], *), .slide .mazo.plana > :is([data-step].on, [data-step], *) { transform: translate(calc(var(--p, 0) * var(--dx) * .6), calc(var(--p, 0) * var(--dy) * -.6)); filter: none; }
+[data-style="noche"] .slide .mazo > .is-front { border-color: var(--accent); }
+
+/* chispa y rayo: los dibuja una capa de canvas por diapositiva (fx/piezas.js) */
+.slide > .bordes { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 3; pointer-events: none; }
+
+/* paleta: casillas de split-flap */
+.paleta { display: inline-flex; gap: 6px; font: 600 var(--paleta-size, 64px)/1 var(--font-mono); perspective: 600px; }
+[data-style="matriz"] .paleta { font-family: var(--font-display); }
+.paleta > i { position: relative; display: grid; place-items: center; width: .8em; height: 1.3em; font-style: normal; color: var(--fg); background: var(--bg-3); border: 1px solid var(--line); border-radius: calc(var(--radius) * .5); }
+.paleta > i::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid color-mix(in oklab, var(--bg) 70%, transparent); }
+
+/* teclea: terminal que escribe los comandos (data-k="cmd") y suelta la salida */
+.teclea > * { white-space: pre; min-height: 1.5em; }
+.teclea > [data-k="cmd"] { color: var(--fg); }
+.teclea > :not([data-k="cmd"]) { color: var(--fg-2); }
+.teclea .caret { color: var(--accent); font-weight: 400; animation: caret 1s steps(1) 4; }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* depósito: nivel vertical con lectura grande y palabra de estado */
+.deposito { display: flex; align-items: flex-end; gap: 36px; height: 100%; min-height: 300px; }
+.deposito .vaso { position: relative; flex: none; width: 128px; height: 100%; box-sizing: border-box; border: 3px solid var(--fg-3); border-top: 0; border-radius: 0 0 30px 30px; overflow: hidden; }
+.deposito .liq { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v, 0) * 1%); background: color-mix(in oklab, var(--fg) 45%, var(--bg)); }
+.deposito.bajo .liq { background: var(--warn); } .deposito.critico .liq { background: var(--err); }
+.deposito .vaso > i { position: absolute; right: 0; width: 26px; border-top: 2px solid var(--fg-3); z-index: 1; }
+.deposito .lectura { display: flex; flex-direction: column; gap: 6px; }
+.deposito .estado { margin: 0; font: 500 22px/1.2 var(--font-mono); color: var(--fg-2); }
+.deposito.bajo .estado b { color: var(--warn); } .deposito.critico .estado b { color: var(--err); } .deposito .estado b { color: var(--ok); }
+
 /* ---------- decorado (lo enciende cada estilo) ---------- */
 .deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .deco > * { display: none; }
@@ -317,6 +366,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   outline: 0 solid var(--accent);
 }
 .viewport.is-overview .slide.is-active { outline-width: 14px; }
+.viewport.is-overview .bento > * { opacity: 1 !important; }
 .viewport.is-overview .slide [data-step] { opacity: 1; transform: none; filter: none; -webkit-mask: none; mask: none; }
 
 /* ---------- movimiento reducido ---------- */

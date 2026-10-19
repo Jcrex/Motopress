@@ -247,15 +247,19 @@
   });
   // Cada letra muestra glifos al azar hasta fijarse, de izquierda a derecha (noche y matriz).
   const GLYPHS = { noche: '▚▞░▒<>/\\_', matriz: '·•●' };
-  Motor.titleFx('descifra', (title, { api }) => {
-    const split = SplitText.create(title, { type: 'words,chars' });
+  /* Revelado por glifos: cada letra muestra glifos al azar (deterministas) hasta fijarse.
+     order: start (izquierda a derecha), center o random. Devuelve { revert }. */
+  Motor.scramble = (el, api, { order = 'start', span } = {}) => {
+    const split = SplitText.create(el, { type: 'words,chars' });
     const chars = split.chars, real = chars.map((c) => c.textContent), n = chars.length;
     const k = api.el.getBoundingClientRect().width / 1920 || 1, R = api.rng(n * 31 + 7);
     const set = GLYPHS[api.style] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    // ancho fijo por letra para que el título no baile mientras cambia
+    // ancho fijo por letra para que el texto no baile mientras cambia
     chars.forEach((c) => { const w = c.getBoundingClientRect().width / k; c.style.display = 'inline-block'; c.style.width = w + 'px'; c.style.textAlign = 'center'; });
-    title.setAttribute('aria-label', real.join(''));
-    const span = Math.max(500, api.dur * 1.4), at = chars.map((_, i) => 120 + (i / Math.max(1, n - 1)) * span);
+    el.setAttribute('aria-label', real.join(''));
+    const total = span || Math.max(500, api.dur * 1.4), mid = (n - 1) / 2;
+    const rank = (i) => (order === 'center' ? Math.abs(i - mid) / Math.max(1, mid) : order === 'random' ? R() : i / Math.max(1, n - 1));
+    const at = chars.map((_, i) => 120 + rank(i) * total);
     let dead = false, tick = -1;
     api.raf((t) => {
       if (dead) return false;
@@ -268,8 +272,9 @@
       });
       return left > 0;
     });
-    return { revert() { dead = true; chars.forEach((c, i) => { c.textContent = real[i]; }); split.revert(); title.removeAttribute('aria-label'); } };
-  });
+    return { revert() { dead = true; chars.forEach((c, i) => { c.textContent = real[i]; }); split.revert(); el.removeAttribute('aria-label'); } };
+  };
+  Motor.titleFx('descifra', (title, { api }) => Motor.scramble(title, api));
   Object.assign(Motor.titleStyle, { rice: 'rise', noche: 'descifra', suizo: 'mask-lines', aurora: 'blur', arcilla: 'pliega', nube: 'rise', celula: 'enfoca', matriz: 'descifra' });
 
   function titlePreset(slide, style) {
@@ -306,7 +311,7 @@
   function resolveReveals(slide, style) {
     const deck = document.documentElement.dataset.reveal;
     slide.querySelectorAll('[data-step]').forEach((el) => {
-      if (el.matches('.etapas > *, .checklist > *')) return; // piezas con su propio estado
+      if (el.matches('.etapas > *, .checklist > *, .bento > *, .mazo > *')) return; // piezas con su propio estado
       const own = el.dataset.reveal || deck;
       const kind = own === 'auto' ? Motor.revealStyle[style] || 'fade' : own;
       if (kind && REVEALS.includes(kind)) el.dataset.rv = kind; else delete el.dataset.rv;

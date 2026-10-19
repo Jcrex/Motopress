@@ -142,6 +142,116 @@
   </div>
 </section>
 
+<section class="slide is-plain divider" id="f-radar" data-fx="backdrop" data-painter="radar" data-seed="19" data-section="Fondos" data-title="Radar PPI">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="radar"</p>
+    <h2 class="s-title xl">Radar PPI</h2>
+    <p class="lead">Barrido con estela y contactos que se apagan.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="f-topo" data-fx="backdrop" data-painter="topo" data-seed="23" data-section="Fondos" data-title="Terreno topográfico">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="topo"</p>
+    <h2 class="s-title xl">Terreno topográfico</h2>
+    <p class="lead">Curvas de nivel en perspectiva; maestra cada 5.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="f-isolineas" data-fx="backdrop" data-painter="isolineas" data-seed="27" data-section="Fondos" data-title="Isolíneas que fluyen">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="isolineas"</p>
+    <h2 class="s-title xl">Isolíneas que fluyen</h2>
+    <p class="lead">GLSL 3.00 con fwidth; respaldo 2D.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="f-escaner" data-fx="backdrop" data-painter="escaner" data-seed="31" data-section="Fondos" data-title="Sala escaneada">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="escaner"</p>
+    <h2 class="s-title xl">Sala escaneada</h2>
+    <p class="lead">Plano láser que recorre la rejilla.</p>
+  </div>
+</section>
+
+<section class="slide is-plain divider" id="f-velo" data-fx="backdrop" data-painter="velo" data-seed="35" data-section="Fondos" data-title="Velo de aurora">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">data-painter="velo"</p>
+    <h2 class="s-title xl">Velo de aurora</h2>
+    <p class="lead">Banda superior en cat-1 → cat-3.</p>
+  </div>
+</section>
+
+<section class="slide" id="bento" data-section="Fase 2" data-title="Bento">
+  <header class="s-head"><p class="kicker">.bento · → pone el foco en cada celda</p><h2 class="s-title">Resumen en rejilla</h2></header>
+  <div class="s-body bento">
+    <div class="panel w2 h2" data-step><p class="label">precisión</p><span class="cifra" data-value="97.3" data-suf=" %"></span><p class="note">Datos de ejemplo.</p></div>
+    <div class="panel" data-step><p class="label">latencia</p><p class="value">38 ms</p></div>
+    <div class="panel" data-step><p class="label">fps</p><p class="value">28,4</p></div>
+    <div class="panel w2" data-step><p class="label">nodos activos</p><p class="value">14 / 16</p></div>
+  </div>
+</section>
+
+<section class="slide" id="mazo" data-section="Fase 2" data-title="Mazo">
+  <header class="s-head"><p class="kicker">.mazo · cada → manda la tarjeta delantera al fondo</p><h2 class="s-title">Capas de la arquitectura</h2></header>
+  <div class="s-body cols even">
+    <div class="mazo">
+      <article class="panel"><p class="label">capa 1</p><p class="value">Sensores</p><p class="note">LiDAR, IMU y cámara.</p></article>
+      <article class="panel" data-step><p class="label">capa 2</p><p class="value">Percepción</p><p class="note">Nube de puntos y detección.</p></article>
+      <article class="panel" data-step><p class="label">capa 3</p><p class="value">Planificación</p><p class="note">Costmap y A*.</p></article>
+      <article class="panel" data-step><p class="label">capa 4</p><p class="value">Control</p><p class="note">/cmd_vel a 20 Hz.</p></article>
+    </div>
+    <div class="stack"><p class="lead">Una idea por tarjeta, sin cambiar de diapositiva.</p></div>
+  </div>
+</section>
+
+<section class="slide" id="bordes" data-section="Fase 2" data-title="Bordes">
+  <header class="s-head"><p class="kicker">.chispa · .rayo</p><h2 class="s-title">Bordes que llaman la atención</h2></header>
+  <div class="s-body cols even" style="align-items:center;gap:96px">
+    <div class="panel chispa" style="height:300px"><p class="label">destacado</p><p class="value">El mapa ya cierra el bucle</p></div>
+    <div class="panel rayo" style="height:300px"><p class="label">alerta</p><p class="value">El cuello de botella está aquí</p></div>
+  </div>
+</section>
+
+<section class="slide" id="texto" data-section="Fase 2" data-title="Texto">
+  <header class="s-head"><p class="kicker">.descifra · .paleta</p><h2 class="s-title">Texto que se revela</h2></header>
+  <div class="s-body stack" style="gap:56px;align-content:center">
+    <p class="lead descifra" style="font-size:44px">Localización activa: error medio de 4,2 cm</p>
+    <div class="paleta" data-words="MAPA LISTO|SLAM ACTIVO|NAVEGANDO"></div>
+    <div class="paleta" data-pasos data-words="EN COLA|CORRIENDO|HECHO" style="--paleta-size:44px"></div>
+    <span data-step hidden></span><span data-step hidden></span>
+  </div>
+</section>
+
+<section class="slide" id="terminal" data-section="Fase 2" data-title="Terminal">
+  <header class="s-head"><p class="kicker">.teclea · data-k="cmd"</p><h2 class="s-title">Comandos en vivo</h2></header>
+  <div class="s-body">
+    <div class="win"><div class="win-bar">bash · ~/ros2_ws</div><div class="win-body"><div class="term teclea">
+      <div data-k="cmd">$ colcon build --packages-select nav_demo</div>
+      <div>Starting >>> nav_demo</div>
+      <div>Finished <<< nav_demo [4.21s]</div>
+      <div data-k="cmd">$ ros2 launch nav_demo bringup.launch.py</div>
+      <div>[INFO] [amcl]: Received initial pose</div>
+    </div></div></div>
+    <p class="note">Salida de ejemplo.</p>
+  </div>
+</section>
+
+<section class="slide" id="deposito" data-section="Fase 2" data-title="Depósito">
+  <header class="s-head"><p class="kicker">.deposito · data-umbral y data-critico</p><h2 class="s-title">Niveles del robot</h2></header>
+  <div class="s-body" style="display:grid;grid-template-columns:repeat(3,1fr);gap:48px;height:520px">
+    <div class="deposito" data-value="72" data-label="batería" data-umbral="30" data-critico="15"></div>
+    <div class="deposito" data-value="24" data-label="almacenamiento libre" data-umbral="30" data-critico="15"></div>
+    <div class="deposito" data-value="9" data-label="presión del neumático" data-umbral="30" data-critico="15"></div>
+  </div>
+  <p class="note">Datos de ejemplo.</p>
+</section>
+
 <section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="9" data-section="Pasos" data-title="Cierre">
   <div class="fx-bg"></div>
   <div class="divider-body">

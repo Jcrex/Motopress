@@ -688,6 +688,207 @@ void main(){
     },
   };
 
+  /* ------------------------------------------------------------------ isolíneas (marching squares)
+     F: campo gw×gh; emite los segmentos de la curva de nivel lv en coordenadas de rejilla. */
+  const MS = [[], [3, 0], [0, 1], [3, 1], [1, 2], [3, 0, 1, 2], [0, 2], [3, 2], [3, 2], [0, 2], [0, 1, 3, 2], [1, 2], [3, 1], [0, 1], [3, 0], []];
+  function isoSegments(F, gw, gh, lv, emit) {
+    for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
+      const a = F[j * gw + i], b = F[j * gw + i + 1], c = F[(j + 1) * gw + i + 1], d = F[(j + 1) * gw + i];
+      const k = (a > lv) | ((b > lv) << 1) | ((c > lv) << 2) | ((d > lv) << 3);
+      const segs = MS[k]; if (!segs.length) continue;
+      // bordes: 0 arriba (a-b), 1 derecha (b-c), 2 abajo (d-c), 3 izquierda (a-d)
+      const E = (e) => (e === 0 ? [i + (lv - a) / (b - a), j] : e === 1 ? [i + 1, j + (lv - b) / (c - b)] : e === 2 ? [i + (lv - d) / (c - d), j + 1] : [i, j + (lv - a) / (d - a)]);
+      for (let s = 0; s < segs.length; s += 2) { const p = E(segs[s]), q = E(segs[s + 1]); emit(p[0], p[1], q[0], q[1]); }
+    }
+  }
+  // Borra con un degradado la parte izquierda (columna del título) y, opcionalmente, la de arriba.
+  function fadeOut(ctx, w, h, x0 = 0.3, x1 = 0.56, top = 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+    let g = ctx.createLinearGradient(w * x0, 0, w * x1, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w * x1, h);
+    if (top) { g = ctx.createLinearGradient(0, h * top * 0.6, 0, h * top); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * top); }
+    ctx.restore();
+  }
+  const fbm = (n, x, y) => 0.6 * n(x, y) + 0.3 * n(x * 2.1 + 3.3, y * 2.1 - 1.7) + 0.1 * n(x * 4.3 - 7.1, y * 4.3 + 2.9);
+
+  /* ============================================================ TOPO (data-painter="topo")
+     Terreno en perspectiva dibujado con curvas de nivel; curva maestra cada 5. Avanza despacio. */
+  P.topo = {
+    init(s, api) { s.last = 0; s.n = api.noise2(s.seed + 21); s.gw = 150; s.gh = 80; s.F = new Float32Array(s.gw * s.gh); },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still, 20)) return;
+      const { ctx, w, h, n, gw, gh, F } = s; ctx.clearRect(0, 0, w, h);
+      let mn = 1e9, mx = -1e9;
+      for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+        const x = (i / gw) * 4, y = (j / gh) * 3 - t * 0.12, q = n(x * 0.7 + 5, y * 0.7) * 0.8;
+        const v = fbm(n, x + q, y + q * 0.6); F[j * gw + i] = v; if (v < mn) mn = v; if (v > mx) mx = v;
+      }
+      const hz = 0.36 * h, L = 22, nube = api.style === 'nube';
+      const P2 = (u, v, z) => { const V = v / (gh - 1), U = u / (gw - 1), sp = 0.5 + 1.15 * V; return [w * 0.68 + (U - 0.5) * w * sp, hz + (h * 1.05 - hz) * Math.pow(V, 1.6) - ((z - mn) / (mx - mn || 1)) * 120 * (0.3 + 0.7 * V)]; };
+      const minor = api.tok('fg-3'), major = api.tok('accent');
+      for (let l = 1; l < L; l++) {
+        const lv = mn + ((mx - mn) * l) / L, master = l % 5 === 0;
+        ctx.beginPath();
+        isoSegments(F, gw, gh, lv, (x1, y1, x2, y2) => { const A = P2(x1, y1, lv), B = P2(x2, y2, lv); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); });
+        ctx.strokeStyle = nube ? color.alpha(api.seq(l / L), master ? 1 : 0.75) : master ? color.alpha(major, 0.9) : color.alpha(minor, api.dark ? 0.5 : 0.6);
+        ctx.lineWidth = master ? 2.2 : 1.2; ctx.stroke();
+      }
+      fadeOut(ctx, w, h, 0.28, 0.55, 0.5);
+    },
+  };
+
+  /* ============================================================ ISOLÍNEAS (data-painter="isolineas")
+     Curvas de nivel de un ruido que fluye, en cat-1…cat-3. GLSL 3.00 (fwidth); respaldo 2D plano. */
+  const FS_ISO = `#version 300 es
+precision highp float;
+uniform vec2 uRes; uniform float uT, uDark, uSeed; uniform vec3 uC1, uC2, uC3; out vec4 o;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+float fbm(vec2 p){ return .55*n(p) + .3*n(p*2.03 + 1.7) + .15*n(p*4.01 - 3.1); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes, p = uv*vec2(uRes.x/uRes.y, 1.)*2.2;
+  float t = uT*.08;
+  vec2 q = vec2(fbm(p + vec2(0., t) + uSeed), fbm(p + vec2(5.2, 1.3) - t));
+  float v = fbm(p + q*1.4 + vec2(t*.5, 0.))*16.;
+  float dl = (.5 - abs(fract(v) - .5))/max(fwidth(v), 1e-4);
+  float line = 1. - smoothstep(.5, 1.5, dl);
+  float b = mod(floor(v + .5), 3.);
+  vec3 c = b < .5 ? uC1 : b < 1.5 ? uC2 : uC3;
+  float a = line*mix(.8, .95, uDark)*smoothstep(.4, .74, uv.x)*(1. - .85*smoothstep(.6, .9, uv.y)*(1. - smoothstep(.6, .9, uv.x)));
+  o = vec4(c*a, a);
+}`;
+  P.isolineas = {
+    init(s, api) { s.last = 0; s.n = api.noise2(s.seed + 9); },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const [c1, c2, c3] = api.cats(3);
+      const L = glLayer(s, glScale(s, 0.7, 1));
+      const pg = L && program(L, 'isolineas', VS_FULL, FS_ISO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uDark: api.dark ? 1 : 0, uSeed: (s.seed % 13) * 0.71, uC1: rgb(c1), uC2: rgb(c2), uC3: rgb(c3) }); return; }
+      // respaldo 2D: las mismas curvas sobre una rejilla gruesa
+      const gw = 96, gh = 54, F = (s.F2 = s.F2 || new Float32Array(gw * gh)), n = s.n;
+      for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) F[j * gw + i] = fbm(n, (i / gw) * 4.4 + t * 0.02, (j / gh) * 2.5 - t * 0.015);
+      const cols = [c1, c2, c3];
+      for (let l = -12; l <= 12; l++) {
+        ctx.beginPath();
+        isoSegments(F, gw, gh, l * 0.06, (x1, y1, x2, y2) => { ctx.moveTo((x1 / (gw - 1)) * w, (y1 / (gh - 1)) * h); ctx.lineTo((x2 / (gw - 1)) * w, (y2 / (gh - 1)) * h); });
+        ctx.strokeStyle = color.alpha(cols[(l + 12) % 3], 0.85); ctx.lineWidth = 1.6; ctx.stroke();
+      }
+      fadeOut(ctx, w, h);
+    },
+  };
+
+  /* ============================================================ ESCÁNER (data-painter="escaner")
+     Sala de rejilla en perspectiva recorrida por un plano láser (barrido 2,4 s y pausa 1,6 s). */
+  const FS_ESC = `precision highp float;
+uniform vec2 uRes; uniform float uScan; uniform vec3 uLine, uAcc, uAcc2;
+void main(){
+  vec2 uv = (gl_FragCoord.xy - .5*uRes)/uRes.y; uv.x -= .34;
+  vec3 ro = vec3(0., .25, 0.), rd = normalize(vec3(uv, 1.5));
+  float W = 2.3, H = 1.4, D = 14.;
+  float tx = ((rd.x > 0. ? W : -W) - ro.x)/rd.x, ty = ((rd.y > 0. ? H : -H) - ro.y)/rd.y, tz = (D - ro.z)/rd.z;
+  float t = min(tx, min(ty, tz)); vec3 p = ro + rd*t;
+  vec2 c = t == tx ? p.zy : t == ty ? p.xz : p.xy;
+  vec2 g = abs(fract(c*1.25) - .5);
+  float w = clamp(.006*t + .01, .012, .12);
+  float l = smoothstep(.5 - w, .5, max(g.x, g.y));
+  float fog = exp(-t*.12);
+  float dz = p.z - uScan;
+  float laser = exp(-dz*dz*160.);
+  float trail = dz < 0. ? exp(dz*1.8)*.55 : 0.;
+  float wl = l*fog*.55, wa = laser*1.2 + trail*l*1.3;
+  float floorRef = (t == ty && p.y < 0.) ? exp(-abs(dz)*1.4)*.18 : 0.;
+  float a = clamp(wl + wa + floorRef, 0., 1.)*smoothstep(.4, .72, gl_FragCoord.x/uRes.x)*(1. - .8*smoothstep(.6, .9, gl_FragCoord.y/uRes.y)*(1. - smoothstep(.6, .9, gl_FragCoord.x/uRes.x)));
+  vec3 col = (uLine*wl + uAcc*wa + uAcc2*floorRef)/max(wl + wa + floorRef, 1e-3);
+  gl_FragColor = vec4(col*a, a);
+}`;
+  P.escaner = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const D = 14, ph = (t - 4) % 4, scan = still ? D * 0.45 : ph < 2.4 ? 0.6 + (D - 0.6) * (ph / 2.4) : D + 6;
+      const L = glLayer(s, glScale(s, 0.8, 1.2));
+      const pg = L && program(L, 'escaner', VS_FULL, FS_ESC);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uScan: scan, uLine: rgb(api.tok(api.dark ? 'fg-3' : 'fg-2')), uAcc: rgb(api.tok('accent')), uAcc2: rgb(api.tok('accent-2')) }); return; }
+      // respaldo 2D: líneas de fuga y el plano de barrido como un rectángulo
+      const vx = w * 0.72, vy = h * 0.47;
+      ctx.strokeStyle = color.alpha(api.tok('fg-3'), 0.5); ctx.lineWidth = 1;
+      for (let k = 0; k <= 12; k++) { const x = w * 0.45 + (k / 12) * w * 0.6; ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(x, h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(x, 0); ctx.stroke(); }
+      const f = 1 / (1 + scan * 0.35);
+      ctx.strokeStyle = api.tok('accent'); ctx.lineWidth = 3; ctx.strokeRect(vx - w * 0.3 * f, vy - h * 0.5 * f, w * 0.6 * f, h * f);
+    },
+  };
+
+  /* ============================================================ VELO (data-painter="velo")
+     Banda de aurora en el borde superior (cat-1 → cat-3); al entrar baja y después ondula. */
+  const FS_VELO = `precision highp float;
+uniform vec2 uRes; uniform float uT, uRev, uDark; uniform vec3 uC1, uC2, uC3;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes; float x = uv.x*uRes.x/uRes.y, t = uT*.15;
+  float hg = .09 + .08*n(vec2(x*1.2 + t, t*.5)) + .04*n(vec2(x*2.7 - t*1.3, 3. + t*.3));
+  float d = (1. - (1. - uRev)*.4) - uv.y;
+  float a = exp(-max(d, 0.)/hg*2.)*smoothstep(-.02, .03, d);
+  a *= .6 + .4*n(vec2(x*9. + t*2., uv.y*1.5));
+  vec3 c = uv.x < .5 ? mix(uC1, uC2, uv.x*2.) : mix(uC2, uC3, uv.x*2. - 1.);
+  a *= mix(.55, .7, uDark);
+  gl_FragColor = vec4(c*a, a);
+}`;
+  P.velo = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const rev = still ? 1 : smooth(0, 1, (t - 4) / 2.4), [c1, c2, c3] = api.cats(3);
+      const L = glLayer(s, glScale(s, 0.5, 0.8));
+      const pg = L && program(L, 'velo', VS_FULL, FS_VELO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uRev: rev, uDark: api.dark ? 1 : 0, uC1: rgb(c1), uC2: rgb(c2), uC3: rgb(c3) }); return; }
+      const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, c1); g.addColorStop(0.5, c2); g.addColorStop(1, c3);
+      ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = g; ctx.fillRect(0, -h * 0.4 * (1 - rev), w, h * 0.3); ctx.restore();
+      const m = ctx.createLinearGradient(0, h * 0.05, 0, h * 0.3);
+      ctx.save(); ctx.globalCompositeOperation = 'destination-out'; m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)'); ctx.fillStyle = m; ctx.fillRect(0, h * 0.05, w, h * 0.3); ctx.restore();
+    },
+  };
+
+  /* ============================================================ RADAR (data-painter="radar")
+     Pantalla PPI: anillos, rumbos, barrido con estela y contactos que se apagan tras cada pasada. */
+  P.radar = {
+    init(s, api) {
+      const R = api.rng(s.seed + 31);
+      s.last = 0; s.n = api.noise2(s.seed + 3);
+      s.ct = Array.from({ length: 6 }, (_, i) => ({ r: 0.25 + R() * 0.68, a: R() * TAU, k: i, d: (1 + R() * 3).toFixed(1).replace('.', ',') }));
+    },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h, n } = s; ctx.clearRect(0, 0, w, h);
+      const cx = w * 0.74, cy = h * 0.52, Rr = h * 0.38, fg3 = api.tok('fg-3'), acc = api.tok('accent');
+      const sweep = ((t * 0.9 - 4 * 0.9 - 0.61) % TAU + TAU) % TAU; // en reposo, a −35°
+      ctx.lineWidth = 1.5;
+      for (let k = 1; k <= 4; k++) { ctx.strokeStyle = color.alpha(fg3, k === 4 ? 0.6 : 0.35); ctx.beginPath(); ctx.arc(cx, cy, (Rr * k) / 4, 0, TAU); ctx.stroke(); }
+      for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; ctx.strokeStyle = color.alpha(fg3, 0.25); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr); ctx.stroke(); }
+      for (let k = 0; k < 72; k++) { const a = (k / 72) * TAU, l = k % 6 ? 8 : 18; ctx.strokeStyle = color.alpha(fg3, 0.55); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr); ctx.lineTo(cx + Math.cos(a) * (Rr + l), cy + Math.sin(a) * (Rr + l)); ctx.stroke(); }
+      // estela: gradiente cónico que se apaga detrás del barrido
+      if (ctx.createConicGradient) {
+        const g = ctx.createConicGradient(sweep - 1.1, cx, cy);
+        g.addColorStop(0, color.alpha(acc, 0)); g.addColorStop(1.1 / TAU, color.alpha(acc, api.dark ? 0.35 : 0.25)); g.addColorStop(1.1 / TAU + 0.001, color.alpha(acc, 0)); g.addColorStop(1, color.alpha(acc, 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, Rr, 0, TAU); ctx.fill();
+      }
+      ctx.strokeStyle = acc; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sweep) * Rr, cy + Math.sin(sweep) * Rr); ctx.stroke();
+      ctx.font = api.font('mono', 22, 500); ctx.textBaseline = 'middle';
+      s.ct.forEach((c) => {
+        const a = c.a + n(c.k * 3.1, t * 0.05) * 0.25, r = Math.min(0.95, c.r + n(t * 0.04, c.k * 2.3) * 0.08);
+        const since = ((sweep - a) % TAU + TAU) % TAU, glow = Math.exp(-since / 2.2);
+        const x = cx + Math.cos(a) * r * Rr, y = cy + Math.sin(a) * r * Rr, hit = c.k === 0;
+        const col = hit ? api.tok('err') : api.tok('fg');
+        ctx.fillStyle = color.alpha(col, 0.25 + 0.75 * glow); ctx.beginPath(); ctx.arc(x, y, hit ? 9 : 6, 0, TAU); ctx.fill();
+        if (hit) { ctx.fillStyle = color.alpha(api.tok('fg'), 0.4 + 0.6 * glow); ctx.fillText('contacto · ' + c.d + ' m', x + 18, y); }
+      });
+    },
+  };
+
   /* ============================================================ MATRIZ */
   function ledSprite(hex, glow, R) {
     const S = 18, c = document.createElement('canvas'); c.width = c.height = Math.ceil(S * R);

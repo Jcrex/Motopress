@@ -75,7 +75,7 @@ motor/
 - Piezas: `.panel`, `.label`, `.value`, `.readout`, `.legend`, `.note`, `.chip`, `.keycap`, `.win` (ventana con `.win-bar` y `.win-body`), `.term`.
 - Portadas y separadores: `class="slide is-plain divider"` con `data-fx="backdrop"` y un `<div class="fx-bg">`.
   - `data-painter` cambia el fondo: `"hilos"` para todos los estilos, `"noche:escaner aurora:hilos"` solo para esos estilos (el resto usa el suyo) y `"none"` lo deja liso. En `<html>` vale para todo el deck; la diapositiva manda.
-- Fondos alternativos para `data-painter`: `grano` (degradado con grano, WebGL) y `hilos` (haz de líneas que se deshilacha).
+- Fondos alternativos para `data-painter`: `grano` (degradado con grano), `hilos` (haz de líneas que se deshilacha), `radar` (pantalla PPI con contactos), `topo` (terreno con curvas de nivel), `isolineas` (curvas de nivel que fluyen, en cat-1…3), `escaner` (sala de rejilla recorrida por un láser) y `velo` (banda de aurora arriba). Todos dejan libre la columna del título y tienen respaldo 2D.
 - Entrada del título: `data-title-fx="auto"` (preset del estilo), `"none"` o el nombre de un preset: `rise` (rice, nube), `descifra` (noche, matriz), `mask-lines` (suizo), `blur` (aurora), `pliega` (arcilla), `enfoca` (celula). Sin atributo, solo se anima en las diapositivas con `backdrop`. En `<html>` vale para todo el deck. Cromo y Térmica nunca parten el título (lo animan en CSS).
 - Pasos: añade `data-step` a cualquier elemento para revelarlo con →. Con `data-reveal="auto"` se revela con el gesto del estilo (inclinación en rice y arcilla, barrido en noche, cromo y nube, niebla en aurora, revelado en térmica, enfoque en célula, puntos en matriz, fundido en suizo); también vale un nombre fijo: `fade`, `wipe`, `wipe-x`, `focus`, `develop`, `mist`, `pixel`, `tilt`. En `<html>` vale para todo el deck.
 
@@ -88,6 +88,13 @@ Componentes por clase que se combinan en cualquier diapositiva, con o sin `data-
 - `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>`: hitos con marca y palabra (pendiente, en curso, hecho, revisar, falló). `class="checklist tacha"` tacha lo hecho.
 - `<ol class="agenda"></ol>`: índice generado con los `data-section`, con la sección actual destacada (o `data-current`); `data-skip="Inicio"` omite secciones; `class="agenda banda"` la rellena.
 - `<div class="reticula">` con hijos `data-target="0|1|2…"` y `data-label`: cuatro esquinas que saltan al objetivo de cada paso.
+- `<div class="bento">` con celdas `.panel` (`w2`, `w3`, `h2` para ocupar más): rejilla de resumen; con `data-step` en las celdas, cada → pone el foco en una.
+- `<div class="mazo">` con tarjetas `.panel`, todas con `data-step` menos la primera: cada → manda la delantera al fondo. En suizo y matriz (o con `class="mazo plana"`) se apila sin 3D.
+- `class="chispa"` o `class="rayo"` en cualquier panel: una chispa que recorre el borde o un borde eléctrico (para la alerta o el punto clave).
+- `class="descifra"` en un texto: se revela con glifos al entrar (`data-orden="start|center|random"`).
+- `<div class="paleta" data-words="MAPA LISTO|SLAM ACTIVO|NAVEGANDO"></div>`: casillas de split-flap que recorren las palabras al entrar; con `data-pasos`, una palabra por paso.
+- `<div class="term teclea"><div data-k="cmd">$ colcon build</div><div>salida</div></div>`: escribe los comandos y suelta la salida.
+- `<div class="deposito" data-value="72" data-label="batería" data-umbral="30" data-critico="15"></div>`: nivel vertical con lectura grande y palabra de estado (normal, bajo, crítico).
 
 ## Efectos
 
