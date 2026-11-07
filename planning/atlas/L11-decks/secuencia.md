@@ -13,7 +13,7 @@ Parte de [L11-decks](plan.md). Revelar en orden los elementos marcados con data-
 
 ## Aceptación
 
-- Ficha lateral con nombre, propósito, parámetros principales y archivo fuente (plantilla `.ficha` de L00)
+- Ficha lateral con nombre, propósito, parámetros principales y archivo fuente (plantilla `.ac-ficha` de L00; marcado en `L00-infra/resumen.md`)
 - `render()` deja el estado final completo; `play()` solo anima; con `api.reduced` no hay movimiento
 - Colores solo con tokens; texto mínimo de 22 px; nada se sale del lienzo según `tools/verificar.mjs`
 - Sin errores de consola al entrar, al pulsar → y al salir

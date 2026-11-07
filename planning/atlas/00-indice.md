@@ -10,7 +10,7 @@ Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir
 
 | # | Lote | Estado | Componentes | Quizás | Diapositivas | Subplan |
 |---:|---|---|---:|---:|---:|---|
-| 0 | L00 · Infraestructura | pendiente | — | — | 1 (portada) | [L00-infra/plan.md](L00-infra/plan.md) |
+| 0 | L00 · Infraestructura | completado | — | — | 1 (portada) | [L00-infra/plan.md](L00-infra/plan.md) |
 | 1 | L01-nucleo · Núcleo | pendiente | 0/19 | 0 | 21 | [L01-nucleo/plan.md](L01-nucleo/plan.md) |
 | 2 | L02-api · API de efectos | pendiente | 0/10 | 0 | 19 | [L02-api/plan.md](L02-api/plan.md) |
 | 3 | L03-estilos · Estilos y tokens | pendiente | 0/14 | 0 | 16 | [L03-estilos/plan.md](L03-estilos/plan.md) |

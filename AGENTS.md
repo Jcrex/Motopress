@@ -6,7 +6,7 @@ Este repositorio es un motor de diapositivas en HTML, CSS y JavaScript sin paso 
 
 ## Antes de empezar
 
-- No leas `index.html` entero: tiene cientos de líneas. Usa como referencia `decks/rai-g1/index.html` o busca con `grep` la parte que necesites.
+- No leas `atlas/original/index.html` entero: tiene cientos de líneas. Usa como referencia `decks/motor-pruebas/index.html` o busca con `grep` la parte que necesites.
 - No toques `engine/`, `themes/tokens.css` ni `themes/meta.js`. Los dos últimos se generan.
 - Trabaja solo dentro de `decks/<nombre>/` y, si hace falta un efecto nuevo, en `fx/<nombre>.js`.
 - Los nombres de archivo, `id` y efectos van en minúsculas y con guiones: `mi-deck`, `ventas-2025`.
@@ -25,7 +25,7 @@ Crea `decks/<nombre>/index.html` con esta plantilla. Cambia solo lo marcado con 
 <meta name="color-scheme" content="light dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Copia aquí la línea <link> de Google Fonts de index.html (es una sola línea larga). -->
+<!-- Copia aquí la línea <link> de Google Fonts de atlas/original/index.html (es una sola línea larga). -->
 <link rel="stylesheet" href="../../themes/tokens.css">
 <link rel="stylesheet" href="../../engine/engine.css">
 <link rel="stylesheet" href="../../themes/styles.css">
@@ -58,7 +58,7 @@ Orden obligatorio de los `<script>`: `MOTOR_PICK` → librerías CDN → `themes
 
 Estilos válidos (no inventes otros): `rice`, `noche`, `suizo`, `aurora`, `cromo`, `arcilla`, `nube`, `termica`, `celula`, `matriz`.
 
-Si usas `d3-cloud` o `d3-sankey`, copia también sus `<script>` de `index.html`.
+Si usas `d3-cloud` o `d3-sankey`, copia también sus `<script>` de `atlas/original/index.html`.
 
 ## Paso 2 · Escribir las diapositivas
 

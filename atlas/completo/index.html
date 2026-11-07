@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="es" data-style="suizo">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atlas Completo</title>
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&family=Chakra+Petch:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Sans:wght@400..700&family=Instrument+Serif:ital@0;1&family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=DM+Mono:wght@400;500&family=Unbounded:wght@400..800&family=Manrope:wght@400..700&family=Martian+Mono:wght@400..600&family=Fraunces:opsz,wght,SOFT@9..144,400..700,0..100&family=Albert+Sans:wght@400..700&family=Red+Hat+Mono:wght@400..600&family=Geist:wght@400..700&family=Geist+Mono:wght@400..600&family=Schibsted+Grotesk:wght@400..900&family=Spline+Sans+Mono:wght@400..600&family=Newsreader:ital,opsz,wght@0,6..72,400..700;1,6..72,400..700&family=Public+Sans:wght@400..700&family=Sometype+Mono:wght@400..600&family=Doto:wght,ROND@400..900,0..100&family=Host+Grotesk:wght@400..700&family=Fragment+Mono&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<link rel="stylesheet" href="../../themes/tokens.css">
+<link rel="stylesheet" href="../../engine/engine.css">
+<link rel="stylesheet" href="../../themes/styles.css">
+<link rel="stylesheet" href="completo.css">
+<!-- CSS de lotes: se añade aquí lote a lote -->
+</head>
+<body>
+<main class="viewport">
+<div class="stage">
+
+<!-- ======================= L00 · PORTADA ======================= -->
+<section class="slide is-plain cover" id="l00-portada" data-fx="backdrop" data-seed="5" data-section="Inicio" data-title="Atlas Completo">
+  <div class="fx-bg"></div>
+  <div class="ac-portada">
+    <p class="kicker">motor de presentaciones · referencia de componentes</p>
+    <h1 class="s-title">Atlas Completo</h1>
+    <p class="lead">Una diapositiva por componente del motor, con la demo en vivo, su propósito, sus parámetros y su archivo fuente. Los marcados <span class="ac-exp">Experimental · quizás</span> vienen de react-bits y aún no forman parte del motor estable.</p>
+    <ol class="ac-lotes" data-role="lotes">
+      <li><b>L01</b> Núcleo</li><li><b>L02</b> API de efectos</li><li><b>L03</b> Estilos y tokens</li>
+      <li><b>L04</b> Transiciones</li><li><b>L05</b> Maquetación</li><li><b>L06</b> Texto y títulos</li>
+      <li><b>L07</b> Revelados y animación</li><li><b>L08</b> Fondos</li><li><b>L09</b> Piezas de interfaz</li>
+      <li><b>L10</b> Demos del Atlas</li><li><b>L11</b> Efectos de decks</li><li><b>L12</b> Herramientas</li>
+    </ol>
+  </div>
+</section>
+
+<!-- Plantilla de ficha: ver planning/atlas/L00-infra/resumen.md -->
+
+</div>
+</main>
+
+<script>window.MOTOR_PICK = ['suizo', 'noche', 'rice', 'aurora', 'cromo', 'arcilla', 'nube', 'termica', 'celula', 'matriz'];</script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+<script src="vendor/three-0.147.0.min.js"></script>
+<script src="vendor/STLLoader-0.147.0.js"></script>
+<script src="../../themes/meta.js"></script>
+<script src="../../engine/engine.js"></script>
+<script src="../../fx/sistema.js"></script>
+<script src="../../fx/fondos.js"></script>
+<script src="../../fx/piezas.js"></script>
+<script src="../../fx/ros.js"></script>
+<script src="../../fx/ml.js"></script>
+<script src="../../fx/datos.js"></script>
+<script src="../../fx/arch.js"></script>
+<script src="../../fx/vc.js"></script>
+<script src="../../fx/rai.js"></script>
+<script src="../../fx/arq-opus.js"></script>
+<script src="../../fx/nav-semantica.js"></script>
+<!-- fx/experimental: se añade aquí lote a lote -->
+</body>
+</html>

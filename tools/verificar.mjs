@@ -1,6 +1,7 @@
 // Captura cada diapositiva de un deck en varios estilos y en claro y oscuro, y avisa
 // de errores de consola y de elementos que se salen del lienzo.
-// Uso: node tools/verificar.mjs <nombre> [estilo1,estilo2] [--out=<carpeta>]   (con el servidor en :8000)
+// Uso: node tools/verificar.mjs <nombre|ruta> [estilo1,estilo2] [--out=<carpeta>]   (con el servidor en :8000)
+// <nombre> es un deck de decks/; una ruta con «/» (atlas/completo) o «.» (la raíz) se sirve tal cual.
 // Capturas en <carpeta de salida>/capturas/<nombre>/ (output/ por defecto; ver tools/salida.mjs).
 // VERIF_REDUCED=1 captura con movimiento reducido (estado final de las animaciones).
 // Requiere playwright (npm i -D playwright). CHROMIUM_PATH=/ruta/chrome usa un navegador ya instalado.
@@ -10,8 +11,10 @@ import { chromium } from 'playwright';
 import { outDir, positional } from './salida.mjs';
 const [deck, list] = positional();
 const styles = (list || 'suizo,noche').split(',');
-const dir = path.join(outDir(), 'capturas', deck);
-const base = `http://localhost:8000/decks/${deck}/`;
+const isPath = deck === '.' || deck.includes('/');
+const rel = deck.replace(/^\.\/?|\/+$/g, '');
+const dir = path.join(outDir(), 'capturas', isPath ? rel.replace(/\//g, '-') || 'raiz' : deck);
+const base = isPath ? `http://localhost:8000/${rel ? rel + '/' : ''}` : `http://localhost:8000/decks/${deck}/`;
 fs.mkdirSync(dir, { recursive: true });
 const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 for (const style of styles) for (const mode of ['light', 'dark']) {

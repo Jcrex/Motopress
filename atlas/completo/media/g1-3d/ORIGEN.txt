@@ -1,0 +1,1 @@
+commit 15ebe53f4cd77e7d745ae83b9d7ff90e685e8998 de github.com/unitreerobotics/unitree_ros (robots/g1_description). Mallas visuales de g1_29dof_rev_1_0.urdf unidas en una pose de pie (codos 1,25 rad, hombros ligeramente abiertos) y simplificadas al 25 % de caras (sin el logo).

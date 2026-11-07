@@ -9,7 +9,7 @@ El núcleo no tiene dependencias. Los efectos de gráficos usan D3 y GSAP desde 
 ```bash
 cd motor
 python -m http.server 8000      # o cualquier servidor estático
-# abre http://localhost:8000/#portada
+# abre http://localhost:8000/#portada (redirige a atlas/original/; el Atlas Completo está en /atlas/completo/)
 ```
 
 `dist/atlas.html` es la misma presentación en un solo archivo; se abre con doble clic.
@@ -33,7 +33,7 @@ El ancla de la URL (`#lidar`) abre una diapositiva concreta. El estilo y el modo
 
 ```
 motor/
-├── index.html            deck «Atlas» (ejemplo completo, 31 diapositivas)
+├── index.html            redirige a atlas/original/ (conserva el #ancla)
 ├── engine/
 │   ├── engine.css        lienzo 1920×1080, piezas comunes, HUD, vista general, impresión
 │   └── engine.js         navegación, estilos, ciclo de vida de efectos, utilidades de color
@@ -42,7 +42,9 @@ motor/
 │   ├── tokens.css        generado: variables CSS por estilo y modo
 │   ├── meta.js           generado: nombres, armonía, contrastes de Itten, fuentes
 │   └── styles.css        tratamiento de cada estilo: decorado, paneles, títulos, transiciones
-├── atlas/atlas.css       maquetación propia del deck de ejemplo
+├── atlas/
+│   ├── original/         deck «Atlas» (ejemplo completo, 31 diapositivas) y su atlas.css
+│   └── completo/         «Atlas Completo»: una diapositiva por componente (plan en planning/atlas/)
 ├── fx/                   efectos: sistema, fondos (WebGL y 2D de los estilos nuevos), ros, ml, datos, arch
 ├── tools/
 │   ├── build-themes.mjs  genera tokens.css y meta.js y ajusta las paletas de gráficos
@@ -145,9 +147,10 @@ Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto W
 ## Empaquetar y exportar
 
 ```bash
-node tools/bundle.mjs index.html dist/atlas.html              # un solo HTML, en una ruta concreta
-node tools/bundle.mjs decks/rai-g1/index.html                 # sin destino: output/rai-g1.html
-node tools/bundle.mjs decks/rai-g1/index.html --fragment      # output/rai-g1-frag.html, sin doctype/head/body
+node tools/bundle.mjs atlas/original/index.html dist/atlas.html   # un solo HTML, en una ruta concreta
+node tools/bundle.mjs atlas/completo/index.html                   # sin destino: output/atlas-completo.html
+node tools/bundle.mjs decks/motor-pruebas/index.html              # output/motor-pruebas.html
+node tools/bundle.mjs decks/motor-pruebas/index.html --fragment   # output/motor-pruebas-frag.html, sin doctype/head/body
 ```
 
 Sin archivo de destino, el resultado va a la carpeta de salida: `output/` por defecto, o la que indiques con `--out=<carpeta>` o con la variable `MOTOR_OUT` (la opción manda sobre la variable). `node tools/verificar.mjs <deck>` guarda allí sus capturas, en `capturas/<deck>/`.

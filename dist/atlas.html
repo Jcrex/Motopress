@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Atlas del motor</title>
 <style>
-/* themes/tokens.css */
+/* ../../themes/tokens.css */
 /* GENERADO por tools/build-themes.mjs a partir de themes/source.json. No editar a mano. */
 :root{--font-display:'Outfit', 'Avenir Next', system-ui, sans-serif;--font-text:'Outfit', 'Avenir Next', system-ui, sans-serif;--font-mono:'JetBrains Mono', ui-monospace, Menlo, monospace;--font-serif:'Outfit', 'Avenir Next', system-ui, sans-serif;--radius:18px;--radius-lg:28px;--stroke:2px;--title-weight:700;--title-case:none;--title-tracking:-0.02em;--title-size:92px;--kicker-case:none;--kicker-tracking:0;--grid-dash:0;--mark-w:3;--dur:650ms;--ease:cubic-bezier(.05,.9,.1,1.05);--bg:#eff1f5;--bg-2:#e6e9ef;--bg-3:#dce0e8;--fg:#4c4f69;--fg-2:#565971;--fg-3:#66697f;--line:#ccd0da;--line-2:#acb0be;--accent:#8839ef;--accent-2:#1e66f5;--accent-3:#fe640b;--on-accent:#ffffff;--ok:#40a02b;--warn:#df8e1d;--err:#d20f39;--x:#d20f39;--y:#40a02b;--z:#1e66f5;--accent-ink:#8839ef;--accent-2-ink:#175fee;--accent-3-ink:#b84501;--cat-1:#8c3ff4;--cat-2:#dc5504;--cat-3:#0696ac;--cat-4:#d91d3f;--cat-5:#226af9;--cat-6:#3e9e29;--seq-1:#e1ecfe;--seq-2:#b3cefd;--seq-3:#87aff8;--seq-4:#5b8ff1;--seq-5:#2e6de9;--seq-6:#004ad4;--seq-7:#01359d;--div-1:#a53d01;--div-2:#dd6d3e;--div-3:#f8b195;--div-4:#e1e5eb;--div-5:#a5c5ff;--div-6:#568ef8;--div-7:#0652e0;--is-dark:0}
 :root[data-theme="dark"]{color-scheme:dark}
@@ -50,7 +50,7 @@
 [data-style="matriz"][data-theme="dark"]{--bg:#060606;--bg-2:#000000;--bg-3:#131313;--fg:#f5f5f2;--fg-2:#b9b9b5;--fg-3:#8a8a86;--line:#222222;--line-2:#373737;--accent:#ff3b30;--accent-2:#e6e6e2;--accent-3:#ff8a7a;--on-accent:#000000;--ok:#36d27a;--warn:#ffb000;--err:#ff3b30;--x:#ff3b30;--y:#36d27a;--z:#4d8dff;--accent-ink:#ff3b30;--accent-2-ink:#e6e6e2;--accent-3-ink:#ff8a7a;--cat-1:#ff473a;--cat-2:#3795f9;--cat-3:#07b060;--cat-4:#b168fc;--cat-5:#c38608;--cat-6:#0ea7b4;--seq-1:#402622;--seq-2:#6c342d;--seq-3:#9b4137;--seq-4:#cd4d40;--seq-5:#ff5b4c;--seq-6:#fe988a;--seq-7:#fec9c0;--div-1:#feac9f;--div-2:#e95f51;--div-3:#8f443a;--div-4:#3a3831;--div-5:#3d6088;--div-6:#5495df;--div-7:#9ac8ff;--is-dark:1;color-scheme:dark}
 @media (prefers-color-scheme: dark){:root[data-style="matriz"]:not([data-theme="light"]){--bg:#060606;--bg-2:#000000;--bg-3:#131313;--fg:#f5f5f2;--fg-2:#b9b9b5;--fg-3:#8a8a86;--line:#222222;--line-2:#373737;--accent:#ff3b30;--accent-2:#e6e6e2;--accent-3:#ff8a7a;--on-accent:#000000;--ok:#36d27a;--warn:#ffb000;--err:#ff3b30;--x:#ff3b30;--y:#36d27a;--z:#4d8dff;--accent-ink:#ff3b30;--accent-2-ink:#e6e6e2;--accent-3-ink:#ff8a7a;--cat-1:#ff473a;--cat-2:#3795f9;--cat-3:#07b060;--cat-4:#b168fc;--cat-5:#c38608;--cat-6:#0ea7b4;--seq-1:#402622;--seq-2:#6c342d;--seq-3:#9b4137;--seq-4:#cd4d40;--seq-5:#ff5b4c;--seq-6:#fe988a;--seq-7:#fec9c0;--div-1:#feac9f;--div-2:#e95f51;--div-3:#8f443a;--div-4:#3a3831;--div-5:#3d6088;--div-6:#5495df;--div-7:#9ac8ff;--is-dark:1;color-scheme:dark}}
 
-/* engine/engine.css */
+/* ../../engine/engine.css */
 /* Motor de presentaciones · núcleo visual
    Lienzo fijo de 1920×1080 escalado al visor. Todo color sale de los tokens (themes/tokens.css). */
 
@@ -101,7 +101,7 @@ body {
   contain: layout paint;
 }
 .slide.is-active { visibility: visible; opacity: 1; }
-.slide > :not(.deco):not(.fx-bg) { position: relative; z-index: 1; }
+.slide > :not(.deco):not(.fx-bg):not(.bordes) { position: relative; z-index: 1; }
 .slide.is-plain { grid-template-rows: minmax(0, 1fr); }
 
 /* Sin View Transitions: fundido simple */
@@ -193,6 +193,157 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .slide [data-step] { opacity: 0; transform: translateY(14px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
 .slide [data-step].on { opacity: 1; transform: none; }
 
+/* Revelados por estilo: data-rv lo pone fx/sistema.js a partir de data-reveal. El estado .on es el final. */
+@property --rv { syntax: "<percentage>"; inherits: false; initial-value: 0%; }
+@property --rvp { syntax: "<length>"; inherits: false; initial-value: 0px; }
+.slide [data-step][data-rv] { transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease), filter var(--dur) var(--ease), --rv var(--dur) var(--ease), --rvp var(--dur) var(--ease); }
+.slide [data-step][data-rv="wipe"], .slide [data-step][data-rv="wipe-x"] { opacity: 1; transform: none; --rv: 0%; }
+.slide [data-step][data-rv="wipe"] { -webkit-mask-image: linear-gradient(to bottom, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); mask-image: linear-gradient(to bottom, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); }
+.slide [data-step][data-rv="wipe-x"] { -webkit-mask-image: linear-gradient(to right, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); mask-image: linear-gradient(to right, #000 calc(var(--rv) * 1.16 - 16%), transparent calc(var(--rv) * 1.16)); transition-timing-function: steps(8, end); }
+.slide [data-step][data-rv^="wipe"].on { --rv: 100%; }
+.slide [data-step][data-rv="focus"] { filter: blur(12px); transform: scale(.97); }
+.slide [data-step][data-rv="develop"] { filter: grayscale(1) contrast(.55) brightness(1.3); transform: none; transition-duration: calc(var(--dur) * .5), 0s, calc(var(--dur) * 2.2); }
+.slide [data-step][data-rv="mist"] { filter: blur(6px); transform: translateY(10px) scale(1.02); transition-duration: calc(var(--dur) * 1.4); }
+.slide [data-step][data-rv="pixel"] { opacity: 1; transform: none; --rvp: 0px; transition-timing-function: steps(6, end); -webkit-mask: radial-gradient(circle, #000 var(--rvp), transparent calc(var(--rvp) + .5px)) 0 0 / 12px 12px; mask: radial-gradient(circle, #000 var(--rvp), transparent calc(var(--rvp) + .5px)) 0 0 / 12px 12px; }
+.slide [data-step][data-rv="pixel"].on { --rvp: 9px; }
+.slide [data-step][data-rv="tilt"] { transform: perspective(900px) rotateX(-24deg) translateY(18px); transform-origin: 50% 100%; }
+.slide [data-step][data-rv].on { filter: none; transform: none; }
+
+/* ---------- piezas (fx/piezas.js completa cifra, agenda y retícula; etapas y checklist son solo CSS) ---------- */
+/* cifra: número grande que cuenta o rueda hasta su valor */
+.cifra { display: inline-flex; align-items: flex-end; white-space: nowrap; font: var(--title-weight) var(--cifra-size, 140px)/1.1 var(--font-display); color: var(--fg); font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.cifra .pre, .cifra .u { font-size: .42em; font-weight: 500; color: var(--fg-2); padding-bottom: .12em; }
+.cifra .pre { margin-right: .12em; } .cifra .u { margin-left: .1em; }
+.cifra .dg { display: inline-block; height: 1.1em; overflow: hidden; }
+.cifra .dg > span { display: flex; flex-direction: column; transform: translateY(calc(var(--d, 0) * -1.1em)); }
+.cifra .dg > span > i { font-style: normal; height: 1.1em; }
+.cifra-delta { display: inline-flex; gap: 10px; align-items: baseline; font: 500 26px/1.2 var(--font-mono); color: var(--fg-2); }
+.cifra-delta b { font-weight: 600; } .cifra-delta.sube b { color: var(--ok); } .cifra-delta.baja b { color: var(--err); }
+
+/* etapas: proceso lineal; los [data-step] siempre se ven y .on marca «hecho» */
+.etapas { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); counter-reset: etapa; }
+.slide .etapas > [data-step] { opacity: 1; transform: none; }
+.etapas > li {
+  --fill: 0px; counter-increment: etapa; position: relative; display: flex; flex-direction: column; gap: 8px; padding: 92px 28px 0 0;
+  background: linear-gradient(var(--accent), var(--accent)) no-repeat 76px 31px / var(--fill) 3px, linear-gradient(var(--line-2), var(--line-2)) no-repeat 76px 31px / calc(100% - 88px) 3px;
+  transition: background-size var(--dur) var(--ease);
+}
+.etapas > li:last-child { background: none; }
+.etapas > li:has(+ li.on) { --fill: calc(100% - 88px); }
+.etapas > li::before {
+  content: counter(etapa); position: absolute; left: 0; top: 0; box-sizing: border-box; width: 64px; height: 64px; border-radius: 50%;
+  display: grid; place-items: center; font: 600 26px/1 var(--font-mono); color: var(--fg-3);
+  background: var(--bg-3); border: 3px solid var(--line-2);
+  transition: background-color var(--dur) var(--ease), border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.etapas > li::after { content: "pendiente"; order: 9; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); }
+.etapas > li > b, .etapas > li > strong { font: 600 30px/1.2 var(--font-display); color: var(--fg-2); }
+.etapas > li > small { font-size: 22px; line-height: 1.35; color: var(--fg-3); }
+.etapas > li.on::before { content: "✓"; background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.etapas > li.on::after { content: "hecho"; color: var(--fg-2); }
+.etapas > li.on > b, .etapas > li.on > strong { color: var(--fg); }
+.etapas > li.on > small { color: var(--fg-2); }
+.etapas > li:not(.on):first-child::before, .etapas > li.on + li:not(.on)::before { border-color: var(--accent); color: var(--accent-ink); transform: scale(1.08); }
+.etapas > li:not(.on):first-child::after, .etapas > li.on + li:not(.on)::after { content: "en curso"; color: var(--accent-ink); }
+.etapas > li:not(.on):first-child > b, .etapas > li.on + li:not(.on) > b { color: var(--fg); }
+.etapas.v { grid-auto-flow: row; grid-auto-rows: auto; gap: 0; }
+.etapas.v > li { padding: 0 0 28px 92px; min-height: 96px; background-position: 31px 76px, 31px 76px; background-size: 3px var(--fill), 3px calc(100% - 88px); }
+.etapas.v > li:has(+ li.on) { --fill: calc(100% - 88px); }
+
+/* checklist: hitos con marca y palabra de estado; data-end="ok|warn|err" fija el final (ok por defecto) */
+.checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 18px; }
+.slide .checklist > [data-step] { opacity: 1; transform: none; }
+.checklist > li { position: relative; display: block; min-height: 44px; padding: 2px 170px 0 70px; font-size: 30px; line-height: 1.35; color: var(--fg-2); text-decoration: line-through 2px transparent; transition: color var(--dur) var(--ease), text-decoration-color var(--dur) var(--ease); }
+.checklist > li::before {
+  content: ""; position: absolute; left: 0; top: 0; box-sizing: border-box; width: 44px; height: 44px; border-radius: 50%; border: 3px solid var(--line-2);
+  display: grid; place-items: center; font: 700 26px/1 var(--font-text); color: transparent;
+  transition: border-color var(--dur) var(--ease), color var(--dur) var(--ease), transform var(--dur) var(--ease);
+}
+.checklist > li::after { content: "pendiente"; position: absolute; right: 0; top: 12px; font: 500 22px/1 var(--font-mono); color: var(--fg-3); }
+.checklist > li:not(.on):first-child, .checklist > li.on + li:not(.on) { color: var(--fg); }
+.checklist > li:not(.on):first-child::before, .checklist > li.on + li:not(.on)::before { border-color: var(--accent); border-style: dashed; }
+.checklist > li:not(.on):first-child::after, .checklist > li.on + li:not(.on)::after { content: "en curso"; color: var(--accent-ink); }
+.checklist > li.on { color: var(--fg); }
+.checklist > li.on::before { content: "✓"; border-color: var(--ok); color: var(--ok); transform: scale(1.06); }
+.checklist > li.on::after { content: "hecho"; color: var(--fg-2); }
+.checklist > li.on[data-end="warn"]::before { content: "!"; border-color: var(--warn); color: var(--warn); }
+.checklist > li.on[data-end="warn"]::after { content: "revisar"; }
+.checklist > li.on[data-end="err"]::before { content: "✕"; border-color: var(--err); color: var(--err); }
+.checklist > li.on[data-end="err"]::after { content: "falló"; }
+.checklist.tacha > li.on:not([data-end="err"]):not([data-end="warn"]) { color: var(--fg-3); text-decoration-color: var(--fg-3); }
+
+/* agenda: índice generado con las secciones (data-section) */
+.agenda { list-style: none; margin: 0; padding: 0; position: relative; display: flex; flex-direction: column; gap: 6px; }
+.agenda > li { --k: 0; position: relative; display: grid; grid-template-columns: 72px 1fr; align-items: baseline; padding: 12px 0 12px 28px; font: 600 40px/1.15 var(--font-display); color: var(--fg-3); transform: translateX(calc(var(--k) * 36px)); opacity: calc(1 - var(--k) * .55); transition: transform var(--dur) var(--ease), opacity var(--dur) var(--ease), color var(--dur) var(--ease); }
+.agenda > li > span { font: 500 24px/1 var(--font-mono); color: var(--fg-3); }
+.agenda > li.is-current { color: var(--fg); }
+.agenda > li.is-current > span { color: var(--accent-ink); }
+.agenda > .bar { position: absolute; left: 0; top: 0; width: 6px; border-radius: 3px; background: var(--accent); }
+.agenda.banda > li { padding-right: 28px; }
+.agenda.banda > li.is-current { color: var(--on-accent); }
+.agenda.banda > li.is-current > span { color: var(--on-accent); }
+.agenda.banda > .bar { width: 100%; border-radius: var(--radius); z-index: -1; }
+
+/* retícula: cuatro esquinas que saltan de un [data-target] a otro con los pasos */
+.reticula { position: relative; }
+.reticula > .rt { position: absolute; left: 0; top: 0; pointer-events: none; z-index: 3; }
+.reticula > .rt > i { position: absolute; width: 28px; height: 28px; border: 0 solid var(--accent); }
+.reticula > .rt > i:nth-child(1) { left: -12px; top: -12px; border-width: 4px 0 0 4px; }
+.reticula > .rt > i:nth-child(2) { right: -12px; top: -12px; border-width: 4px 4px 0 0; }
+.reticula > .rt > i:nth-child(3) { left: -12px; bottom: -12px; border-width: 0 0 4px 4px; }
+.reticula > .rt > i:nth-child(4) { right: -12px; bottom: -12px; border-width: 0 4px 4px 0; }
+.reticula > .rt > b { position: absolute; left: -12px; top: calc(100% + 22px); white-space: nowrap; font: 500 22px/1 var(--font-mono); color: var(--fg-2); background: var(--bg); padding: 4px 8px; border-radius: 4px; }
+.reticula > .rt.arriba > b { top: auto; bottom: calc(100% + 22px); }
+
+/* letras revueltas (preset descifra y pieza .descifra) */
+.scr { color: var(--accent-ink); }
+
+/* bento: rejilla de celdas; con data-step, la última celda encendida queda en foco */
+.bento { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-rows: minmax(0, 1fr); gap: 24px; height: 100%; }
+.bento > * { min-width: 0; min-height: 0; box-sizing: border-box; transition: opacity var(--dur) var(--ease), box-shadow var(--dur) var(--ease), border-color var(--dur) var(--ease); }
+.bento > .w2 { grid-column: span 2; } .bento > .w3 { grid-column: span 3; } .bento > .h2 { grid-row: span 2; }
+.slide .bento > :is([data-step].on, [data-step]) { opacity: 1; transform: none; }
+.slide .bento:has(> .on) > :not(.on:not(:has(~ .on))) { opacity: .5; }
+.bento > .on:not(:has(~ .on)) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent), 0 24px 60px -24px color-mix(in oklab, var(--accent) 50%, transparent); background-image: radial-gradient(120% 90% at 0% 0%, color-mix(in oklab, var(--accent) 16%, transparent), transparent 60%); }
+
+/* mazo: tarjetas apiladas; cada paso manda la delantera al fondo (data-step en todas menos la primera) */
+.mazo { position: relative; height: 100%; min-height: 440px; perspective: 1100px; --dx: 44px; --dy: 34px; --dz: 90px; }
+.slide .mazo > :is([data-step].on, [data-step], *) {
+  position: absolute; left: 0; bottom: 0; box-sizing: border-box; opacity: 1; background: var(--bg-3); border: var(--stroke) solid var(--line-2); padding: 28px 32px;
+  width: calc(100% - (var(--n, 3) - 1) * var(--dx)); height: calc(100% - (var(--n, 3) - 1) * var(--dy));
+  transform: translate3d(calc(var(--p, 0) * var(--dx)), calc(var(--p, 0) * var(--dy) * -1), calc(var(--p, 0) * var(--dz) * -1)) skewY(calc(var(--p, 0) * -1.2deg));
+  z-index: calc(20 - var(--p, 0)); filter: brightness(calc(1 - var(--p, 0) * .07));
+  transition: transform var(--dur) var(--ease), filter var(--dur) var(--ease);
+}
+:is([data-style="suizo"], [data-style="matriz"]) .slide .mazo > :is([data-step].on, [data-step], *), .slide .mazo.plana > :is([data-step].on, [data-step], *) { transform: translate(calc(var(--p, 0) * var(--dx) * .6), calc(var(--p, 0) * var(--dy) * -.6)); filter: none; }
+[data-style="noche"] .slide .mazo > .is-front { border-color: var(--accent); }
+
+/* chispa y rayo: los dibuja una capa de canvas por diapositiva (fx/piezas.js) */
+.slide > .bordes { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; z-index: 3; pointer-events: none; }
+
+/* paleta: casillas de split-flap */
+.paleta { display: inline-flex; gap: 6px; font: 600 var(--paleta-size, 64px)/1 var(--font-mono); perspective: 600px; }
+[data-style="matriz"] .paleta { font-family: var(--font-display); }
+.paleta > i { position: relative; display: grid; place-items: center; width: .8em; height: 1.3em; font-style: normal; color: var(--fg); background: var(--bg-3); border: 1px solid var(--line); border-radius: calc(var(--radius) * .5); }
+.paleta > i::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid color-mix(in oklab, var(--bg) 70%, transparent); }
+
+/* teclea: terminal que escribe los comandos (data-k="cmd") y suelta la salida */
+.teclea > * { white-space: pre; min-height: 1.5em; }
+.teclea > [data-k="cmd"] { color: var(--fg); }
+.teclea > :not([data-k="cmd"]) { color: var(--fg-2); }
+.teclea .caret { color: var(--accent); font-weight: 400; animation: caret 1s steps(1) 4; }
+@keyframes caret { 50% { opacity: 0; } }
+
+/* depósito: nivel vertical con lectura grande y palabra de estado */
+.deposito { display: flex; align-items: flex-end; gap: 36px; height: 100%; min-height: 300px; }
+.deposito .vaso { position: relative; flex: none; width: 128px; height: 100%; box-sizing: border-box; border: 3px solid var(--fg-3); border-top: 0; border-radius: 0 0 30px 30px; overflow: hidden; }
+.deposito .liq { position: absolute; left: 0; right: 0; bottom: 0; height: calc(var(--v, 0) * 1%); background: color-mix(in oklab, var(--fg) 45%, var(--bg)); }
+.deposito.bajo .liq { background: var(--warn); } .deposito.critico .liq { background: var(--err); }
+.deposito .vaso > i { position: absolute; right: 0; width: 26px; border-top: 2px solid var(--fg-3); z-index: 1; }
+.deposito .lectura { display: flex; flex-direction: column; gap: 6px; }
+.deposito .estado { margin: 0; font: 500 22px/1.2 var(--font-mono); color: var(--fg-2); }
+.deposito.bajo .estado b { color: var(--warn); } .deposito.critico .estado b { color: var(--err); } .deposito .estado b { color: var(--ok); }
+
 /* ---------- decorado (lo enciende cada estilo) ---------- */
 .deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .deco > * { display: none; }
@@ -268,11 +419,12 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   outline: 0 solid var(--accent);
 }
 .viewport.is-overview .slide.is-active { outline-width: 14px; }
-.viewport.is-overview .slide [data-step] { opacity: 1; transform: none; }
+.viewport.is-overview .bento > * { opacity: 1 !important; }
+.viewport.is-overview .slide [data-step] { opacity: 1; transform: none; filter: none; -webkit-mask: none; mask: none; }
 
 /* ---------- movimiento reducido ---------- */
 @media (prefers-reduced-motion: reduce) {
-  .slide, .slide [data-step], .hud, .progress { transition: none !important; }
+  .slide, .slide [data-step], .slide [data-step]::before, .etapas > li, .agenda > li, .hud, .progress { transition: none !important; }
   ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none !important; }
   /* las animaciones CSS de los estilos saltan a su estado final */
   .slide *, .slide *::before, .slide *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; animation-delay: 0s !important; }
@@ -286,10 +438,10 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   .viewport { position: static; overflow: visible; }
   .stage { position: static; transform: none !important; width: 1920px; height: auto; }
   .slide { position: relative; visibility: visible; opacity: 1; break-after: page; }
-  .slide [data-step] { opacity: 1; transform: none; }
+  .slide [data-step] { opacity: 1; transform: none; filter: none; -webkit-mask: none; mask: none; }
 }
 
-/* themes/styles.css */
+/* ../../themes/styles.css */
 /* Direcciones de arte. Cada estilo cambia mucho más que el color:
    fondo, decorado del lienzo, títulos, paneles, teclas, ventanas y la transición entre diapositivas. */
 
@@ -736,7 +888,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 
 ::view-transition-group(hud), ::view-transition-group(progress) { animation: none; }
 
-/* atlas/atlas.css */
+/* atlas.css */
 /* Maquetación específica del deck «Atlas». Todo sale de los tokens del estilo activo. */
 
 /* ---------- portada, separadores y cierre ---------- */
@@ -1309,18 +1461,20 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/SplitText.min.js"></script>
-<script>/* themes/meta.js */
+<script>/* ../../themes/meta.js */
 /* GENERADO por tools/build-themes.mjs. No editar a mano. */
 window.MOTOR_STYLES=[{"id":"rice","name":"Rice","full":"Rice · Catppuccin","mood":"Escritorio riceado de Hyprland: ventanas con huecos, bordes en degradado que giran y pasteles sobre índigo.","harmony":"Análoga fría (malva y azul) con un complementario cálido (melocotón). Pasteles de luminosidad alta y croma baja sobre una base índigo.","itten":["Cálido–frío","Saturación","Extensión"],"refs":["Catppuccin Mocha y Latte","Hyprland: col.active_border en degradado","HyDE: temas Catppuccin"],"fontNames":{"display":"Outfit","text":"Outfit","mono":"JetBrains Mono"},"motion":{"dur":"650ms","ease":"cubic-bezier(.05,.9,.1,1.05)","easeNote":"La bezier por defecto de Hyprland (0.05, 0.9, 0.1, 1.05): un pequeño rebote al final."},"modes":{"light":{"names":{"bg":"base","bg-2":"mantle","bg-3":"crust","fg":"text","fg-2":"subtext1","fg-3":"subtext0","line":"surface0","accent":"mauve","accent-2":"blue","accent-3":"peach","ok":"green","warn":"yellow","err":"red"},"raw":["#dc8a78","#dd7878","#ea76cb","#8839ef","#d20f39","#e64553","#fe640b","#df8e1d","#40a02b","#179299","#04a5e5","#209fb5","#1e66f5","#7287fd"],"roles":{"bg":"#eff1f5","bg-2":"#e6e9ef","bg-3":"#dce0e8","fg":"#4c4f69","fg-2":"#565971","fg-3":"#66697f","line":"#ccd0da","line-2":"#acb0be","accent":"#8839ef","accent-2":"#1e66f5","accent-3":"#fe640b","on-accent":"#ffffff","ok":"#40a02b","warn":"#df8e1d","err":"#d20f39","x":"#d20f39","y":"#40a02b","z":"#1e66f5","accent-ink":"#8839ef","accent-2-ink":"#175fee","accent-3-ink":"#b84501"},"cats":["#8c3ff4","#dc5504","#0696ac","#d91d3f","#226af9","#3e9e29"],"sourceCats":["#8839ef","#1e66f5","#fe640b","#40a02b","#179299","#ea76cb"]},"dark":{"names":{"bg":"base","bg-2":"mantle","bg-3":"surface0","fg":"text","fg-2":"subtext0","fg-3":"overlay1","line":"surface1","accent":"mauve","accent-2":"blue","accent-3":"peach","ok":"green","warn":"yellow","err":"red"},"raw":["#f5e0dc","#f2cdcd","#f5c2e7","#cba6f7","#f38ba8","#eba0ac","#fab387","#f9e2af","#a6e3a1","#94e2d5","#89dceb","#74c7ec","#89b4fa","#b4befe"],"roles":{"bg":"#1e1e2e","bg-2":"#181825","bg-3":"#313244","fg":"#cdd6f4","fg-2":"#a6adc8","fg-3":"#82879f","line":"#45475a","line-2":"#585b70","accent":"#cba6f7","accent-2":"#89b4fa","accent-3":"#fab387","on-accent":"#0d0d12","ok":"#a6e3a1","warn":"#f9e2af","err":"#f38ba8","x":"#f38ba8","y":"#a6e3a1","z":"#89b4fa","accent-ink":"#cba6f7","accent-2-ink":"#89b4fa","accent-3-ink":"#fab387"},"cats":["#a480ce","#6aa566","#6b94d8","#c88051","#3aa0c9","#b18f3a"],"sourceCats":["#cba6f7","#89b4fa","#fab387","#a6e3a1","#94e2d5","#f5c2e7"]}}},{"id":"noche","name":"Noche","full":"Noche · Tokyo Night","mood":"Interfaz de ficción (FUI) y terminal: corchetes de HUD, líneas de barrido y neón contenido sobre índigo profundo.","harmony":"Complementaria dividida: azul eléctrico con magenta y naranja a ambos lados de su opuesto. El neón solo aparece en los datos y en los bordes activos.","itten":["Claro–oscuro","Cálido–frío","Complementarios"],"refs":["Tokyo Night (folke/tokyonight.nvim)","FUI de Territory Studio","HyDE: Tokyo-Night y Synth-Wave"],"fontNames":{"display":"Chakra Petch","text":"Chakra Petch","mono":"IBM Plex Mono"},"motion":{"dur":"420ms","ease":"cubic-bezier(.2,0,0,1)","easeNote":"Entrada seca y fallos de señal (glitch) en las transiciones."},"modes":{"light":{"names":{"bg":"bg","bg-2":"bg_dark","bg-3":"superficie","fg":"fg","fg-2":"fg_dark (ajustado)","fg-3":"dark5 (ajustado)","line":"bg_highlight","accent":"blue","accent-2":"magenta","accent-3":"orange","ok":"green","warn":"yellow","err":"red"},"raw":["#2e7de9","#007197","#9854f1","#7847bd","#b15c00","#8c6c3e","#587539","#118c74","#f52a65","#3760bf","#6172b0","#848cb5"],"roles":{"bg":"#e1e2e7","bg-2":"#d0d5e3","bg-3":"#e9e9ed","fg":"#3760bf","fg-2":"#3e4c89","fg-3":"#575f8b","line":"#c4c8da","line-2":"#a8aecb","accent":"#2e7de9","accent-2":"#9854f1","accent-3":"#b15c00","on-accent":"#101014","ok":"#587539","warn":"#8c6c3e","err":"#f52a65","x":"#f52a65","y":"#587539","z":"#2e7de9","accent-ink":"#015ec7","accent-2-ink":"#8138d5","accent-3-ink":"#984e01"},"cats":["#2374df","#b35d04","#077399","#9d6d1b","#9d59f7","#038c73"],"sourceCats":["#2e7de9","#b15c00","#587539","#9854f1","#007197","#f52a65"]},"dark":{"names":{"bg":"bg","bg-2":"bg_dark","bg-3":"bg_highlight","fg":"fg","fg-2":"fg_dark","fg-3":"dark5","line":"fg_gutter","accent":"blue","accent-2":"magenta","accent-3":"orange","ok":"green","warn":"yellow","err":"red"},"raw":["#7aa2f7","#7dcfff","#bb9af7","#9d7cd8","#ff9e64","#e0af68","#9ece6a","#1abc9c","#f7768e","#c0caf5","#a9b1d6","#565f89"],"roles":{"bg":"#1a1b26","bg-2":"#16161e","bg-3":"#292e42","fg":"#c0caf5","fg-2":"#a9b1d6","fg-3":"#7c83ab","line":"#3b4261","line-2":"#545c7e","accent":"#7aa2f7","accent-2":"#bb9af7","accent-3":"#ff9e64","on-accent":"#0d0d12","ok":"#9ece6a","warn":"#e0af68","err":"#f7768e","x":"#f7768e","y":"#9ece6a","z":"#7aa2f7","accent-ink":"#7aa2f7","accent-2-ink":"#bb9af7","accent-3-ink":"#ff9e64"},"cats":["#6a91e5","#d5783d","#469ece","#bb893e","#a07fda","#76a440"],"sourceCats":["#7aa2f7","#ff9e64","#9ece6a","#bb9af7","#7dcfff","#f7768e"]}}},{"id":"suizo","name":"Suizo","full":"Suizo · Editorial de datos","mood":"Estilo Tipográfico Internacional y Tufte: retícula estricta, mucha tinta para los datos y nada de adorno.","harmony":"Acromática con un solo acento rojo. Es el contraste de extensión de Itten: el rojo ocupa poca superficie y por eso pesa tanto como todo el gris.","itten":["Extensión","Claro–oscuro","Tono puro"],"refs":["Josef Müller-Brockmann, Grid Systems (1981)","Edward Tufte: relación datos-tinta y sparklines","Ryoji Ikeda, datamatics"],"fontNames":{"display":"Instrument Sans","text":"Instrument Sans","mono":"IBM Plex Mono","serif":"Instrument Serif"},"motion":{"dur":"460ms","ease":"cubic-bezier(.2,.8,.2,1)","easeNote":"Cortes limpios y rápidos; nada se balancea."},"modes":{"light":{"names":{"bg":"papel","bg-2":"gris retícula","bg-3":"blanco","fg":"negro tinta","fg-2":"gris 80","fg-3":"gris 60","line":"filete","accent":"rojo suizo","accent-2":"azul cobalto","accent-3":"amarillo","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#121417","#3d4247","#5f666d","#9aa1a5","#c9cecf","#e2e5e4","#eef0ef","#f8f9f8","#e1251b","#2a5cb8","#c98a00"],"roles":{"bg":"#eef0ef","bg-2":"#e2e5e4","bg-3":"#f8f9f8","fg":"#121417","fg-2":"#3d4247","fg-3":"#5f666d","line":"#c9cecf","line-2":"#9aa1a5","accent":"#e1251b","accent-2":"#2a5cb8","accent-3":"#c98a00","on-accent":"#ffffff","ok":"#2f8a57","warn":"#b07a00","err":"#e1251b","x":"#e1251b","y":"#2f8a57","z":"#2a5cb8","accent-ink":"#d6110b","accent-2-ink":"#2a5cb8","accent-3-ink":"#8f6103"},"cats":["#dc1c14","#3264c1","#b27a02","#7b4cb6","#c56c01","#0c96ae"],"sourceCats":["#e1251b","#2a5cb8","#e09a00","#2f8a57","#7a4bb5","#e07b00"]},"dark":{"names":{"bg":"negro tinta","bg-2":"negro profundo","bg-3":"gris 90","fg":"papel","fg-2":"gris 30","fg-3":"gris 45","line":"filete","accent":"rojo suizo","accent-2":"azul cobalto","accent-3":"amarillo","ok":"verde","warn":"amarillo","err":"rojo"},"raw":["#0c0e10","#121417","#1c1f23","#2c3034","#474c51","#8a918f","#b5bab8","#eceeec","#ff4433","#6d9cff","#ffc93c"],"roles":{"bg":"#121417","bg-2":"#0c0e10","bg-3":"#1c1f23","fg":"#eceeec","fg-2":"#b5bab8","fg-3":"#8a918f","line":"#2c3034","line-2":"#474c51","accent":"#ff4433","accent-2":"#6d9cff","accent-3":"#ffc93c","on-accent":"#0d0d12","ok":"#4fc483","warn":"#ffc93c","err":"#ff4433","x":"#ff4433","y":"#4fc483","z":"#6d9cff","accent-ink":"#ff4433","accent-2-ink":"#6d9cff","accent-3-ink":"#ffc93c"},"cats":["#fe4937","#6290f2","#b88d0a","#a279ea","#d87803","#02a6bb"],"sourceCats":["#ff4433","#6d9cff","#ffc93c","#4fc483","#b48cff","#ff9a3c"]}}},{"id":"aurora","name":"Aurora","full":"Aurora · Rosé Pine","mood":"Arte generativo: campos de flujo, curvas de nivel, vidrio esmerilado y grano suave. Lento y orgánico.","harmony":"Tríada suave (iris, espuma y oro) sobre una base violeta desaturada. Croma baja y valores cercanos: las capas se funden en lugar de chocar.","itten":["Saturación","Extensión","Cálido–frío"],"refs":["Rosé Pine y Rosé Pine Dawn","Tyler Hobbs: campos de flujo","HyDE: Rosé-Pine y Frosted-Glass"],"fontNames":{"display":"Bricolage Grotesque","text":"Bricolage Grotesque","mono":"DM Mono"},"motion":{"dur":"1100ms","ease":"cubic-bezier(.22,1,.36,1)","easeNote":"Desaceleración larga: todo llega flotando y se posa."},"modes":{"light":{"names":{"bg":"base","bg-2":"overlay","bg-3":"surface","fg":"text","fg-2":"text medio","fg-3":"subtle","line":"highlight med","accent":"iris","accent-2":"foam","accent-3":"gold","ok":"pine","warn":"gold oscuro","err":"love"},"raw":["#faf4ed","#fffaf3","#f2e9e1","#9893a5","#797593","#464261","#b4637a","#ea9d34","#d7827e","#286983","#56949f","#907aa9"],"roles":{"bg":"#faf4ed","bg-2":"#f2e9e1","bg-3":"#fffaf3","fg":"#464261","fg-2":"#5c577a","fg-3":"#6d6987","line":"#dfdad9","line-2":"#cecacd","accent":"#907aa9","accent-2":"#56949f","accent-3":"#ea9d34","on-accent":"#101014","ok":"#286983","warn":"#b9771d","err":"#b4637a","x":"#b4637a","y":"#286983","z":"#907aa9","accent-ink":"#7b6693","accent-2-ink":"#377681","accent-3-ink":"#9b6200"},"cats":["#9674bb","#b87504","#0f97a9","#8b3d55","#2692ba","#af5b58"],"sourceCats":["#907aa9","#56949f","#ea9d34","#b4637a","#286983","#d7827e"]},"dark":{"names":{"bg":"base","bg-2":"surface","bg-3":"overlay","fg":"text","fg-2":"subtle (ajustado)","fg-3":"subtle","line":"highlight med","accent":"iris","accent-2":"foam","accent-3":"gold","ok":"foam","warn":"gold","err":"love"},"raw":["#191724","#1f1d2e","#26233a","#6e6a86","#908caa","#e0def4","#eb6f92","#f6c177","#ebbcba","#31748f","#9ccfd8","#c4a7e7"],"roles":{"bg":"#191724","bg-2":"#1f1d2e","bg-3":"#26233a","fg":"#e0def4","fg-2":"#a7a3c2","fg-3":"#908caa","line":"#403d52","line-2":"#524f67","accent":"#c4a7e7","accent-2":"#9ccfd8","accent-3":"#f6c177","on-accent":"#0d0d12","ok":"#9ccfd8","warn":"#f6c177","err":"#eb6f92","x":"#eb6f92","y":"#9ccfd8","z":"#c4a7e7","accent-ink":"#c4a7e7","accent-2-ink":"#9ccfd8","accent-3-ink":"#f6c177"},"cats":["#a382ca","#bb893e","#1ca6b8","#ac5858","#38a0c8","#bb4469"],"sourceCats":["#c4a7e7","#9ccfd8","#f6c177","#eb6f92","#31748f","#ebbcba"]}}},{"id":"cromo","name":"Cromo","full":"Cromo · Metal líquido","mood":"Metal líquido y estética Y3K: esferas cromadas que se funden, reflejos de estudio y un acento ácido.","harmony":"Acromática metálica con un acento ácido (lima) y reflejos iridiscentes cian y violeta. El metal no tiene color propio: refleja lo que le rodea.","itten":["Claro–oscuro","Saturación","Extensión"],"refs":["Estética Y3K y tipografía cromada (2024–2026)","Hajime Sorayama: robots cromados","Metabolas por raymarching (Inigo Quilez)"],"fontNames":{"display":"Unbounded","text":"Manrope","mono":"Martian Mono"},"motion":{"dur":"900ms","ease":"cubic-bezier(.16,1,.3,1)","easeNote":"Metal que gotea: la diapositiva nueva cae como un telón líquido y se asienta sin rebote."},"modes":{"light":{"names":{"bg":"aluminio","bg-2":"aluminio cepillado","bg-3":"plata de estudio","fg":"grafito","fg-2":"grafito medio","fg-3":"gris acero","line":"junta","accent":"lima ácida","accent-2":"cian iridiscente","accent-3":"violeta iridiscente","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#f6f7f9","#e8eaee","#dcdfe4","#cfd3d9","#aab0b9","#5d636d","#3a3f47","#101216","#9be000","#0090c8","#7a4dff","#e5602a"],"roles":{"bg":"#e8eaee","bg-2":"#dcdfe4","bg-3":"#f6f7f9","fg":"#101216","fg-2":"#3a3f47","fg-3":"#5d636d","line":"#cfd3d9","line-2":"#aab0b9","accent":"#9be000","accent-2":"#0090c8","accent-3":"#7a4dff","on-accent":"#101014","ok":"#1f9d63","warn":"#c48a00","err":"#d6303a","x":"#d6303a","y":"#1f9d63","z":"#0090c8","accent-ink":"#4e7301","accent-2-ink":"#066e99","accent-3-ink":"#6f3ef1"},"cats":["#518903","#db39a1","#af7b06","#784bfd","#da561e","#0081b4"],"sourceCats":["#6bb300","#0090c8","#7a4dff","#e5602a","#d6339c","#0f9e78"]},"dark":{"names":{"bg":"grafito","bg-2":"negro pulido","bg-3":"acero oscuro","fg":"plata clara","fg-2":"plata","fg-3":"plata vieja","line":"junta","accent":"lima ácida","accent-2":"cian iridiscente","accent-3":"violeta iridiscente","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#070809","#0b0c0f","#16181d","#262a31","#3b4049","#8a909c","#b9bec8","#eef0f4","#c6ff3d","#7ee8fa","#c9a7ff","#ff8a5c"],"roles":{"bg":"#0b0c0f","bg-2":"#070809","bg-3":"#16181d","fg":"#eef0f4","fg-2":"#b9bec8","fg-3":"#8a909c","line":"#262a31","line-2":"#3b4049","accent":"#c6ff3d","accent-2":"#7ee8fa","accent-3":"#c9a7ff","on-accent":"#070809","ok":"#6ee7a0","warn":"#ffd166","err":"#ff6b6b","x":"#ff6b6b","y":"#6ee7a0","z":"#7ee8fa","accent-ink":"#c6ff3d","accent-2-ink":"#7ee8fa","accent-3-ink":"#c9a7ff"},"cats":["#7ca408","#e450bc","#b88c07","#a280d5","#e06e40","#1ca6b9"],"sourceCats":["#c6ff3d","#7ee8fa","#c9a7ff","#ff8a5c","#ff6ad5","#5ce1b4"]}}},{"id":"arcilla","name":"Arcilla","full":"Arcilla · Render 3D mate","mood":"Render de arcilla: un brazo robótico de plastilina, sombras suaves, oclusión ambiental y colores de tierra.","harmony":"Análoga cálida (terracota, ocre y arena) con un frío de contrapeso (salvia y pizarra). Valores medios y croma moderada: todo parece que se puede tocar.","itten":["Cálido–frío","Saturación","Claro–oscuro"],"refs":["Render de arcilla en Blender y Spline","Ilustración 3D suave en interfaces (2025–2026)","Sombras suaves y oclusión ambiental con SDF (Inigo Quilez)"],"fontNames":{"display":"Fraunces","text":"Albert Sans","mono":"Red Hat Mono"},"motion":{"dur":"750ms","ease":"cubic-bezier(.34,1.56,.64,1)","easeNote":"Elástica: cada pieza se aplasta un poco al llegar, como la plastilina."},"modes":{"light":{"names":{"bg":"masilla","bg-2":"arcilla seca","bg-3":"arcilla blanca","fg":"pizarra húmeda","fg-2":"barro","fg-3":"barro claro","line":"junta","accent":"terracota","accent-2":"salvia","accent-3":"ocre","ok":"salvia","warn":"ocre","err":"óxido"},"raw":["#f7f3ed","#ece6dd","#e2dbd0","#d8cfc2","#bbaf9f","#776d64","#2b2622","#d0643a","#6f8f72","#e0b13f","#4f7fa8","#a3608f"],"roles":{"bg":"#ece6dd","bg-2":"#e2dbd0","bg-3":"#f7f3ed","fg":"#2b2622","fg-2":"#554d46","fg-3":"#6e645c","line":"#d8cfc2","line-2":"#bbaf9f","accent":"#d0643a","accent-2":"#6f8f72","accent-3":"#e0b13f","on-accent":"#101014","ok":"#5f8f5f","warn":"#c98b1c","err":"#c2453a","x":"#c2453a","y":"#5f8f5f","z":"#4f7fa8","accent-ink":"#ae4517","accent-2-ink":"#4d6b50","accent-3-ink":"#7e5f00"},"cats":["#ce6238","#387db4","#4a893e","#8f75c6","#927304","#a15c8d"],"sourceCats":["#d0643a","#4f7fa8","#5a9a4e","#c9a227","#a3608f","#3f9a96"]},"dark":{"names":{"bg":"arcilla negra","bg-2":"grafito","bg-3":"arcilla cocida","fg":"arena","fg-2":"arena oscura","fg-3":"barro claro","line":"junta","accent":"terracota","accent-2":"salvia","accent-3":"ocre","ok":"salvia","warn":"ocre","err":"óxido"},"raw":["#161412","#1d1a18","#29241f","#38322c","#4e463e","#a69a8b","#cfc4b6","#f1e9df","#ef8a5e","#95b596","#f0c766","#7fa9d6"],"roles":{"bg":"#1d1a18","bg-2":"#161412","bg-3":"#29241f","fg":"#f1e9df","fg-2":"#cfc4b6","fg-3":"#a69a8b","line":"#38322c","line-2":"#4e463e","accent":"#ef8a5e","accent-2":"#95b596","accent-3":"#f0c766","on-accent":"#0d0d12","ok":"#95b596","warn":"#f0c766","err":"#ef6f5e","x":"#ef6f5e","y":"#95b596","z":"#7fa9d6","accent-ink":"#ef8a5e","accent-2-ink":"#95b596","accent-3-ink":"#f0c766"},"cats":["#d87549","#5d98d5","#6ea461","#9b85cf","#b38f1c","#be79ad"],"sourceCats":["#ef8a5e","#7fa9d6","#8cc47f","#e6c15a","#c58bb6","#5fbdb6"]}}},{"id":"nube","name":"Nube","full":"Nube · Gemelo digital","mood":"Gemelo digital: una nube de puntos LiDAR que gira, coloreada por altura, con ejes XYZ y líneas finas.","harmony":"Neutros casi puros para que la nube de puntos lleve todo el color. El acento sale del mapa Turbo y los ejes siguen el convenio de RViz: X rojo, Y verde, Z azul.","itten":["Claro–oscuro","Tono puro","Extensión"],"refs":["Mapa de color Turbo (Google, 2019)","RViz y Foxglove: nubes de puntos y marcos TF","Escaneo LiDAR y gemelos digitales"],"fontNames":{"display":"Geist","text":"Geist","mono":"Geist Mono"},"motion":{"dur":"650ms","ease":"cubic-bezier(.4,0,.2,1)","easeNote":"Barrido de escáner: la diapositiva se revela de arriba abajo con un borde suave."},"modes":{"light":{"names":{"bg":"blanco de estudio","bg-2":"gris claro","bg-3":"blanco","fg":"negro","fg-2":"gris oscuro","fg-3":"gris medio","line":"rejilla","accent":"turbo rojo","accent-2":"turbo turquesa","accent-3":"turbo amarillo","ok":"verde","warn":"amarillo","err":"rojo"},"raw":["#30123b","#4662d7","#36aaf9","#1ae4b6","#72fe5e","#c7ef34","#fabb38","#f66b19","#ca2a04","#7a0403","#0c0e10","#ffffff"],"roles":{"bg":"#f3f4f5","bg-2":"#e8eaec","bg-3":"#ffffff","fg":"#0c0e10","fg-2":"#3b4249","fg-3":"#5e666e","line":"#dde1e4","line-2":"#b9c0c6","accent":"#e8431c","accent-2":"#0e9e91","accent-3":"#c99a00","on-accent":"#0c0e10","ok":"#2e9d4a","warn":"#c99a00","err":"#e0302a","x":"#e0302a","y":"#2e9d4a","z":"#2a64e0","accent-ink":"#cf3103","accent-2-ink":"#017a6f","accent-3-ink":"#8b6901"},"cats":["#e8431c","#0d9b8e","#a4035f","#559b26","#4a59cf","#a78006"],"sourceCats":["#e8431c","#0e9e91","#4f5fd6","#c99a00","#5aa02c","#d63384"]},"dark":{"names":{"bg":"vacío","bg-2":"negro","bg-3":"panel","fg":"punto blanco","fg-2":"gris medio","fg-3":"gris tenue","line":"rejilla","accent":"turbo rojo","accent-2":"turbo turquesa","accent-3":"turbo amarillo","ok":"verde","warn":"amarillo","err":"rojo"},"raw":["#30123b","#4662d7","#36aaf9","#1ae4b6","#72fe5e","#c7ef34","#fabb38","#f66b19","#ca2a04","#7a0403","#e8ecef","#050607"],"roles":{"bg":"#050607","bg-2":"#020303","bg-3":"#0e1013","fg":"#e8ecef","fg-2":"#a9b2ba","fg-3":"#7a848d","line":"#1c2025","line-2":"#2c3239","accent":"#ff5a36","accent-2":"#23d5c4","accent-3":"#ffd23f","on-accent":"#020303","ok":"#4ade80","warn":"#ffd23f","err":"#ff5a36","x":"#ff4d4d","y":"#4ade80","z":"#4d8dff","accent-ink":"#ff5a36","accent-2-ink":"#23d5c4","accent-3-ink":"#ffd23f"},"cats":["#f8532f","#08aa9c","#7487fe","#b38f09","#dc2986","#72a701"],"sourceCats":["#ff5a36","#23d5c4","#ffd23f","#6b7cff","#a6e34a","#ff4fa3"]}}},{"id":"termica","name":"Térmica","full":"Térmica · Infrarrojo","mood":"Cámara térmica: firmas de calor de un robot en paleta ironbow, medidor de punto y escala de temperatura.","harmony":"Secuencial de cuerpo negro: del violeta frío al naranja y al blanco caliente. En claro, «negro caliente» en grises con isotermas naranjas.","itten":["Cálido–frío","Claro–oscuro","Saturación"],"refs":["Paletas térmicas de FLIR: Ironbow, White Hot e isotermas","Mapas secuenciales inferno y magma","Termografía de motores y electrónica"],"fontNames":{"display":"Schibsted Grotesk","text":"Schibsted Grotesk","mono":"Spline Sans Mono"},"motion":{"dur":"700ms","ease":"cubic-bezier(.3,0,.1,1)","easeNote":"Calibración: un destello como el del obturador de la cámara (NUC) y la imagen se asienta."},"modes":{"light":{"names":{"bg":"frío","bg-2":"gris frío","bg-3":"blanco","fg":"negro caliente","fg-2":"gris tibio","fg-3":"gris medio","line":"isoterma","accent":"isoterma naranja","accent-2":"violeta frío","accent-3":"ámbar","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#fafaf9","#e3e3e0","#bdbdba","#8c8c89","#5e5e5b","#2f2f2e","#111111","#f05a00","#7c3aed","#d4a000","#e02424","#1e88c7"],"roles":{"bg":"#efefed","bg-2":"#e3e3e0","bg-3":"#fafaf9","fg":"#111111","fg-2":"#3d3d3b","fg-3":"#61615e","line":"#d4d4d0","line-2":"#adadaa","accent":"#f05a00","accent-2":"#7c3aed","accent-3":"#d4a000","on-accent":"#101014","ok":"#2f9e6e","warn":"#d4a000","err":"#e02424","x":"#e02424","y":"#2f9e6e","z":"#1e88c7","accent-ink":"#b74302","accent-2-ink":"#7c3aed","accent-3-ink":"#866406"},"cats":["#de5205","#278ece","#ab7d00","#a8014c","#6f42d9","#138d5e"],"sourceCats":["#e05200","#6d3fd6","#c79200","#d6336c","#1e88c7","#2f9e6e"]},"dark":{"names":{"bg":"frío absoluto","bg-2":"negro","bg-3":"violeta frío","fg":"blanco caliente","fg-2":"gris tibio","fg-3":"gris templado","line":"isoterma","accent":"naranja caliente","accent-2":"amarillo incandescente","accent-3":"violeta frío","ok":"verde","warn":"amarillo","err":"rojo"},"raw":["#000004","#1b0c41","#4a0c6b","#781c6d","#a52c60","#cf4446","#ed6925","#fb9b06","#f7d13d","#fcffa4","#f7f1ea","#08060c"],"roles":{"bg":"#08060c","bg-2":"#040306","bg-3":"#130e19","fg":"#f7f1ea","fg-2":"#cfc4bb","fg-3":"#9d9189","line":"#241b2c","line-2":"#3a2d44","accent":"#ff7a1a","accent-2":"#ffd84a","accent-3":"#8a3ffc","on-accent":"#040306","ok":"#46d39a","warn":"#ffd84a","err":"#ff3d3d","x":"#ff3d3d","y":"#46d39a","z":"#3fb6ff","accent-ink":"#ff7a1a","accent-2-ink":"#ffd84a","accent-3-ink":"#9152fe"},"cats":["#e66b07","#d40560","#199de5","#b0910c","#9f74fe","#08ae79"],"sourceCats":["#ff7a1a","#ffd84a","#8a3ffc","#ff3d7f","#3fb6ff","#46d39a"]}}},{"id":"celula","name":"Célula","full":"Célula · Microscopía","mood":"Microscopía: fluorescencia de tres canales en oscuro y tinción H&E en claro, con barra de escala.","harmony":"Canales de fluorescencia que se suman sobre negro (verde GFP, magenta y azul DAPI). En claro, hematoxilina violeta y eosina rosa, con marrón DAB de apoyo.","itten":["Complementarios","Claro–oscuro","Cálido–frío"],"refs":["Nikon Small World: fotomicrografía","Tinción hematoxilina-eosina (H&E)","Patología digital e IA médica"],"fontNames":{"display":"Newsreader","text":"Public Sans","mono":"Sometype Mono"},"motion":{"dur":"950ms","ease":"cubic-bezier(.33,0,.15,1)","easeNote":"Diafragma de campo: la diapositiva se abre en círculo, como al enfocar en el microscopio."},"modes":{"light":{"names":{"bg":"eosina pálida","bg-2":"eosina","bg-3":"portaobjetos","fg":"hematoxilina","fg-2":"hematoxilina media","fg-3":"violeta tenue","line":"fibra","accent":"eosina","accent-2":"hematoxilina","accent-3":"DAB","ok":"verde","warn":"DAB","err":"rojo"},"raw":["#fdf9fa","#f7eff2","#eee2e8","#e7d7df","#cdb6c3","#6e5d7c","#2a1838","#c2367a","#e58fb3","#4b3a9a","#b5832a","#2d7f9a"],"roles":{"bg":"#f7eff2","bg-2":"#eee2e8","bg-3":"#fdf9fa","fg":"#2a1838","fg-2":"#4c3a5c","fg-3":"#6e5d7c","line":"#e7d7df","line-2":"#cdb6c3","accent":"#c2367a","accent-2":"#4b3a9a","accent-3":"#b5832a","on-accent":"#ffffff","ok":"#3d8a5a","warn":"#b5832a","err":"#b8233c","x":"#b8233c","y":"#3d8a5a","z":"#4b3a9a","accent-ink":"#bf3277","accent-2-ink":"#4b3a9a","accent-3-ink":"#906301"},"cats":["#b3266e","#ad7c20","#6457ba","#3a8a59","#7236a7","#1c94b7"],"sourceCats":["#c2367a","#4b3a9a","#b5832a","#2d7f9a","#7a3fb0","#3d8a5a"]},"dark":{"names":{"bg":"campo oscuro","bg-2":"negro","bg-3":"portaobjetos","fg":"blanco","fg-2":"gris azulado","fg-3":"gris tenue","line":"rejilla","accent":"GFP","accent-2":"mCherry","accent-3":"DAPI","ok":"GFP","warn":"ámbar","err":"rojo"},"raw":["#030406","#0c0f14","#171c24","#273141","#8591a3","#eef2f7","#36e27a","#ff3fa4","#4f86ff","#ffc94d","#2fd6e6","#b07bff"],"roles":{"bg":"#030406","bg-2":"#010203","bg-3":"#0c0f14","fg":"#eef2f7","fg-2":"#b3bccb","fg-3":"#8591a3","line":"#171c24","line-2":"#273141","accent":"#36e27a","accent-2":"#ff3fa4","accent-3":"#4f86ff","on-accent":"#010203","ok":"#36e27a","warn":"#ffc94d","err":"#ff5a5a","x":"#ff5a5a","y":"#36e27a","z":"#4f86ff","accent-ink":"#36e27a","accent-2-ink":"#ff3fa4","accent-3-ink":"#4f86ff"},"cats":["#06b158","#598eff","#ec2794","#a772f5","#ba8c0a","#0fa7b4"],"sourceCats":["#36e27a","#ff3fa4","#4f86ff","#ffc94d","#2fd6e6","#b07bff"]}}},{"id":"matriz","name":"Matriz","full":"Matriz · Puntos LED","mood":"Matriz de LED: tipografía de puntos, luces glifo que laten y monocromo con un solo rojo de señal.","harmony":"Monocroma de blanco LED sobre negro (o tinta sobre blanco) con un rojo de señal. El color solo aparece en los datos.","itten":["Claro–oscuro","Extensión","Tono puro"],"refs":["Lenguaje de diseño de Nothing: Ndot y luces Glyph","Doto: tipografía de matriz de puntos (Google Fonts)","Paneles y pantallas de matriz de LED"],"fontNames":{"display":"Doto","text":"Host Grotesk","mono":"Fragment Mono"},"motion":{"dur":"600ms","ease":"cubic-bezier(.2,.7,.3,1)","easeNote":"Fundido por píxeles: los puntos de la diapositiva nueva crecen hasta tocarse."},"modes":{"light":{"names":{"bg":"blanco","bg-2":"gris claro","bg-3":"blanco puro","fg":"negro tinta","fg-2":"gris oscuro","fg-3":"gris medio","line":"rejilla","accent":"rojo de señal","accent-2":"negro tinta","accent-3":"rojo suave","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#fafaf8","#efefec","#e3e3e0","#d3d3cf","#ababa7","#5e5e5b","#3a3a38","#0b0b0b","#d71921","#e8584d"],"roles":{"bg":"#efefec","bg-2":"#e3e3e0","bg-3":"#fafaf8","fg":"#0b0b0b","fg-2":"#3a3a38","fg-3":"#5e5e5b","line":"#d3d3cf","line-2":"#ababa7","accent":"#d71921","accent-2":"#0b0b0b","accent-3":"#e8584d","on-accent":"#ffffff","ok":"#1f9d63","warn":"#c48a00","err":"#d71921","x":"#d71921","y":"#1f9d63","z":"#2f6fe0","accent-ink":"#d3111d","accent-2-ink":"#0b0b0b","accent-3-ink":"#c4362f"},"cats":["#da1f24","#0e97a9","#7d40c9","#af7b06","#3171e2","#028e56"],"sourceCats":["#d71921","#2f6fe0","#c48a00","#1f9d63","#8a4fd8","#0a96a8"]},"dark":{"names":{"bg":"negro LED apagado","bg-2":"negro","bg-3":"negro satinado","fg":"blanco LED","fg-2":"gris LED","fg-3":"gris tenue","line":"rejilla","accent":"rojo de señal","accent-2":"blanco LED","accent-3":"rojo suave","ok":"verde","warn":"ámbar","err":"rojo"},"raw":["#000000","#060606","#131313","#222222","#373737","#8a8a86","#b9b9b5","#f5f5f2","#ff3b30","#ff8a7a"],"roles":{"bg":"#060606","bg-2":"#000000","bg-3":"#131313","fg":"#f5f5f2","fg-2":"#b9b9b5","fg-3":"#8a8a86","line":"#222222","line-2":"#373737","accent":"#ff3b30","accent-2":"#e6e6e2","accent-3":"#ff8a7a","on-accent":"#000000","ok":"#36d27a","warn":"#ffb000","err":"#ff3b30","x":"#ff3b30","y":"#36d27a","z":"#4d8dff","accent-ink":"#ff3b30","accent-2-ink":"#e6e6e2","accent-3-ink":"#ff8a7a"},"cats":["#ff473a","#3795f9","#07b060","#b168fc","#c38608","#0ea7b4"],"sourceCats":["#ff3b30","#3d9bff","#ffb000","#2ed47a","#b46bff","#00c2d1"]}}}];
 window.MOTOR_DEFAULT_STYLE="rice";
 </script>
-<script>/* engine/engine.js */
+<script>/* ../../engine/engine.js */
 /* Motor de presentaciones · núcleo
    - Escala un lienzo de 1920×1080 al visor.
    - Navegación: teclado, gestos, HUD, ancla #id-de-diapositiva.
    - Estilos (data-style) y modo claro/oscuro (data-theme) en <html>.
-   - Ciclo de vida de efectos: Motor.fx(nombre, { render(api), play(api), stop(api) }).
-     render() deja la diapositiva completa y en reposo; play() anima. */
+   - Ciclo de vida de efectos: Motor.fx(nombre, { render(api), play(api), stop(api), step(api, n, info) }).
+     render() deja la diapositiva completa y en reposo (con api.step pasos visibles); play() anima;
+     step() se llama al mostrar u ocultar un [data-step] de la diapositiva activa.
+   - Eventos en la diapositiva (burbujean hasta document): motor:enter, motor:leave y motor:step. */
 (() => {
   'use strict';
   const W = 1920, H = 1080;
@@ -1453,6 +1607,9 @@ window.MOTOR_DEFAULT_STYLE="rice";
       get meta() { return currentStyle(); },
       get reduced() { return reduced.matches; },
       get dur() { return parseFloat(api.tok('dur')) || 600; },
+      // pasos [data-step] visibles y totales; en la vista general cuentan todos como visibles
+      get steps() { return slide.querySelectorAll('[data-step]').length; },
+      get step() { return overview ? api.steps : slide.querySelectorAll('[data-step].on').length; },
       ease(t) { return bezier(api.tok('ease'))(t); },
       cats(n = 6) { return Array.from({ length: n }, (_, i) => api.tok('cat-' + (i + 1))); },
       ramp(prefix, t) {
@@ -1505,13 +1662,17 @@ window.MOTOR_DEFAULT_STYLE="rice";
     try { def.render && def.render(api); } catch (e) { console.error('[motor] render', slide.id, e); }
     slide._rendered = true; slide._dirty = false;
   }
+  const emit = (slide, type, detail) => slide.dispatchEvent(new CustomEvent('motor:' + type, { bubbles: true, detail: { slide, index: slides.indexOf(slide), ...detail } }));
   function activate(slide) {
     updateDeco(slide);
-    const def = fxOf(slide); if (!def) return;
-    const api = apiOf(slide);
+    const def = fxOf(slide), api = apiOf(slide);
     api.stopAll();
-    if (!slide._rendered || slide._dirty) renderSlide(slide);
-    if (!reduced.matches && !overview && def.play) { try { def.play(api); } catch (e) { console.error('[motor] play', slide.id, e); } }
+    const animate = !reduced.matches && !overview;
+    if (def) {
+      if (!slide._rendered || slide._dirty) renderSlide(slide);
+      if (animate && def.play) { try { def.play(api); } catch (e) { console.error('[motor] play', slide.id, e); } }
+    }
+    if (!overview) emit(slide, 'enter', { api, animate });
   }
   function deactivate(slide) {
     if (!slide._api) return;
@@ -1519,6 +1680,15 @@ window.MOTOR_DEFAULT_STYLE="rice";
     const def = fxOf(slide);
     if (def && def.stop) def.stop(slide._api);
     if (def && def.play) slide._dirty = true; // al volver, se reconstruye y se vuelve a reproducir
+    emit(slide, 'leave', { api: slide._api });
+  }
+  // Aviso de paso: el efecto de la diapositiva (si define step) y el evento motor:step.
+  function stepped(el, dir) {
+    const slide = slides[idx], api = apiOf(slide), def = fxOf(slide);
+    const info = { dir, el, total: api.steps, animate: !reduced.matches };
+    const n = api.step;
+    if (def && def.step) { try { def.step(api, n, info); } catch (e) { console.error('[motor] step', slide.id, e); } }
+    emit(slide, 'step', { api, step: n, ...info });
   }
 
   function refreshAll() {
@@ -1580,24 +1750,27 @@ window.MOTOR_DEFAULT_STYLE="rice";
     const swap = () => {
       if (prev && prev !== next) { prev.classList.remove('is-active'); prev.setAttribute('aria-hidden', 'true'); deactivate(prev); }
       next.classList.add('is-active'); next.removeAttribute('aria-hidden');
-      if (i < idx) next.querySelectorAll('[data-step]').forEach((s) => s.classList.add('on'));
+      if (i < idx) {
+        const pend = next.querySelectorAll('[data-step]:not(.on)');
+        if (pend.length) { pend.forEach((s) => s.classList.add('on')); next._dirty = true; } // render() con todos los pasos
+      }
       idx = i;
       activate(next);
       updateHud();
     };
     if (!instant && !overview && document.startViewTransition && !reduced.matches) {
-      try { document.startViewTransition(swap); } catch (e) { swap(); }
+      try { document.startViewTransition(swap).ready.catch(() => {}); } catch (e) { swap(); } // al encadenar teclas, la anterior se salta
     } else swap();
     try { history.replaceState(null, '', '#' + next.id); } catch (e) { /* sin historial */ }
   }
   function next() {
     const pending = slides[idx].querySelector('[data-step]:not(.on)');
-    if (pending && !overview) { pending.classList.add('on'); return; }
+    if (pending && !overview) { pending.classList.add('on'); stepped(pending, 'next'); return; }
     go(idx + 1);
   }
   function prev() {
     const shown = [...slides[idx].querySelectorAll('[data-step].on')];
-    if (shown.length && !overview) { shown[shown.length - 1].classList.remove('on'); return; }
+    if (shown.length && !overview) { const el = shown[shown.length - 1]; el.classList.remove('on'); stepped(el, 'prev'); return; }
     go(idx - 1);
   }
 
@@ -1614,12 +1787,14 @@ window.MOTOR_DEFAULT_STYLE="rice";
 
   function toggleOverview(on = !overview) {
     if (on === overview) return;
+    // api.step cambia (en la vista general cuentan todos los pasos): hay que volver a dibujar
+    slides.forEach((s) => { if (s._rendered && s.querySelector('[data-step]')) s._dirty = true; });
+    overview = on;
     if (on) {
       // Renderiza en tamaño real lo que aún no tiene contenido, antes de reducir.
       slides.forEach((s) => { if (fxOf(s) && (!s._rendered || s._dirty)) { s._api && s._api.stopAll(); renderSlide(s); } });
       slides[idx]._api && slides[idx]._api.stopAll();
     }
-    overview = on;
     viewport.classList.toggle('is-overview', on);
     if (on) { stage.style.transform = ''; layoutOverview(); requestAnimationFrame(() => slides[idx].scrollIntoView({ block: 'center' })); }
     else { fit(); activate(slides[idx]); }
@@ -1769,7 +1944,7 @@ window.MOTOR_DEFAULT_STYLE="rice";
   else init();
 })();
 </script>
-<script>/* fx/sistema.js */
+<script>/* ../../fx/sistema.js */
 /* Efectos del sistema: fondos generativos por estilo, direcciones de arte,
    teoría del color, círculo OKLCH, tipografía, paletas, referencias y comparativa. */
 (() => {
@@ -1782,9 +1957,56 @@ window.MOTOR_DEFAULT_STYLE="rice";
      ================================================================= */
   function roundRect(ctx, x, y, w, h, r) { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, r) : ctx.rect(x, y, w, h); }
 
+  /* Rice en portadas y separadores: grafo de nodos conectados que deriva despacio, con mensajes que recorren
+     las aristas. Ocupa la esquina superior derecha y se aparta del texto midiendo .divider-body. */
+  function riceGraph(s, api) {
+    const R = api.rng(s.seed * 7 + 1), slide = api.el, sr = slide.getBoundingClientRect(), k = sr.width / 1920 || 1;
+    // rectángulos reales de cada línea de texto (no el ancho máximo del bloque)
+    const obst = [];
+    slide.querySelectorAll('.divider-body > *, .cover-body > *, .cover-body .chip').forEach((e) => {
+      const rg = document.createRange(); rg.selectNodeContents(e);
+      [...rg.getClientRects()].forEach((r) => { if (r.width) obst.push({ l: (r.left - sr.left) / k, t: (r.top - sr.top) / k, r: (r.right - sr.left) / k, b: (r.bottom - sr.top) / k }); });
+    });
+    const PAD = 64, DRIFT = 18;
+    const box = { x0: s.w * 0.5, x1: s.w - 150, y0: 150, y1: s.h - 190 };
+    const free = (x, y, rad) => obst.every((o) => x + rad + PAD < o.l || x - rad - PAD > o.r || y + rad + PAD < o.t || y - rad - PAD > o.b);
+    const nodes = [];
+    for (let tries = 0; nodes.length < 16 && tries < 3000; tries++) {
+      const x = R.range(box.x0, box.x1), y = R.range(box.y0, box.y1), r = 9 + R() * 9;
+      if (free(x, y, r + DRIFT) && nodes.every((n) => Math.hypot(n.x - x, n.y - y) > 120)) nodes.push({ x, y, r, p: R() * 6.28, q: R() * 6.28, c: nodes.length % 3 });
+    }
+    // aristas: árbol de vecino más cercano (conexo) y algunas más; se descartan las que cruzan texto
+    const crosses = (A, B) => obst.some((o) => { for (let i = 0; i <= 20; i++) { const x = A.x + (B.x - A.x) * i / 20, y = A.y + (B.y - A.y) * i / 20; if (x > o.l - 24 && x < o.r + 24 && y > o.t - 24 && y < o.b + 24) return true; } return false; });
+    const edges = [], has = new Set(), add = (a, b) => { const key = a < b ? a + ':' + b : b + ':' + a; if (a !== b && !has.has(key) && !crosses(nodes[a], nodes[b])) { has.add(key); edges.push([a, b]); return true; } return false; };
+    nodes.forEach((n, i) => { if (!i) return; const near = nodes.slice(0, i).map((m, j) => [Math.hypot(n.x - m.x, n.y - m.y), j]).sort((x, y) => x[0] - y[0]); near.some(([, j]) => add(i, j)); });
+    nodes.forEach((n, i) => { const near = nodes.map((m, j) => [Math.hypot(n.x - m.x, n.y - m.y), j]).sort((x, y) => x[0] - y[0]); if (R() < 0.6 && near[2]) add(i, near[2][1]); });
+    // fuera los nodos que se quedan sin aristas (todas cruzaban texto)
+    const deg = nodes.map(() => 0); edges.forEach(([a, b]) => { deg[a]++; deg[b]++; });
+    const keep = [], idx = nodes.map((n, i) => (deg[i] ? keep.push(n) - 1 : -1));
+    return { box: { x0: 0, x1: s.w, y0: 0, y1: s.h }, nodes: keep, edges: edges.map(([a, b]) => ({ a: idx[a], b: idx[b], sp: 0.16 + R() * 0.24, ph: R(), c: R.int(0, 2) })) };
+  }
+  function drawRiceGraph(s, api, t, cols) {
+    const { ctx } = s, g = s.graph, B = g.box;
+    const P = g.nodes.map((n) => ({ x: Math.max(B.x0, Math.min(B.x1, n.x + Math.sin(t * 0.35 + n.p) * 16)), y: Math.max(B.y0, Math.min(B.y1, n.y + Math.cos(t * 0.29 + n.q) * 12)) }));
+    ctx.lineWidth = 2; ctx.strokeStyle = color.alpha(api.tok('fg-3'), api.dark ? 0.45 : 0.4);
+    g.edges.forEach((e) => { ctx.beginPath(); ctx.moveTo(P[e.a].x, P[e.a].y); ctx.lineTo(P[e.b].x, P[e.b].y); ctx.stroke(); });
+    g.edges.forEach((e) => {
+      const u = (t * e.sp + e.ph) % 1, A = P[e.a], Bp = P[e.b];
+      ctx.fillStyle = cols[e.c]; ctx.beginPath(); ctx.arc(A.x + (Bp.x - A.x) * u, A.y + (Bp.y - A.y) * u, 5, 0, TAU); ctx.fill();
+    });
+    g.nodes.forEach((n, i) => {
+      ctx.beginPath(); ctx.arc(P[i].x, P[i].y, n.r, 0, TAU);
+      ctx.fillStyle = color.alpha(api.tok('bg-3'), 0.92); ctx.fill();
+      ctx.lineWidth = 3.5; ctx.strokeStyle = cols[n.c]; ctx.stroke();
+    });
+  }
+
   const painters = (Motor.painters = {
     rice: {
-      init(s, api) { const R = api.rng(s.seed); s.lines = Array.from({ length: 3 }, () => Array.from({ length: 9 }, () => 0.25 + R() * 0.7)); },
+      init(s, api) {
+        const R = api.rng(s.seed); s.lines = Array.from({ length: 3 }, () => Array.from({ length: 9 }, () => 0.25 + R() * 0.7));
+        s.graph = (api.el.classList.contains('divider') || api.el.classList.contains('cover')) ? riceGraph(s, api) : null;
+      },
       frame(s, api, t) {
         const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
         const cols = [api.tok('accent'), api.tok('accent-2'), api.tok('accent-3')];
@@ -1796,6 +2018,7 @@ window.MOTOR_DEFAULT_STYLE="rice";
           ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
         });
         if (s.quiet) return;
+        if (s.graph) return drawRiceGraph(s, api, t, cols);
         // mosaico dwindle: maestra a la izquierda, dos apiladas a la derecha
         const gap = 18, X0 = 1060, Y0 = 118, X1 = 1840, Y1 = 560, mid = 1450, my = (Y0 + Y1) / 2;
         const wins = [[X0, Y0, mid - gap / 2 - X0, Y1 - Y0], [mid + gap / 2, Y0, X1 - mid - gap / 2, my - gap / 2 - Y0], [mid + gap / 2, my + gap / 2, X1 - mid - gap / 2, Y1 - my - gap / 2]];
@@ -1890,8 +2113,27 @@ window.MOTOR_DEFAULT_STYLE="rice";
     });
   }
 
-  // null: el estilo no parte el título en letras (anima el título en CSS).
-  const titleEase = (Motor.titleEase = { rice: 'back.out(1.7)', noche: 'steps(4)', suizo: 'power3.out', aurora: 'expo.out' });
+  // Pintor vacío: deja el fondo liso (data-painter="none").
+  painters.none = { init() {}, frame(s) { s.ctx.clearRect(0, 0, s.w, s.h); } };
+
+  /* Pintor de una diapositiva. data-painter en la sección (o en <html> para todo el deck) admite
+     un nombre para todos los estilos («hilos») o una lista por estilo («noche:escaner aurora:hilos»);
+     los estilos que no aparecen usan su pintor propio. */
+  function painterOf(api) {
+    const pick = (attr) => {
+      if (!attr) return null;
+      for (const tok of attr.trim().split(/[\s,]+/)) {
+        const [a, b] = tok.split(':');
+        const name = b === undefined ? a : a === api.style ? b : null;
+        if (name && painters[name]) return painters[name];
+        if (name) console.warn('[motor] pintor desconocido: ' + name);
+      }
+      return null;
+    };
+    return pick(api.el.dataset.painter) || pick(document.documentElement.dataset.painter) || painters[api.style] || painters.rice;
+  }
+  Motor.painterOf = painterOf;
+
   Motor.fx('backdrop', {
     render(api) {
       const host = api.q('.fx-bg');
@@ -1899,23 +2141,131 @@ window.MOTOR_DEFAULT_STYLE="rice";
       const c = api.canvas(host);
       const s = (api.s = { ...c, host, seed: +(api.el.dataset.seed || 1), style: api.style, quiet: api.el.classList.contains('closing') });
       host.style.opacity = s.quiet && api.style !== 'rice' ? 0.45 : '';
-      (painters[api.style] || painters.rice).init(s, api);
-      (painters[api.style] || painters.rice).frame(s, api, 4, true);
+      const p = (s.painter = painterOf(api));
+      p.init(s, api);
+      p.frame(s, api, 4, true);
     },
     play(api) {
-      const title = api.q('.s-title');
-      const split = () => {
-        if (!api.el.classList.contains('is-active') || !window.gsap || !window.SplitText || !title || titleEase[api.style] === null) return;
-        if (api.el._split) api.el._split.revert();
-        api.el._split = SplitText.create(title, { type: 'words,chars' });
-        gsap.fromTo(api.el._split.chars, { yPercent: 38, opacity: 0.12 }, { yPercent: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: api.style === 'aurora' ? 0.04 : 0.022, ease: titleEase[api.style] || 'power3.out' });
-      };
-      if (!document.fonts || document.fonts.status === 'loaded') split(); else document.fonts.ready.then(split);
-      const p = painters[api.style] || painters.rice;
-      api.raf((t) => { p.frame(api.s, api, 4 + t / 1000); });
+      const s = api.s;
+      api.raf((t) => { s.painter.frame(s, api, 4 + t / 1000); });
     },
-    stop(api) { if (window.gsap && api.el._split) { gsap.killTweensOf(api.el._split.chars); api.el._split.revert(); api.el._split = null; } },
   });
+
+  /* =================================================================
+     ENTRADA DE TÍTULOS
+     Preset por estilo y opt-in por diapositiva con data-title-fx="auto|none|<preset>"
+     (o en <html> para todo el deck). Sin atributo, solo se anima en diapositivas con
+     data-fx="backdrop" (portada, separadores y cierre).
+     ================================================================= */
+  // Curva por estilo; null: el estilo no parte el título (lo anima en CSS con background-clip:text).
+  const titleEase = (Motor.titleEase = { rice: 'back.out(1.7)', noche: 'steps(4)', suizo: 'power3.out', aurora: 'expo.out' });
+  // Preset por estilo (por defecto «rise»). Los estilos con titleEase null nunca se animan.
+  Motor.titleStyle = Motor.titleStyle || {};
+  const titlePresets = (Motor.titlePresets = {});
+  // Registra un preset: fn(title, ctx) con ctx = { api, ease, style, dur }. Devuelve algo con revert() o nada.
+  Motor.titleFx = (name, fn) => { titlePresets[name] = fn; };
+  Motor.titleFx('rise', (title, { api, ease }) => {
+    const split = SplitText.create(title, { type: 'words,chars' });
+    gsap.fromTo(split.chars, { yPercent: 38, opacity: 0.12 }, { yPercent: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: api.style === 'aurora' ? 0.04 : 0.022, ease });
+    return { revert() { gsap.killTweensOf(split.chars); split.revert(); } };
+  });
+  // Líneas que suben desde detrás de una máscara (suizo: editorial, sin opacidades intermedias).
+  Motor.titleFx('mask-lines', (title, { api }) => {
+    const split = SplitText.create(title, { type: 'lines', mask: 'lines' });
+    gsap.from(split.lines, { yPercent: 105, duration: Math.max(0.5, api.dur / 1000 * 1.3), stagger: 0.1, ease: 'power3.out' });
+    return { revert() { gsap.killTweensOf(split.lines); split.revert(); } };
+  });
+  // Palabras que llegan desenfocadas (aurora: lento y orgánico).
+  Motor.titleFx('blur', (title, { api }) => {
+    const split = SplitText.create(title, { type: 'words' });
+    gsap.fromTo(split.words, { filter: 'blur(12px)', opacity: 0, y: 20 }, { filter: 'blur(0px)', opacity: 1, y: 0, duration: Math.max(0.8, api.dur / 1000 * 1.2), stagger: 0.08, ease: 'expo.out' });
+    return { revert() { gsap.killTweensOf(split.words); split.revert(); } };
+  });
+  // Letras que se levantan girando sobre su base (arcilla: plastilina con rebote).
+  Motor.titleFx('pliega', (title, { api, ease }) => {
+    const split = SplitText.create(title, { type: 'words,chars' });
+    gsap.fromTo(split.chars, { rotationX: -90, opacity: 0, transformOrigin: '50% 100%', transformPerspective: 600 }, { rotationX: 0, opacity: 1, duration: Math.max(0.5, api.dur / 900), stagger: 0.03, ease });
+    return { revert() { gsap.killTweensOf(split.chars); split.revert(); } };
+  });
+  // La línea entera pasa de desenfocada a nítida, sin partir (celula: enfocar el microscopio).
+  Motor.titleFx('enfoca', (title, { api }) => {
+    gsap.fromTo(title, { filter: 'blur(8px)', opacity: 0.3 }, { filter: 'blur(0px)', opacity: 1, duration: api.dur / 1000 * 1.4, ease: 'sine.out', clearProps: 'filter,opacity' });
+    return { revert() { gsap.killTweensOf(title); gsap.set(title, { clearProps: 'filter,opacity' }); } };
+  });
+  // Cada letra muestra glifos al azar hasta fijarse, de izquierda a derecha (noche y matriz).
+  const GLYPHS = { noche: '▚▞░▒<>/\\_', matriz: '·•●' };
+  /* Revelado por glifos: cada letra muestra glifos al azar (deterministas) hasta fijarse.
+     order: start (izquierda a derecha), center o random. Devuelve { revert }. */
+  Motor.scramble = (el, api, { order = 'start', span } = {}) => {
+    const split = SplitText.create(el, { type: 'words,chars' });
+    const chars = split.chars, real = chars.map((c) => c.textContent), n = chars.length;
+    const k = api.el.getBoundingClientRect().width / 1920 || 1, R = api.rng(n * 31 + 7);
+    const set = GLYPHS[api.style] || 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    // ancho fijo por letra para que el texto no baile mientras cambia
+    chars.forEach((c) => { const w = c.getBoundingClientRect().width / k; c.style.display = 'inline-block'; c.style.width = w + 'px'; c.style.textAlign = 'center'; });
+    el.setAttribute('aria-label', real.join(''));
+    const total = span || Math.max(500, api.dur * 1.4), mid = (n - 1) / 2;
+    const rank = (i) => (order === 'center' ? Math.abs(i - mid) / Math.max(1, mid) : order === 'random' ? R() : i / Math.max(1, n - 1));
+    const at = chars.map((_, i) => 120 + rank(i) * total);
+    let dead = false, tick = -1;
+    api.raf((t) => {
+      if (dead) return false;
+      const fresh = Math.floor(t / 55) !== tick; tick = Math.floor(t / 55);
+      let left = 0;
+      chars.forEach((c, i) => {
+        if (t >= at[i]) { if (c.classList.contains('scr')) { c.textContent = real[i]; c.classList.remove('scr'); } return; }
+        left++;
+        if (fresh && real[i].trim()) { c.textContent = set[Math.floor(R() * set.length)]; c.classList.add('scr'); }
+      });
+      return left > 0;
+    });
+    return { revert() { dead = true; chars.forEach((c, i) => { c.textContent = real[i]; }); split.revert(); el.removeAttribute('aria-label'); } };
+  };
+  Motor.titleFx('descifra', (title, { api }) => Motor.scramble(title, api));
+  Object.assign(Motor.titleStyle, { rice: 'rise', noche: 'descifra', suizo: 'mask-lines', aurora: 'blur', arcilla: 'pliega', nube: 'rise', celula: 'enfoca', matriz: 'descifra' });
+
+  function titlePreset(slide, style) {
+    const own = slide.dataset.titleFx || document.documentElement.dataset.titleFx || (slide.dataset.fx === 'backdrop' ? 'auto' : 'none');
+    if (own === 'none' || titleEase[style] === null) return null;
+    const name = own === 'auto' ? Motor.titleStyle[style] || 'rise' : own;
+    if (!titlePresets[name]) { console.warn('[motor] preset de título desconocido: ' + name); return null; }
+    return titlePresets[name];
+  }
+  function titleOut(slide) { if (slide._title) { try { slide._title.revert(); } catch (e) { /* ya revertido */ } slide._title = null; } }
+  document.addEventListener('motor:enter', (e) => {
+    const { slide, api, animate } = e.detail;
+    titleOut(slide);
+    if (!animate || !window.gsap || !window.SplitText) return;
+    const title = slide.querySelector('.s-title'), fn = title && titlePreset(slide, api.style);
+    if (!fn) return;
+    const run = () => {
+      if (!slide.classList.contains('is-active')) return;
+      titleOut(slide);
+      try { slide._title = fn(title, { api, style: api.style, dur: api.dur, ease: titleEase[api.style] || 'power3.out' }) || null; } catch (err) { console.error('[motor] título', slide.id, err); }
+    };
+    if (!document.fonts || document.fonts.status === 'loaded') run(); else document.fonts.ready.then(run);
+  });
+  document.addEventListener('motor:leave', (e) => titleOut(e.detail.slide));
+
+  /* =================================================================
+     REVELADOS POR ESTILO
+     data-reveal en un [data-step] (o en <html> para todo el deck): «auto» usa el gesto del
+     estilo y un nombre lo fija: fade, wipe, wipe-x, focus, develop, mist, pixel, tilt.
+     El CSS (engine.css) anima según data-rv, que se resuelve al entrar en la diapositiva.
+     ================================================================= */
+  Motor.revealStyle = Object.assign({ rice: 'tilt', noche: 'wipe-x', suizo: 'fade', aurora: 'mist', cromo: 'wipe', arcilla: 'tilt', nube: 'wipe', termica: 'develop', celula: 'focus', matriz: 'pixel' }, Motor.revealStyle);
+  const REVEALS = ['fade', 'wipe', 'wipe-x', 'focus', 'develop', 'mist', 'pixel', 'tilt'];
+  function resolveReveals(slide, style) {
+    const deck = document.documentElement.dataset.reveal;
+    slide.querySelectorAll('[data-step]').forEach((el) => {
+      if (el.matches('.etapas > *, .checklist > *, .bento > *, .mazo > *')) return; // piezas con su propio estado
+      const own = el.dataset.reveal || deck;
+      const kind = own === 'auto' ? Motor.revealStyle[style] || 'fade' : own;
+      if (kind && REVEALS.includes(kind)) el.dataset.rv = kind; else delete el.dataset.rv;
+      if (kind && !REVEALS.includes(kind) && kind !== 'none') console.warn('[motor] revelado desconocido: ' + kind);
+    });
+  }
+  document.addEventListener('motor:enter', (e) => resolveReveals(e.detail.slide, e.detail.api.style));
 
   /* =================================================================
      SEIS DIRECCIONES DE ARTE
@@ -2205,7 +2555,7 @@ window.MOTOR_DEFAULT_STYLE="rice";
   });
 })();
 </script>
-<script>/* fx/fondos.js */
+<script>/* ../../fx/fondos.js */
 /* Fondos generativos de los estilos candidatos.
    Cromo, Arcilla y Nube dibujan con WebGL (con respaldo en 2D si no hay contexto);
    Térmica, Célula y Matriz usan canvas 2D. Se registran en Motor.painters y los usa el efecto «backdrop». */
@@ -2220,27 +2570,36 @@ window.MOTOR_DEFAULT_STYLE="rice";
   // limita a ~30 fps los fondos caros; los estados quietos (render) siempre se dibujan
   const throttle = (s, t, still, fps = 30) => { if (still) return false; if (s.last && t - s.last < 1 / fps && t >= s.last) return true; s.last = t; return false; };
 
-  /* ------------------------------------------------------------------ WebGL */
+  /* ------------------------------------------------------------------ WebGL
+     Una capa por fondo: pide WebGL2 y, si no lo hay, WebGL1. Los sombreadores GLSL 1.00
+     funcionan en las dos; los que empiezan por «#version 300 es» solo con WebGL2
+     (sin él, program() devuelve null y el pintor usa su respaldo 2D). */
   const VS_FULL = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const VS_FULL2 = '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  const isES3 = (src) => /^\s*#version\s+300\s+es/.test(src);
   function glLayer(s, scale) {
     let cv = s.host.querySelector(':scope > canvas.gl');
     if (!cv) { cv = document.createElement('canvas'); cv.className = 'gl'; cv.setAttribute('aria-hidden', 'true'); s.host.insertBefore(cv, s.host.firstChild); }
     const W = Math.max(2, Math.round(s.w * scale)), H = Math.max(2, Math.round(s.h * scale));
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     if (!('_gl' in cv)) {
-      let gl = null;
-      try { gl = cv.getContext('webgl', { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false }); } catch (e) { gl = null; }
-      cv._gl = gl; cv._progs = {};
+      const opts = { alpha: true, premultipliedAlpha: true, preserveDrawingBuffer: true, antialias: false };
+      let gl = null, gl2 = false;
+      try { gl = cv.getContext('webgl2', opts); gl2 = !!gl; } catch (e) { gl = null; }
+      if (!gl) try { gl = cv.getContext('webgl', opts); } catch (e) { gl = null; }
+      cv._gl = gl; cv._gl2 = gl2; cv._progs = {};
     }
     const gl = cv._gl;
     if (!gl || gl.isContextLost()) { cv.style.display = 'none'; return null; }
     cv.style.display = '';
     gl.viewport(0, 0, W, H);
-    return { gl, cv, W, H };
+    return { gl, cv, W, H, gl2: cv._gl2 };
   }
   function program(L, key, vs, fs) {
     const { gl, cv } = L;
     if (key in cv._progs) return cv._progs[key];
+    if (isES3(fs) && vs === VS_FULL) vs = VS_FULL2; // las dos etapas deben tener la misma versión
+    if ((isES3(vs) || isES3(fs)) && !cv._gl2) { cv._progs[key] = null; return null; }
     const mk = (type, src) => {
       const o = gl.createShader(type); gl.shaderSource(o, src); gl.compileShader(o);
       if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn('[motor] shader ' + key + ': ' + gl.getShaderInfoLog(o)); return null; }
@@ -2266,6 +2625,7 @@ window.MOTOR_DEFAULT_STYLE="rice";
       if (typeof v === 'number') gl.uniform1f(loc, v);
       else if (v.length === 2) gl.uniform2fv(loc, v);
       else if (v.length === 3) gl.uniform3fv(loc, v);
+      else if (v.length === 4) gl.uniform4fv(loc, v);
       else if (v.length === 16 && k.startsWith('uM')) gl.uniformMatrix4fv(loc, false, v);
       else gl.uniform3fv(loc, v);
     }
@@ -2284,6 +2644,8 @@ window.MOTOR_DEFAULT_STYLE="rice";
   }
   // resolución del lienzo WebGL: proporcional a la pantalla, con techo por coste del sombreador
   const glScale = (s, k, max = 1.5) => Math.min(max, Math.max(0.35, (s.ratio || 1) * k));
+  // Para pintores y efectos de otros archivos: Motor.gl.layer(s, Motor.gl.scale(s, .7)) → program → drawFull.
+  Motor.gl = { layer: glLayer, program, uniforms, drawFull, scale: glScale, throttle, VS_FULL, VS_FULL2 };
 
   /* ============================================================ CROMO */
   const FS_CROMO = `precision highp float;
@@ -2822,6 +3184,269 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
     },
   };
 
+  /* ============================================================ GRANO (alternativo: data-painter="grano")
+     Degradado fluido bg → accent-2 → accent, más intenso a la derecha, con grano fino. */
+  const FS_GRANO = `precision highp float;
+uniform vec2 uRes; uniform float uT, uDark, uSeed; uniform vec3 uBg, uA, uB;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes, p = uv*vec2(uRes.x/uRes.y, 1.);
+  float t = uT*.05;
+  vec2 q = p + vec2(n(p*1.3 + t + uSeed), n(p*1.3 - t + 3.1 + uSeed))*.6;
+  float g = n(q*1.6 + vec2(t*.7, -t*.4));
+  float m = smoothstep(.42, 1.05, uv.x*.9 + g*.35 - uv.y*.12);
+  vec3 c = mix(uBg, uA, smoothstep(0., .55, m)*mix(.55, .45, uDark));
+  c = mix(c, uB, smoothstep(.5, 1., m)*mix(.5, .4, uDark));
+  c += (h(floor(gl_FragCoord.xy) + fract(uT*7.)*91.) - .5)*mix(.04, .07, uDark);
+  gl_FragColor = vec4(c, 1.);
+}`;
+  P.grano = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still, 24)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const L = glLayer(s, glScale(s, 0.6, 1));
+      const pg = L && program(L, 'grano', VS_FULL, FS_GRANO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uDark: api.dark ? 1 : 0, uSeed: (s.seed % 17) * 0.37, uBg: rgb(api.tok('bg')), uA: rgb(api.tok('accent-2')), uB: rgb(api.tok('accent')) }); return; }
+      const g = ctx.createLinearGradient(w * 0.3, h, w, 0);
+      g.addColorStop(0, color.alpha(api.tok('accent-2'), 0)); g.addColorStop(0.6, color.alpha(api.tok('accent-2'), 0.45)); g.addColorStop(1, color.alpha(api.tok('accent'), 0.75));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+    },
+  };
+
+  /* ============================================================ HILOS (alternativo: data-painter="hilos")
+     Haz de líneas que entra junto por abajo a la izquierda y se deshilacha hacia la derecha. */
+  P.hilos = {
+    init(s, api) {
+      const N = 60, fg = api.tok(api.style === 'suizo' ? 'fg-2' : 'fg-3'), acc = api.tok('accent'), cats = api.cats(3);
+      s.n = api.noise2(s.seed + 5);
+      s.th = Array.from({ length: N }, (_, i) => {
+        const f = i / (N - 1);
+        const col = api.style === 'suizo' ? (i >= N - 3 ? acc : fg) : api.style === 'aurora' ? cats[Math.min(2, Math.floor(f * 3))] : color.mix(fg, acc, f);
+        return { f, col, lw: 2.5 - 2 * f, a: (api.dark ? 0.95 : 0.85) * (1 - 0.7 * Math.pow(f, 0.3)) * (api.style === 'suizo' && i >= N - 3 ? 1.6 : 1) };
+      });
+    },
+    frame(s, api, t) {
+      const { ctx, w, h, n } = s; ctx.clearRect(0, 0, w, h);
+      const A = [-0.04 * w, 0.96 * h], B = [1.04 * w, 0.3 * h], len = Math.hypot(B[0] - A[0], B[1] - A[1]);
+      const d = [(B[0] - A[0]) / len, (B[1] - A[1]) / len], nr = [-d[1], d[0]], M = 120, tt = t * 0.6;
+      s.th.forEach((th, i) => {
+        const split = 0.22 + th.f * 0.3, amp = h * 0.42 * (0.35 + th.f);
+        ctx.strokeStyle = color.alpha(th.col, Math.min(1, th.a)); ctx.lineWidth = Math.max(0.5, th.lw);
+        ctx.beginPath();
+        for (let j = 0; j <= M; j++) {
+          const u = j / M, fr = Math.max(0, u - split) / (1 - split);
+          const off = Math.sin(u * 5 + tt * 0.8) * 12 + Math.pow(fr, 1.4) * amp * n(i * 0.11 + tt * 0.25, u * 2.6 + s.seed);
+          const x = A[0] + d[0] * len * u + nr[0] * off, y = A[1] + d[1] * len * u + nr[1] * off;
+          j ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+        }
+        ctx.stroke();
+      });
+    },
+  };
+
+  /* ------------------------------------------------------------------ isolíneas (marching squares)
+     F: campo gw×gh; emite los segmentos de la curva de nivel lv en coordenadas de rejilla. */
+  const MS = [[], [3, 0], [0, 1], [3, 1], [1, 2], [3, 0, 1, 2], [0, 2], [3, 2], [3, 2], [0, 2], [0, 1, 3, 2], [1, 2], [3, 1], [0, 1], [3, 0], []];
+  function isoSegments(F, gw, gh, lv, emit) {
+    for (let j = 0; j < gh - 1; j++) for (let i = 0; i < gw - 1; i++) {
+      const a = F[j * gw + i], b = F[j * gw + i + 1], c = F[(j + 1) * gw + i + 1], d = F[(j + 1) * gw + i];
+      const k = (a > lv) | ((b > lv) << 1) | ((c > lv) << 2) | ((d > lv) << 3);
+      const segs = MS[k]; if (!segs.length) continue;
+      // bordes: 0 arriba (a-b), 1 derecha (b-c), 2 abajo (d-c), 3 izquierda (a-d)
+      const E = (e) => (e === 0 ? [i + (lv - a) / (b - a), j] : e === 1 ? [i + 1, j + (lv - b) / (c - b)] : e === 2 ? [i + (lv - d) / (c - d), j + 1] : [i, j + (lv - a) / (d - a)]);
+      for (let s = 0; s < segs.length; s += 2) { const p = E(segs[s]), q = E(segs[s + 1]); emit(p[0], p[1], q[0], q[1]); }
+    }
+  }
+  // Borra con un degradado la parte izquierda (columna del título) y, opcionalmente, la de arriba.
+  function fadeOut(ctx, w, h, x0 = 0.3, x1 = 0.56, top = 0) {
+    ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+    let g = ctx.createLinearGradient(w * x0, 0, w * x1, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w * x1, h);
+    if (top) { g = ctx.createLinearGradient(0, h * top * 0.6, 0, h * top); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * top); }
+    ctx.restore();
+  }
+  const fbm = (n, x, y) => 0.6 * n(x, y) + 0.3 * n(x * 2.1 + 3.3, y * 2.1 - 1.7) + 0.1 * n(x * 4.3 - 7.1, y * 4.3 + 2.9);
+
+  /* ============================================================ TOPO (data-painter="topo")
+     Terreno en perspectiva dibujado con curvas de nivel; curva maestra cada 5. Avanza despacio. */
+  P.topo = {
+    init(s, api) { s.last = 0; s.n = api.noise2(s.seed + 21); s.gw = 150; s.gh = 80; s.F = new Float32Array(s.gw * s.gh); },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still, 20)) return;
+      const { ctx, w, h, n, gw, gh, F } = s; ctx.clearRect(0, 0, w, h);
+      let mn = 1e9, mx = -1e9;
+      for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+        const x = (i / gw) * 4, y = (j / gh) * 3 - t * 0.12, q = n(x * 0.7 + 5, y * 0.7) * 0.8;
+        const v = fbm(n, x + q, y + q * 0.6); F[j * gw + i] = v; if (v < mn) mn = v; if (v > mx) mx = v;
+      }
+      const hz = 0.36 * h, L = 22, nube = api.style === 'nube';
+      const P2 = (u, v, z) => { const V = v / (gh - 1), U = u / (gw - 1), sp = 0.5 + 1.15 * V; return [w * 0.68 + (U - 0.5) * w * sp, hz + (h * 1.05 - hz) * Math.pow(V, 1.6) - ((z - mn) / (mx - mn || 1)) * 120 * (0.3 + 0.7 * V)]; };
+      const minor = api.tok('fg-3'), major = api.tok('accent');
+      for (let l = 1; l < L; l++) {
+        const lv = mn + ((mx - mn) * l) / L, master = l % 5 === 0;
+        ctx.beginPath();
+        isoSegments(F, gw, gh, lv, (x1, y1, x2, y2) => { const A = P2(x1, y1, lv), B = P2(x2, y2, lv); ctx.moveTo(A[0], A[1]); ctx.lineTo(B[0], B[1]); });
+        ctx.strokeStyle = nube ? color.alpha(api.seq(l / L), master ? 1 : 0.75) : master ? color.alpha(major, 0.9) : color.alpha(minor, api.dark ? 0.5 : 0.6);
+        ctx.lineWidth = master ? 2.2 : 1.2; ctx.stroke();
+      }
+      fadeOut(ctx, w, h, 0.28, 0.55, 0.5);
+    },
+  };
+
+  /* ============================================================ ISOLÍNEAS (data-painter="isolineas")
+     Curvas de nivel de un ruido que fluye, en cat-1…cat-3. GLSL 3.00 (fwidth); respaldo 2D plano. */
+  const FS_ISO = `#version 300 es
+precision highp float;
+uniform vec2 uRes; uniform float uT, uDark, uSeed; uniform vec3 uC1, uC2, uC3; out vec4 o;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+float fbm(vec2 p){ return .55*n(p) + .3*n(p*2.03 + 1.7) + .15*n(p*4.01 - 3.1); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes, p = uv*vec2(uRes.x/uRes.y, 1.)*2.2;
+  float t = uT*.08;
+  vec2 q = vec2(fbm(p + vec2(0., t) + uSeed), fbm(p + vec2(5.2, 1.3) - t));
+  float v = fbm(p + q*1.4 + vec2(t*.5, 0.))*16.;
+  float dl = (.5 - abs(fract(v) - .5))/max(fwidth(v), 1e-4);
+  float line = 1. - smoothstep(.5, 1.5, dl);
+  float b = mod(floor(v + .5), 3.);
+  vec3 c = b < .5 ? uC1 : b < 1.5 ? uC2 : uC3;
+  float a = line*mix(.8, .95, uDark)*smoothstep(.4, .74, uv.x)*(1. - .85*smoothstep(.6, .9, uv.y)*(1. - smoothstep(.6, .9, uv.x)));
+  o = vec4(c*a, a);
+}`;
+  P.isolineas = {
+    init(s, api) { s.last = 0; s.n = api.noise2(s.seed + 9); },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const [c1, c2, c3] = api.cats(3);
+      const L = glLayer(s, glScale(s, 0.7, 1));
+      const pg = L && program(L, 'isolineas', VS_FULL, FS_ISO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uDark: api.dark ? 1 : 0, uSeed: (s.seed % 13) * 0.71, uC1: rgb(c1), uC2: rgb(c2), uC3: rgb(c3) }); return; }
+      // respaldo 2D: las mismas curvas sobre una rejilla gruesa
+      const gw = 96, gh = 54, F = (s.F2 = s.F2 || new Float32Array(gw * gh)), n = s.n;
+      for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) F[j * gw + i] = fbm(n, (i / gw) * 4.4 + t * 0.02, (j / gh) * 2.5 - t * 0.015);
+      const cols = [c1, c2, c3];
+      for (let l = -12; l <= 12; l++) {
+        ctx.beginPath();
+        isoSegments(F, gw, gh, l * 0.06, (x1, y1, x2, y2) => { ctx.moveTo((x1 / (gw - 1)) * w, (y1 / (gh - 1)) * h); ctx.lineTo((x2 / (gw - 1)) * w, (y2 / (gh - 1)) * h); });
+        ctx.strokeStyle = color.alpha(cols[(l + 12) % 3], 0.85); ctx.lineWidth = 1.6; ctx.stroke();
+      }
+      fadeOut(ctx, w, h);
+    },
+  };
+
+  /* ============================================================ ESCÁNER (data-painter="escaner")
+     Sala de rejilla en perspectiva recorrida por un plano láser (barrido 2,4 s y pausa 1,6 s). */
+  const FS_ESC = `precision highp float;
+uniform vec2 uRes; uniform float uScan; uniform vec3 uLine, uAcc, uAcc2;
+void main(){
+  vec2 uv = (gl_FragCoord.xy - .5*uRes)/uRes.y; uv.x -= .34;
+  vec3 ro = vec3(0., .25, 0.), rd = normalize(vec3(uv, 1.5));
+  float W = 2.3, H = 1.4, D = 14.;
+  float tx = ((rd.x > 0. ? W : -W) - ro.x)/rd.x, ty = ((rd.y > 0. ? H : -H) - ro.y)/rd.y, tz = (D - ro.z)/rd.z;
+  float t = min(tx, min(ty, tz)); vec3 p = ro + rd*t;
+  vec2 c = t == tx ? p.zy : t == ty ? p.xz : p.xy;
+  vec2 g = abs(fract(c*1.25) - .5);
+  float w = clamp(.006*t + .01, .012, .12);
+  float l = smoothstep(.5 - w, .5, max(g.x, g.y));
+  float fog = exp(-t*.12);
+  float dz = p.z - uScan;
+  float laser = exp(-dz*dz*160.);
+  float trail = dz < 0. ? exp(dz*1.8)*.55 : 0.;
+  float wl = l*fog*.55, wa = laser*1.2 + trail*l*1.3;
+  float floorRef = (t == ty && p.y < 0.) ? exp(-abs(dz)*1.4)*.18 : 0.;
+  float a = clamp(wl + wa + floorRef, 0., 1.)*smoothstep(.4, .72, gl_FragCoord.x/uRes.x)*(1. - .8*smoothstep(.6, .9, gl_FragCoord.y/uRes.y)*(1. - smoothstep(.6, .9, gl_FragCoord.x/uRes.x)));
+  vec3 col = (uLine*wl + uAcc*wa + uAcc2*floorRef)/max(wl + wa + floorRef, 1e-3);
+  gl_FragColor = vec4(col*a, a);
+}`;
+  P.escaner = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const D = 14, ph = (t - 4) % 4, scan = still ? D * 0.45 : ph < 2.4 ? 0.6 + (D - 0.6) * (ph / 2.4) : D + 6;
+      const L = glLayer(s, glScale(s, 0.8, 1.2));
+      const pg = L && program(L, 'escaner', VS_FULL, FS_ESC);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uScan: scan, uLine: rgb(api.tok(api.dark ? 'fg-3' : 'fg-2')), uAcc: rgb(api.tok('accent')), uAcc2: rgb(api.tok('accent-2')) }); return; }
+      // respaldo 2D: líneas de fuga y el plano de barrido como un rectángulo
+      const vx = w * 0.72, vy = h * 0.47;
+      ctx.strokeStyle = color.alpha(api.tok('fg-3'), 0.5); ctx.lineWidth = 1;
+      for (let k = 0; k <= 12; k++) { const x = w * 0.45 + (k / 12) * w * 0.6; ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(x, h); ctx.stroke(); ctx.beginPath(); ctx.moveTo(vx, vy); ctx.lineTo(x, 0); ctx.stroke(); }
+      const f = 1 / (1 + scan * 0.35);
+      ctx.strokeStyle = api.tok('accent'); ctx.lineWidth = 3; ctx.strokeRect(vx - w * 0.3 * f, vy - h * 0.5 * f, w * 0.6 * f, h * f);
+    },
+  };
+
+  /* ============================================================ VELO (data-painter="velo")
+     Banda de aurora en el borde superior (cat-1 → cat-3); al entrar baja y después ondula. */
+  const FS_VELO = `precision highp float;
+uniform vec2 uRes; uniform float uT, uRev, uDark; uniform vec3 uC1, uC2, uC3;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)))*43758.5453); }
+float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f*f*(3. - 2.*f); return mix(mix(h(i), h(i + vec2(1., 0.)), f.x), mix(h(i + vec2(0., 1.)), h(i + 1.), f.x), f.y); }
+void main(){
+  vec2 uv = gl_FragCoord.xy/uRes; float x = uv.x*uRes.x/uRes.y, t = uT*.15;
+  float hg = .09 + .08*n(vec2(x*1.2 + t, t*.5)) + .04*n(vec2(x*2.7 - t*1.3, 3. + t*.3));
+  float d = (1. - (1. - uRev)*.4) - uv.y;
+  float a = exp(-max(d, 0.)/hg*2.)*smoothstep(-.02, .03, d);
+  a *= .6 + .4*n(vec2(x*9. + t*2., uv.y*1.5));
+  vec3 c = uv.x < .5 ? mix(uC1, uC2, uv.x*2.) : mix(uC2, uC3, uv.x*2. - 1.);
+  a *= mix(.55, .7, uDark);
+  gl_FragColor = vec4(c*a, a);
+}`;
+  P.velo = {
+    init(s) { s.last = 0; },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
+      const rev = still ? 1 : smooth(0, 1, (t - 4) / 2.4), [c1, c2, c3] = api.cats(3);
+      const L = glLayer(s, glScale(s, 0.5, 0.8));
+      const pg = L && program(L, 'velo', VS_FULL, FS_VELO);
+      if (pg) { drawFull(L, pg, { uRes: [L.W, L.H], uT: t, uRev: rev, uDark: api.dark ? 1 : 0, uC1: rgb(c1), uC2: rgb(c2), uC3: rgb(c3) }); return; }
+      const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, c1); g.addColorStop(0.5, c2); g.addColorStop(1, c3);
+      ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = g; ctx.fillRect(0, -h * 0.4 * (1 - rev), w, h * 0.3); ctx.restore();
+      const m = ctx.createLinearGradient(0, h * 0.05, 0, h * 0.3);
+      ctx.save(); ctx.globalCompositeOperation = 'destination-out'; m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)'); ctx.fillStyle = m; ctx.fillRect(0, h * 0.05, w, h * 0.3); ctx.restore();
+    },
+  };
+
+  /* ============================================================ RADAR (data-painter="radar")
+     Pantalla PPI: anillos, rumbos, barrido con estela y contactos que se apagan tras cada pasada. */
+  P.radar = {
+    init(s, api) {
+      const R = api.rng(s.seed + 31);
+      s.last = 0; s.n = api.noise2(s.seed + 3);
+      s.ct = Array.from({ length: 6 }, (_, i) => ({ r: 0.25 + R() * 0.68, a: R() * TAU, k: i, d: (1 + R() * 3).toFixed(1).replace('.', ',') }));
+    },
+    frame(s, api, t, still) {
+      if (throttle(s, t, still)) return;
+      const { ctx, w, h, n } = s; ctx.clearRect(0, 0, w, h);
+      const cx = w * 0.74, cy = h * 0.52, Rr = h * 0.38, fg3 = api.tok('fg-3'), acc = api.tok('accent');
+      const sweep = ((t * 0.9 - 4 * 0.9 - 0.61) % TAU + TAU) % TAU; // en reposo, a −35°
+      ctx.lineWidth = 1.5;
+      for (let k = 1; k <= 4; k++) { ctx.strokeStyle = color.alpha(fg3, k === 4 ? 0.6 : 0.35); ctx.beginPath(); ctx.arc(cx, cy, (Rr * k) / 4, 0, TAU); ctx.stroke(); }
+      for (let k = 0; k < 12; k++) { const a = (k / 12) * TAU; ctx.strokeStyle = color.alpha(fg3, 0.25); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr); ctx.stroke(); }
+      for (let k = 0; k < 72; k++) { const a = (k / 72) * TAU, l = k % 6 ? 8 : 18; ctx.strokeStyle = color.alpha(fg3, 0.55); ctx.beginPath(); ctx.moveTo(cx + Math.cos(a) * Rr, cy + Math.sin(a) * Rr); ctx.lineTo(cx + Math.cos(a) * (Rr + l), cy + Math.sin(a) * (Rr + l)); ctx.stroke(); }
+      // estela: gradiente cónico que se apaga detrás del barrido
+      if (ctx.createConicGradient) {
+        const g = ctx.createConicGradient(sweep - 1.1, cx, cy);
+        g.addColorStop(0, color.alpha(acc, 0)); g.addColorStop(1.1 / TAU, color.alpha(acc, api.dark ? 0.35 : 0.25)); g.addColorStop(1.1 / TAU + 0.001, color.alpha(acc, 0)); g.addColorStop(1, color.alpha(acc, 0));
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, Rr, 0, TAU); ctx.fill();
+      }
+      ctx.strokeStyle = acc; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(sweep) * Rr, cy + Math.sin(sweep) * Rr); ctx.stroke();
+      ctx.font = api.font('mono', 22, 500); ctx.textBaseline = 'middle';
+      s.ct.forEach((c) => {
+        const a = c.a + n(c.k * 3.1, t * 0.05) * 0.25, r = Math.min(0.95, c.r + n(t * 0.04, c.k * 2.3) * 0.08);
+        const since = ((sweep - a) % TAU + TAU) % TAU, glow = Math.exp(-since / 2.2);
+        const x = cx + Math.cos(a) * r * Rr, y = cy + Math.sin(a) * r * Rr, hit = c.k === 0;
+        const col = hit ? api.tok('err') : api.tok('fg');
+        ctx.fillStyle = color.alpha(col, 0.25 + 0.75 * glow); ctx.beginPath(); ctx.arc(x, y, hit ? 9 : 6, 0, TAU); ctx.fill();
+        if (hit) { ctx.fillStyle = color.alpha(api.tok('fg'), 0.4 + 0.6 * glow); ctx.fillText('contacto · ' + c.d + ' m', x + 18, y); }
+      });
+    },
+  };
+
   /* ============================================================ MATRIZ */
   function ledSprite(hex, glow, R) {
     const S = 18, c = document.createElement('canvas'); c.width = c.height = Math.ceil(S * R);
@@ -2871,7 +3496,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
   };
 })();
 </script>
-<script>/* fx/ros.js */
+<script>/* ../../fx/ros.js */
 /* Efectos de robótica con ROS 2: grafo de nodos, LiDAR, mapa de ocupación con A*,
    árbol TF, plano técnico de la base y telemetría tipo osciloscopio. */
 (() => {
@@ -3324,7 +3949,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
   }
 })();
 </script>
-<script>/* fx/ml.js */
+<script>/* ../../fx/ml.js */
 /* Efectos de aprendizaje automático: curvas de entrenamiento, matriz de confusión,
    espacio latente y arquitectura de una red. Datos sintéticos y deterministas. */
 (() => {
@@ -3584,7 +4209,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
   });
 })();
 </script>
-<script>/* fx/datos.js */
+<script>/* ../../fx/datos.js */
 /* Efectos de análisis de datos: tres nubes de palabras, ridgeline, calendario de commits,
    sankey de un pipeline y panel de indicadores con sparklines. Datos sintéticos. */
 (() => {
@@ -3827,7 +4452,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
   });
 })();
 </script>
-<script>/* fx/arch.js */
+<script>/* ../../fx/arch.js */
 /* Efectos de Arch + Hyprland: escritorio en mosaico (dwindle) y ficha tipo fastfetch. */
 (() => {
   const { color } = Motor;
