@@ -1,3 +1,6 @@
 output/*
 !output/.gitkeep
 node_modules/
+# Presentaciones personales: no se suben. Solo el deck de pruebas del motor.
+decks/*
+!decks/motor-pruebas/
