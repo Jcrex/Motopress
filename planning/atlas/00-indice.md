@@ -2,7 +2,7 @@
 
 Presentación de referencia con una diapositiva por componente del motor, incluidos los «quizás». Deck: `atlas/completo/index.html`. El Atlas original pasa a `atlas/original/` sin cambios de contenido.
 
-**Progreso:** 0 de 238 componentes explicados · unas 288 diapositivas previstas (más la portada).
+**Progreso:** 19 de 238 componentes explicados · unas 288 diapositivas previstas (más la portada).
 
 Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir de `atlas.db`, que es donde se marca el progreso (`explicado = 1`).
 
@@ -11,7 +11,7 @@ Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir
 | # | Lote | Estado | Componentes | Quizás | Diapositivas | Subplan |
 |---:|---|---|---:|---:|---:|---|
 | 0 | L00 · Infraestructura | completado | — | — | 1 (portada) | [L00-infra/plan.md](L00-infra/plan.md) |
-| 1 | L01-nucleo · Núcleo | pendiente | 0/19 | 0 | 21 | [L01-nucleo/plan.md](L01-nucleo/plan.md) |
+| 1 | L01-nucleo · Núcleo | completado | 19/19 | 0 | 21 | [L01-nucleo/plan.md](L01-nucleo/plan.md) |
 | 2 | L02-api · API de efectos | pendiente | 0/10 | 0 | 19 | [L02-api/plan.md](L02-api/plan.md) |
 | 3 | L03-estilos · Estilos y tokens | pendiente | 0/14 | 0 | 16 | [L03-estilos/plan.md](L03-estilos/plan.md) |
 | 4 | L04-transiciones · Transiciones | pendiente | 0/11 | 0 | 13 | [L04-transiciones/plan.md](L04-transiciones/plan.md) |
@@ -26,8 +26,8 @@ Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir
 
 ## Flujo por componente
 
-1. Implementar la diapositiva (y, en los «quizás», portar antes el componente de react-bits a `fx/experimental/`).
-2. Servir la raíz (`python3 -m http.server 8000`) y ejecutar `node tools/verificar.mjs atlas/completo` y `node planning/atlas/recorrer.mjs` (L00).
+1. Implementar la diapositiva en `atlas/completo/src/lNN.html` (con sus efectos en `atlas/completo/lotes/lNN.js` y `.css`; en los «quizás», portar antes el componente de react-bits a `fx/experimental/`) y montar el deck con `python3 planning/atlas/montar.py`. Las fichas y los títulos de lote salen de `atlas.db` con los marcadores `<!-- ficha:id -->`, `<!-- kicker:id -->` y `<!-- titulo:LNN -->`.
+2. Servir la raíz (`python3 -m http.server 8000`) y ejecutar `node tools/verificar.mjs atlas/completo` y `node planning/atlas/recorrer.mjs`; comprobar los criterios interactivos con un script de Playwright.
 3. Revisar las capturas de esa diapositiva en suizo y noche, claro y oscuro.
 4. `UPDATE componentes SET explicado=1, diapositivas='<ids>' WHERE id='<id>'` en `atlas.db`.
 5. Regenerar planes e índice con `generar_planes.py`.

@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- GENERADO por planning/atlas/montar.py a partir de atlas/completo/src/. No editar a mano. -->
 <html lang="es" data-style="suizo">
 <head>
 <meta charset="utf-8">
@@ -15,10 +16,12 @@
 <link rel="stylesheet" href="../../themes/styles.css">
 <link rel="stylesheet" href="completo.css">
 <!-- CSS de lotes: se añade aquí lote a lote -->
+<link rel="stylesheet" href="lotes/l01.css">
 </head>
 <body>
 <main class="viewport">
 <div class="stage">
+
 
 <!-- ======================= L00 · PORTADA ======================= -->
 <section class="slide is-plain cover" id="l00-portada" data-fx="backdrop" data-seed="5" data-section="Inicio" data-title="Atlas Completo">
@@ -36,7 +39,261 @@
   </div>
 </section>
 
-<!-- Plantilla de ficha: ver planning/atlas/L00-infra/resumen.md -->
+
+<!-- ======================= L01 · NÚCLEO ======================= -->
+<section class="slide" id="l01-titulo" data-section="Núcleo" data-title="Núcleo">
+  <header class="s-head"><p class="kicker">lote 01 · 19 componentes</p><h2 class="s-title">Núcleo</h2></header>
+  <div class="s-body ac-lote"><div><p class="ac-lote-num">01</p><p class="ac-lote-desc">Lienzo, anatomía de la diapositiva, navegación, pasos, HUD, vista general, preferencias, ciclo de vida de efectos, eventos, impresión.</p></div><ol class="ac-lote-demos largo"><li><span>Lienzo 1920×1080 y escalado</span><code>l01-lienzo</code></li><li><span>Anatomía de una diapositiva</span><code>l01-anatomia-slide</code></li><li><span>Navegación con teclado</span><code>l01-navegacion-teclado</code></li><li><span>Navegación táctil</span><code>l01-navegacion-tactil</code></li><li><span>Ancla de la URL</span><code>l01-ancla-url</code></li><li><span>Pasos (data-step)</span><code>l01-pasos</code></li><li><span>HUD de controles</span><code>l01-hud</code></li><li><span>Barra de progreso</span><code>l01-barra-progreso</code></li><li><span>Vista general</span><code>l01-vista-general</code></li><li><span>Pantalla completa</span><code>l01-pantalla-completa</code></li><li><span>Selector de estilo</span><code>l01-selector-estilo</code></li><li><span>Modo claro y oscuro</span><code>l01-modo-claro-oscuro</code></li><li><span>Memoria de preferencias</span><code>l01-preferencias</code></li><li><span>Estilos del deck (MOTOR_PICK)</span><code>l01-motor-pick</code></li><li><span>Decorado por diapositiva</span><code>l01-decorado-slide</code></li><li><span>Ciclo de vida de un efecto</span><code>l01-ciclo-fx</code></li><li><span>Eventos del motor</span><code>l01-eventos-motor</code></li><li><span>Movimiento reducido</span><code>l01-movimiento-reducido</code></li><li><span>Impresión y PDF</span><code>l01-impresion-pdf</code></li></ol></div>
+</section>
+
+<section class="slide" id="l01-lienzo" data-fx="ac-lienzo" data-section="Núcleo" data-title="Lienzo y escalado">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Lienzo 1920 × 1080</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="fx" data-role="lienzo"></div>
+      <p class="ac-medida" data-role="medida"></p>
+    </div>
+    <aside class="ac-info panel" data-componente="lienzo"><p class="ac-nombre"><b>Lienzo 1920×1080 y escalado</b><code>lienzo</code></p><p class="ac-proposito">Componer siempre sobre un lienzo fijo de 1920×1080 y escalarlo al tamaño de la ventana sin deformarlo</p><dl class="ac-params"><dt>margenes</dt><dd>120 arriba, 128 lados, 140 abajo</dd><dt>cuerpo_util</dt><dd>1664×630</dd></dl><p class="ac-fuente"><code>engine/engine.js fit() · engine/engine.css .viewport .stage</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-anatomia-slide" data-fx="ac-anatomia" data-section="Núcleo" data-title="Anatomía de una diapositiva">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Anatomía</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-maqueta panel">
+        <span class="ac-parte p-kicker">kicker</span>
+        <span class="ac-parte p-titulo">s-title</span>
+        <span class="ac-parte p-cuerpo">s-body</span>
+        <span class="ac-parte p-deco">deco (lo inyecta el motor)</span>
+      </div>
+      <pre class="ac-cod" data-role="atributos"></pre>
+    </div>
+    <aside class="ac-info panel" data-componente="anatomia-slide"><p class="ac-nombre"><b>Anatomía de una diapositiva</b><code>anatomia-slide</code></p><p class="ac-proposito">Estructura común de cada diapositiva para que el motor la numere, la agrupe y la decore</p><dl class="ac-params"><dt>atributos</dt><dd>id · data-section · data-title · data-fx</dd><dt>clases</dt><dd>s-head · kicker · s-title · s-body</dd></dl><p class="ac-fuente"><code>engine/engine.css .slide .s-head .kicker .s-title .s-body</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-navegacion-teclado" data-section="Núcleo" data-title="Navegación con teclado">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Teclado</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo ac-teclas">
+      <div class="ac-grupo" data-step data-reveal="auto"><p class="label">avanzar</p><p><span class="keycap">→</span><span class="keycap">Espacio</span><span class="keycap">↓</span><span class="keycap">AvPág</span><span class="keycap">Intro</span></p></div>
+      <div class="ac-grupo" data-step data-reveal="auto"><p class="label">retroceder</p><p><span class="keycap">←</span><span class="keycap">↑</span><span class="keycap">RePág</span><span class="keycap">Retroceso</span></p></div>
+      <div class="ac-grupo" data-step data-reveal="auto"><p class="label">extremos</p><p><span class="keycap">Inicio</span><span class="keycap">Fin</span></p></div>
+      <div class="ac-grupo" data-step data-reveal="auto"><p class="label">interfaz</p><p><span class="keycap">O</span> vista <span class="keycap">Esc</span> salir <span class="keycap">S</span><span class="keycap">⇧S</span> estilo <span class="keycap">1…0</span> estilo directo <span class="keycap">D</span> modo <span class="keycap">F</span> pantalla <span class="keycap">H</span> controles</p></div>
+      <p class="note">Cada grupo aparece con →: esta misma diapositiva usa pasos. Se ignoran las teclas con Ctrl, Alt o Meta y las que se pulsan dentro de un campo de texto.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="navegacion-teclado"><p class="ac-nombre"><b>Navegación con teclado</b><code>navegacion-teclado</code></p><p class="ac-proposito">Avanzar y retroceder por pasos y diapositivas con el teclado</p><dl class="ac-params"><dt>siguiente</dt><dd>→ · Espacio · ↓ · AvPág · Intro</dd><dt>anterior</dt><dd>← · ↑ · RePág · Retroceso</dd><dt>extremos</dt><dd>Inicio · Fin</dd></dl><p class="ac-fuente"><code>engine/engine.js onKey() next() prev() go()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-navegacion-tactil" data-fx="ac-tactil" data-section="Núcleo" data-title="Navegación táctil">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Gesto táctil</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx" data-role="gesto"></div></div>
+    <aside class="ac-info panel" data-componente="navegacion-tactil"><p class="ac-nombre"><b>Navegación táctil</b><code>navegacion-tactil</code></p><p class="ac-proposito">Pasar diapositivas deslizando el dedo en pantallas táctiles</p><dl class="ac-params"><dt>umbral_px</dt><dd>50</dd><dt>relacion_horizontal</dt><dd>1.3</dd></dl><p class="ac-fuente"><code>engine/engine.js onTouch()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-ancla-url" data-fx="ac-ancla" data-section="Núcleo" data-title="Ancla de la URL">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Ancla de la URL</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <p class="ac-barra mono" data-role="url"></p>
+      <ol class="ac-pasos-texto">
+        <li>Al cargar, el motor lee <code>#id</code> y abre esa diapositiva.</li>
+        <li>Al navegar, reescribe el ancla con <code>history.replaceState</code>: no llena el historial.</li>
+        <li>Con la página ya abierta, cambiar el ancla a mano no navega. Desde código se usa <code>Motor.go('id')</code>.</li>
+      </ol>
+      <p><button type="button" class="ac-btn" data-ac-accion="go:l01-hud">Motor.go('l01-hud')</button></p>
+    </div>
+    <aside class="ac-info panel" data-componente="ancla-url"><p class="ac-nombre"><b>Ancla de la URL</b><code>ancla-url</code></p><p class="ac-proposito">Abrir una diapositiva concreta con #id y mantener la URL al día al navegar</p><dl class="ac-params"><dt>ejemplo</dt><dd>#lidar</dd></dl><p class="ac-fuente"><code>engine/engine.js go() init()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-pasos" data-fx="ac-pasos" data-section="Núcleo" data-title="Pasos">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Pasos (data-step)</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <p class="ac-contador"><span class="label">api.step / api.steps</span><b data-role="contador"></b></p>
+      <div class="row ac-tres">
+        <div class="panel" data-step>Primer paso</div>
+        <div class="panel" data-step>Segundo paso</div>
+        <div class="panel" data-step>Tercer paso</div>
+      </div>
+      <p class="note">Cada → enciende el siguiente <code>[data-step]</code> (clase <code>on</code>). Cuando no quedan pasos, → pasa de diapositiva. En la vista general cuentan todos como visibles.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="pasos"><p class="ac-nombre"><b>Pasos (data-step)</b><code>pasos</code></p><p class="ac-proposito">Revelar elementos uno a uno dentro de una diapositiva antes de pasar a la siguiente</p><dl class="ac-params"><dt>atributo</dt><dd>data-step</dd><dt>clase_visible</dt><dd>on</dd><dt>api</dt><dd>api.step · api.steps</dd></dl><p class="ac-fuente"><code>engine/engine.js stepped() · engine/engine.css [data-step]</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-hud" data-fx="ac-hud" data-section="Núcleo" data-title="HUD de controles">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">HUD de controles</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-hud-marco" data-role="hud"></div>
+      <ol class="ac-leyenda-num" data-role="leyenda">
+        <li>anterior</li><li>contador (diapositiva / total)</li><li>siguiente</li><li>un botón por estilo, con su tecla</li><li>claro u oscuro (D)</li><li>vista general (O)</li><li>pantalla completa (F)</li>
+      </ol>
+      <p class="note">Copia del HUD real de esta página. Se oculta solo a los 2,8 s sin mover el ratón; H lo oculta o lo muestra.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="hud"><p class="ac-nombre"><b>HUD de controles</b><code>hud</code></p><p class="ac-proposito">Controles flotantes con contador, selector de estilos y botones; se ocultan con H o por inactividad</p><dl class="ac-params"><dt>tecla</dt><dd>H</dd><dt>piezas</dt><dd>hud-count · hud-styles · hud-sep</dd></dl><p class="ac-fuente"><code>engine/engine.js buildHud() updateHud() wake() · engine/engine.css .hud</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-barra-progreso" data-fx="ac-progreso" data-section="Núcleo" data-title="Barra de progreso">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Barra de progreso</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-barra-p"><span data-role="relleno"></span></div>
+      <p class="ac-formula mono" data-role="formula"></p>
+      <p class="note">La barra real está en el borde de la ventana: <code>.progress</code> con la variable <code>--p</code> que actualiza <code>updateHud()</code>.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="barra-progreso"><p class="ac-nombre"><b>Barra de progreso</b><code>barra-progreso</code></p><p class="ac-proposito">Indicar cuánto queda de la presentación</p><p class="ac-fuente"><code>engine/engine.css .progress</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-vista-general" data-section="Núcleo" data-title="Vista general">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Vista general</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-mini-rejilla" aria-hidden="true"><i></i><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p><span class="keycap">O</span> abre y cierra · <span class="keycap">Esc</span> cierra · un clic en una miniatura salta a ella</p>
+      <p><button type="button" class="ac-btn" data-ac-accion="overview">Abrir la vista general</button></p>
+      <p class="note">Antes de reducir, el motor dibuja a tamaño real todas las diapositivas con efecto, con todos sus pasos.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="vista-general"><p class="ac-nombre"><b>Vista general</b><code>vista-general</code></p><p class="ac-proposito">Ver todas las diapositivas en miniatura y saltar a una con un clic</p><dl class="ac-params"><dt>tecla</dt><dd>O</dd><dt>salir</dt><dd>Escape</dd></dl><p class="ac-fuente"><code>engine/engine.js toggleOverview() layoutOverview()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-pantalla-completa" data-section="Núcleo" data-title="Pantalla completa">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Pantalla completa</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <p><span class="keycap">F</span> alterna la pantalla completa del documento.</p>
+      <p><button type="button" class="ac-btn" data-ac-accion="fullscreen">Alternar pantalla completa</button></p>
+      <p class="note">Usa <code>requestFullscreen</code> sobre <code>&lt;html&gt;</code>. Si el navegador lo deniega, el motor no muestra error.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="pantalla-completa"><p class="ac-nombre"><b>Pantalla completa</b><code>pantalla-completa</code></p><p class="ac-proposito">Entrar y salir de pantalla completa</p><dl class="ac-params"><dt>tecla</dt><dd>F</dd></dl><p class="ac-fuente"><code>engine/engine.js fullscreen()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-selector-estilo" data-fx="ac-estilos" data-section="Núcleo" data-title="Selector de estilo">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Selector de estilo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-estilos" data-role="estilos"></div>
+      <p class="note">Cada botón llama a <code>Motor.setStyle(id)</code>: cambia <code>&lt;html data-style&gt;</code>, lo guarda y vuelve a dibujar la diapositiva activa.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="selector-estilo"><p class="ac-nombre"><b>Selector de estilo</b><code>selector-estilo</code></p><p class="ac-proposito">Cambiar la dirección de arte en vivo sin recargar</p><dl class="ac-params"><dt>teclas</dt><dd>S · ⇧S · 1…9 · 0</dd><dt>atributo</dt><dd>&lt;html data-style&gt;</dd></dl><p class="ac-fuente"><code>engine/engine.js setStyle() cycleStyle()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-modo-claro-oscuro" data-fx="ac-modo" data-section="Núcleo" data-title="Modo claro y oscuro">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Claro y oscuro</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-dos" data-role="dos">
+        <div class="ac-mitad" data-theme="light"><p class="label">claro</p><p class="ac-muestra">Texto <b>acento</b></p><span class="chip">ok · listo</span></div>
+        <div class="ac-mitad" data-theme="dark"><p class="label">oscuro</p><p class="ac-muestra">Texto <b>acento</b></p><span class="chip">ok · listo</span></div>
+      </div>
+      <p class="ac-estado mono" data-role="estado"></p>
+      <p><button type="button" class="ac-btn" data-ac-accion="mode">Alternar modo (D)</button></p>
+    </div>
+    <aside class="ac-info panel" data-componente="modo-claro-oscuro"><p class="ac-nombre"><b>Modo claro y oscuro</b><code>modo-claro-oscuro</code></p><p class="ac-proposito">Alternar claro y oscuro respetando la preferencia del sistema mientras no se elija otra</p><dl class="ac-params"><dt>tecla</dt><dd>D</dd><dt>atributo</dt><dd>&lt;html data-theme&gt;</dd><dt>por_defecto</dt><dd>prefers-color-scheme</dd></dl><p class="ac-fuente"><code>engine/engine.js setMode() toggleMode()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-preferencias" data-fx="ac-preferencias" data-section="Núcleo" data-title="Memoria de preferencias">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Preferencias</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <dl class="ac-tabla" data-role="tabla"></dl>
+      <p class="note">Pulsa S o D y vuelve a mirar: el motor guarda con <code>localStorage</code> dentro de <code>try/catch</code>. En una ventana privada puede no haber almacenamiento y la presentación funciona igual.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="preferencias"><p class="ac-nombre"><b>Memoria de preferencias</b><code>preferencias</code></p><p class="ac-proposito">Recordar en el navegador el estilo y el modo elegidos</p><dl class="ac-params"><dt>claves</dt><dd>style · mode</dd></dl><p class="ac-fuente"><code>engine/engine.js store</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-motor-pick" data-fx="ac-pick" data-section="Núcleo" data-title="Estilos del deck">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">MOTOR_PICK</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <pre class="ac-cod panel" data-role="codigo"></pre>
+      <p class="ac-estado" data-role="resultado"></p>
+    </div>
+    <aside class="ac-info panel" data-componente="motor-pick"><p class="ac-nombre"><b>Estilos del deck (MOTOR_PICK)</b><code>motor-pick</code></p><p class="ac-proposito">Limitar y ordenar los estilos disponibles en un deck</p><dl class="ac-params"><dt>sintaxis</dt><dd>window.MOTOR_PICK = ['rice', 'nube']</dd><dt>orden_carga</dt><dd>antes de themes/meta.js</dd></dl><p class="ac-fuente"><code>engine/engine.js STYLES · themes/meta.js</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-decorado-slide" data-fx="ac-decorado" data-section="Núcleo" data-title="Decorado por diapositiva">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Decorado</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-minis" data-role="minis"></div></div>
+    <aside class="ac-info panel" data-componente="decorado-slide"><p class="ac-nombre"><b>Decorado por diapositiva</b><code>decorado-slide</code></p><p class="ac-proposito">Inyectar el decorado del estilo (folio, barra de sección, ruta de tópico) según data-section y la posición</p><dl class="ac-params"><dt>usa</dt><dd>data-section · índice · total</dd></dl><p class="ac-fuente"><code>engine/engine.js injectDeco() updateDeco() · engine/engine.css .deco</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-ciclo-fx" data-fx="ac-ciclo" data-section="Núcleo" data-title="Ciclo de vida de un efecto">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Ciclo de un efecto</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <ol class="ac-registro mono" data-role="registro"></ol>
+      <div class="row ac-tres"><div class="panel" data-step>paso 1 → step(api, 1)</div><div class="panel" data-step>paso 2 → step(api, 2)</div></div>
+      <p class="note">Pulsa → para ver <code>step</code>; sal y vuelve para ver <code>stop</code> y un nuevo <code>render</code>.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="ciclo-fx"><p class="ac-nombre"><b>Ciclo de vida de un efecto</b><code>ciclo-fx</code></p><p class="ac-proposito">Registrar un efecto y separar el estado final (render) de la animación (play), con limpieza (stop) y aviso de pasos (step)</p><dl class="ac-params"><dt>metodos</dt><dd>render(api) · play(api) · stop(api) · step(api, n, {dir, el, total,…</dd><dt>regla</dt><dd>render deja el estado final completo; play solo anima</dd></dl><p class="ac-fuente"><code>engine/engine.js Motor.fx() activate() deactivate() renderSlide()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-eventos-motor" data-fx="ac-eventos" data-section="Núcleo" data-title="Eventos del motor">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Eventos</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <ol class="ac-registro mono" data-role="registro"></ol>
+      <div class="row ac-tres"><div class="panel" data-step>paso → motor:step</div></div>
+    </div>
+    <aside class="ac-info panel" data-componente="eventos-motor"><p class="ac-nombre"><b>Eventos del motor</b><code>eventos-motor</code></p><p class="ac-proposito">Avisar a cualquier script de la entrada, la salida y los pasos de una diapositiva</p><dl class="ac-params"><dt>eventos</dt><dd>motor:enter · motor:leave · motor:step</dd><dt>detail</dt><dd>slide · index · api · animate · step · dir</dd></dl><p class="ac-fuente"><code>engine/engine.js emit()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-movimiento-reducido" data-fx="ac-reducido" data-section="Núcleo" data-title="Movimiento reducido">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Movimiento reducido</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pista"><p class="label">con play()</p><div class="fx" data-role="a"></div></div>
+      <div class="ac-pista"><p class="label">forzado a api.reduced: solo render()</p><div class="fx" data-role="b"></div></div>
+      <p class="ac-estado mono" data-role="estado"></p>
+    </div>
+    <aside class="ac-info panel" data-componente="movimiento-reducido"><p class="ac-nombre"><b>Movimiento reducido</b><code>movimiento-reducido</code></p><p class="ac-proposito">Respetar prefers-reduced-motion: sin animaciones, con el estado final visible</p><dl class="ac-params"><dt>api</dt><dd>api.reduced</dd></dl><p class="ac-fuente"><code>engine/engine.js api.reduced · engine/engine.css @media (prefers-reduced-motion)</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-impresion-pdf" data-section="Núcleo" data-title="Impresión y PDF">
+  <header class="s-head"><p class="kicker">l01 · núcleo</p><h2 class="s-title">Impresión y PDF</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-hojas" aria-hidden="true"><div class="ac-hoja"><b>01</b></div><div class="ac-hoja"><b>02</b></div><div class="ac-hoja"><b>03</b></div></div>
+      <ul class="ac-pasos-texto">
+        <li>Una diapositiva por página de 1920 × 1080, con todos sus pasos visibles.</li>
+        <li>Sin HUD ni barra de progreso.</li>
+        <li>En Chrome: Imprimir → Guardar como PDF, márgenes «Ninguno», con gráficos de fondo.</li>
+      </ul>
+      <p><button type="button" class="ac-btn" data-ac-accion="print">Imprimir</button></p>
+    </div>
+    <aside class="ac-info panel" data-componente="impresion-pdf"><p class="ac-nombre"><b>Impresión y PDF</b><code>impresion-pdf</code></p><p class="ac-proposito">Imprimir cada diapositiva en una página de 1920×1080 sin HUD ni barra</p><dl class="ac-params"><dt>pagina</dt><dd>1920×1080</dd></dl><p class="ac-fuente"><code>engine/engine.css @media print</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l01-resumen" data-section="Núcleo" data-title="Resumen del núcleo">
+  <header class="s-head"><p class="kicker">l01 · resumen</p><h2 class="s-title">Resumen del núcleo</h2></header>
+  <div class="s-body cols even ac-resumen">
+    <div class="panel"><p class="label">moverse</p><p><span class="keycap">→</span><span class="keycap">←</span> pasos y diapositivas · <span class="keycap">O</span> vista general · <span class="keycap">#id</span> al cargar · <code>Motor.go()</code></p></div>
+    <div class="panel"><p class="label">ver</p><p><span class="keycap">S</span><span class="keycap">1…0</span> estilo · <span class="keycap">D</span> modo · <span class="keycap">F</span> pantalla · <span class="keycap">H</span> HUD · se recuerda en <code>localStorage</code></p></div>
+    <div class="panel"><p class="label">escribir</p><p>lienzo 1920 × 1080 · <code>s-head</code> + <code>s-body</code> · <code>data-section</code>, <code>data-title</code>, <code>data-step</code></p></div>
+    <div class="panel"><p class="label">programar</p><p><code>Motor.fx</code>: <code>render</code> deja el final, <code>play</code> anima, <code>step</code> avisa, <code>stop</code> limpia · eventos <code>motor:*</code> · respeta <code>api.reduced</code></p></div>
+  </div>
+</section>
 
 </div>
 </main>
@@ -65,5 +322,6 @@
 <script src="../../fx/arq-opus.js"></script>
 <script src="../../fx/nav-semantica.js"></script>
 <!-- fx/experimental: se añade aquí lote a lote -->
+<script src="lotes/l01.js"></script>
 </body>
 </html>

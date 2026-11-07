@@ -7,25 +7,25 @@ Deck: `atlas/completo/index.html`. Diapositivas con id `l01-<componente>`. Estad
 ## Diapositivas del lote
 
 1. `l01-titulo`: título del lote con la lista de sus demos y el id de cada una.
-2. `l01-lienzo`: Lienzo 1920×1080 y escalado
-3. `l01-anatomia-slide`: Anatomía de una diapositiva
-4. `l01-navegacion-teclado`: Navegación con teclado
-5. `l01-navegacion-tactil`: Navegación táctil
-6. `l01-ancla-url`: Ancla de la URL
-7. `l01-pasos`: Pasos (data-step)
-8. `l01-hud`: HUD de controles
-9. `l01-barra-progreso`: Barra de progreso
-10. `l01-vista-general`: Vista general
-11. `l01-pantalla-completa`: Pantalla completa
-12. `l01-selector-estilo`: Selector de estilo
-13. `l01-modo-claro-oscuro`: Modo claro y oscuro
-14. `l01-preferencias`: Memoria de preferencias
-15. `l01-motor-pick`: Estilos del deck (MOTOR_PICK)
-16. `l01-decorado-slide`: Decorado por diapositiva
-17. `l01-ciclo-fx`: Ciclo de vida de un efecto
-18. `l01-eventos-motor`: Eventos del motor
-19. `l01-movimiento-reducido`: Movimiento reducido
-20. `l01-impresion-pdf`: Impresión y PDF
+2. `l01-lienzo`: Lienzo 1920×1080 y escalado ✓
+3. `l01-anatomia-slide`: Anatomía de una diapositiva ✓
+4. `l01-navegacion-teclado`: Navegación con teclado ✓
+5. `l01-navegacion-tactil`: Navegación táctil ✓
+6. `l01-ancla-url`: Ancla de la URL ✓
+7. `l01-pasos`: Pasos (data-step) ✓
+8. `l01-hud`: HUD de controles ✓
+9. `l01-barra-progreso`: Barra de progreso ✓
+10. `l01-vista-general`: Vista general ✓
+11. `l01-pantalla-completa`: Pantalla completa ✓
+12. `l01-selector-estilo`: Selector de estilo ✓
+13. `l01-modo-claro-oscuro`: Modo claro y oscuro ✓
+14. `l01-preferencias`: Memoria de preferencias ✓
+15. `l01-motor-pick`: Estilos del deck (MOTOR_PICK) ✓
+16. `l01-decorado-slide`: Decorado por diapositiva ✓
+17. `l01-ciclo-fx`: Ciclo de vida de un efecto ✓
+18. `l01-eventos-motor`: Eventos del motor ✓
+19. `l01-movimiento-reducido`: Movimiento reducido ✓
+20. `l01-impresion-pdf`: Impresión y PDF ✓
 21. `l01-resumen`: resumen del lote que combina lo visto (la única diapositiva que mezcla componentes).
 
 Total estimado: **21 diapositivas**.

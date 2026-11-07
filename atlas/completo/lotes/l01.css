@@ -1,0 +1,98 @@
+/* Atlas Completo · L01 núcleo. Solo tokens; clases con prefijo ac-. */
+.ac-demo .note, .ac-demo p { margin: 0; }
+.ac-demo code { font: 500 22px/1.3 var(--font-mono); color: var(--fg); }
+.ac-demo .keycap { margin: 0 6px 6px 0; }
+
+/* lienzo */
+.ac-medida { font: 400 22px/1.4 var(--font-mono); color: var(--fg-2); }
+.ac-medida b { color: var(--fg); }
+
+/* anatomía */
+.ac-maqueta { position: relative; flex: 1; min-height: 0; padding: 0; }
+.ac-parte { position: absolute; display: grid; place-items: center; font: 500 24px/1.2 var(--font-mono); color: var(--fg);
+  border: 3px dashed var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+.p-kicker { left: 7%; top: 8%; width: 30%; height: 9%; }
+.p-titulo { left: 7%; top: 20%; width: 62%; height: 16%; }
+.p-cuerpo { left: 7%; top: 42%; width: 86%; height: 50%; }
+.p-deco { right: 2%; top: 2%; width: 30%; height: 8%; border-color: var(--fg-3); background: transparent; color: var(--fg-2); font-size: 22px; }
+.ac-maqueta + .ac-cod { flex: none; }
+
+/* teclado */
+.ac-teclas { gap: 22px; }
+.ac-grupo { display: grid; grid-template-columns: 200px 1fr; align-items: baseline; gap: 16px; font: 400 24px/1.6 var(--font-text); color: var(--fg-2); }
+.ac-grupo .label { padding-top: 6px; }
+
+/* ancla */
+.ac-barra { padding: 16px 22px; border: 1px solid var(--line-2); border-radius: 999px; background: var(--bg-2); font-size: 24px; color: var(--fg-2); overflow-wrap: anywhere; }
+.ac-barra b { color: var(--accent-ink, var(--accent)); }
+.ac-pasos-texto { margin: 0; padding-left: 32px; display: flex; flex-direction: column; gap: 14px; font: 400 26px/1.4 var(--font-text); color: var(--fg); }
+
+/* pasos y registros */
+.ac-contador { display: flex; align-items: baseline; gap: 24px; }
+.ac-contador b { font: 700 120px/1 var(--font-display); color: var(--fg); font-variant-numeric: tabular-nums; }
+.ac-tres { flex-wrap: nowrap; }
+.ac-tres > .panel { flex: 1; font: 500 26px/1.3 var(--font-text); color: var(--fg); }
+.ac-registro { flex: 1; min-height: 0; margin: 0; padding: 18px 22px 18px 52px; background: var(--bg-2); border: 1px solid var(--line); border-radius: var(--radius, 10px);
+  font-size: 22px; line-height: 1.5; color: var(--fg); overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; }
+.ac-registro li:last-child { color: var(--accent-ink, var(--accent)); font-weight: 600; }
+
+/* HUD copiado */
+.ac-hud-marco { position: relative; padding: 50px 0 10px; display: flex; justify-content: center; }
+.ac-hud-copia { position: relative !important; inset: auto !important; bottom: auto !important; transform: none !important; opacity: 1 !important; zoom: 1.05; margin: 0; flex-wrap: nowrap; view-transition-name: none !important; }
+.ac-hud-copia .hud-styles { flex-wrap: nowrap; }
+.ac-con-num { position: relative; overflow: visible !important; }
+.ac-num { position: absolute; left: 50%; top: -36px; translate: -50% 0; zoom: .7; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent, var(--bg)); font: 700 22px/1 var(--font-mono); }
+.ac-leyenda-num { margin: 0; padding-left: 40px; columns: 2; column-gap: 40px; font: 400 24px/1.6 var(--font-text); color: var(--fg); }
+
+/* progreso */
+.ac-barra-p { height: 36px; border-radius: 18px; background: var(--bg-3); overflow: hidden; }
+.ac-barra-p span { display: block; height: 100%; background: var(--accent); }
+.ac-formula { font-size: 28px; color: var(--fg-2); }
+.ac-formula b { color: var(--fg); }
+
+/* vista general */
+.ac-mini-rejilla { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.ac-mini-rejilla i { aspect-ratio: 16 / 9; background: var(--bg-3); border: 1px solid var(--line); border-radius: 6px; }
+.ac-mini-rejilla i.on { outline: 4px solid var(--accent); outline-offset: 2px; }
+
+/* selector de estilo */
+.ac-estilos { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.ac-estilos .ac-btn { display: flex; align-items: center; gap: 14px; text-align: left; }
+.ac-estilos .keycap { margin: 0; }
+
+/* claro y oscuro */
+.ac-dos { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-radius: var(--radius-lg, 16px); overflow: hidden; border: 1px solid var(--line-2); }
+.ac-mitad { background: var(--bg); color: var(--fg); padding: 32px; display: flex; flex-direction: column; gap: 22px; align-items: flex-start; }
+.ac-muestra { font: 600 44px/1.2 var(--font-display); color: var(--fg); }
+.ac-muestra b { color: var(--accent-ink, var(--accent)); }
+.ac-estado { font: 400 22px/1.4 var(--font-mono); color: var(--fg-2); }
+.ac-estado b { color: var(--fg); }
+
+/* preferencias */
+.ac-tabla { margin: 0; display: grid; grid-template-columns: max-content 1fr; gap: 14px 32px; font: 400 30px/1.3 var(--font-mono); }
+.ac-tabla dt { color: var(--fg-2); }
+.ac-tabla dd { margin: 0; color: var(--fg); }
+
+/* decorado en diez estilos */
+.ac-minis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; align-content: start; }
+.ac-mini { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.ac-mini figcaption { font: 500 22px/1 var(--font-text); color: var(--fg-2); }
+.ac-mini-lienzo.slide { position: relative !important; inset: auto; flex: none; width: 1920px; height: 1080px; zoom: 0.132; visibility: visible !important; opacity: 1 !important;
+  transform: none !important; background: var(--bg); border: 6px solid var(--line-2); border-radius: 30px; overflow: hidden; pointer-events: none; }
+.ac-mini-lienzo .s-head { position: relative; z-index: 1; }
+
+/* movimiento reducido */
+.ac-pista { display: flex; flex-direction: column; gap: 10px; }
+.ac-pista .fx { height: 80px; flex: none; }
+
+/* impresión */
+.ac-hojas { display: flex; gap: 22px; }
+.ac-hoja { flex: 1; aspect-ratio: 16 / 9; background: var(--bg-2); border: 1px solid var(--line-2); border-radius: 6px; display: grid; place-items: center;
+  font: 700 44px/1 var(--font-display); color: var(--fg-3); }
+
+/* resumen */
+.ac-resumen { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 28px; height: 100%; }
+.ac-resumen .panel { display: flex; flex-direction: column; gap: 14px; font: 400 26px/1.6 var(--font-text); color: var(--fg); }
+.ac-resumen p { margin: 0; }
+.ac-resumen code { font: 500 22px/1.3 var(--font-mono); }

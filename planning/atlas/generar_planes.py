@@ -194,7 +194,7 @@ def main():
                 filas.append(f'{len(filas) + 2}. `{sid}` … sublote [{c["nombre"]}]({c["id"]}.md): {k} diapositivas')
             else:
                 k = 1
-                filas.append(f'{len(filas) + 2}. `{sid}`: {c["nombre"]}' + (' · **quizás**' if c['estado_motor'] == 'quizas' else ''))
+                filas.append(f'{len(filas) + 2}. `{sid}`: {c["nombre"]}' + (' · **quizás**' if c['estado_motor'] == 'quizas' else '') + (' ✓' if c['explicado'] else ''))
             n_slides += k
         o += filas
         o.append(f'{len(filas) + 2}. `l{num}-resumen`: resumen del lote que combina lo visto (la única diapositiva que mezcla componentes).\n')
@@ -300,8 +300,8 @@ def indice(db):
     for l in lotes:
         o.append(f'| {l["orden"]} | {l["id"]} · {l["nombre"]} | {estado(l)} | {l["hechos"] or 0}/{l["n"]} | {l["q"] or 0} | {l["diapositivas_est"]} | [{l["id"]}/plan.md]({l["id"]}/plan.md) |')
     o += ['', '## Flujo por componente\n',
-          '1. Implementar la diapositiva (y, en los «quizás», portar antes el componente de react-bits a `fx/experimental/`).',
-          '2. Servir la raíz (`python3 -m http.server 8000`) y ejecutar `node tools/verificar.mjs atlas/completo` y `node planning/atlas/recorrer.mjs` (L00).',
+          '1. Implementar la diapositiva en `atlas/completo/src/lNN.html` (con sus efectos en `atlas/completo/lotes/lNN.js` y `.css`; en los «quizás», portar antes el componente de react-bits a `fx/experimental/`) y montar el deck con `python3 planning/atlas/montar.py`. Las fichas y los títulos de lote salen de `atlas.db` con los marcadores `<!-- ficha:id -->`, `<!-- kicker:id -->` y `<!-- titulo:LNN -->`.',
+          '2. Servir la raíz (`python3 -m http.server 8000`) y ejecutar `node tools/verificar.mjs atlas/completo` y `node planning/atlas/recorrer.mjs`; comprobar los criterios interactivos con un script de Playwright.',
           '3. Revisar las capturas de esa diapositiva en suizo y noche, claro y oscuro.',
           "4. `UPDATE componentes SET explicado=1, diapositivas='<ids>' WHERE id='<id>'` en `atlas.db`.",
           '5. Regenerar planes e índice con `generar_planes.py`.',
