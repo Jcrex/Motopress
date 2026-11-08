@@ -16,6 +16,7 @@ import { servir } from '../servidor.mjs';
 import { abrirNavegador, nuevaPagina, capturar, verificar, urlDeck } from '../verificar.mjs';
 import { listarDecks, leerDiapositiva, escribirDiapositiva, borrarDiapositiva, moverDiapositiva, crearDeck, rutaDeck } from './deck.mjs';
 import { Spec, renderSpec, TIPOS } from './tipos.mjs';
+import { rbBuscar, rbFicha, rbCodigo } from './react-bits.mjs';
 
 const SKILL = path.join(ROOT, '.claude/skills/crear-presentacion');
 const STYLES = JSON.parse(fs.readFileSync(path.join(ROOT, 'themes/source.json'), 'utf8')).styles.map((s) => s.id);
@@ -170,6 +171,38 @@ server.registerTool('empaquetar', {
   const { stdout } = await run(process.execPath, [path.join(ROOT, 'tools/bundle.mjs'), f, `--out=${carpeta || outDir()}`], { cwd: ROOT });
   return texto(stdout.trim());
 }));
+
+/* ---------- react-bits: consulta para portar componentes (tools/mcp/react-bits.mjs) ---------- */
+server.registerTool('rb_buscar', {
+  title: 'Buscar en react-bits',
+  description: 'Busca componentes de react-bits (218) con su veredicto para el motor (implementar, quizas, descartar), coste y equivalente ya portado. Úsala antes de portar algo o cuando pidan un efecto «como el X de react-bits».',
+  inputSchema: {
+    texto: z.string().optional().describe('En nombre, descripción, técnica o motivo'),
+    categoria: z.enum(['Animations', 'Backgrounds', 'Components', 'Micro', 'TextAnimations']).optional(),
+    veredicto: z.enum(['implementar', 'quizas', 'descartar']).optional(),
+    tecnica: z.string().optional().describe('webgl, glsl, ogl, three, canvas2d, svg, motion, gsap, splittext, raton, scroll…'),
+    estado: z.enum(['portado', 'quizas', 'libre']).optional().describe('portado: ya en el motor; quizas: pendiente en el Atlas; libre: sin relación'),
+    limite: z.number().int().min(1).max(218).default(40),
+  },
+  annotations: { readOnlyHint: true },
+}, seguro(async (a) => texto(rbBuscar(a))));
+
+server.registerTool('rb_ficha', {
+  title: 'Ficha de un componente de react-bits',
+  description: 'Props (tipo, valor por defecto, descripción), técnicas, shaders y uniforms, eventos, veredicto y motivo, estilos que encajan y qué hay ya en el motor (componente, archivo, diapositiva del Atlas).',
+  inputSchema: { nombre: z.string().describe('Nombre en react-bits, p. ej. GlitchText') },
+  annotations: { readOnlyHint: true },
+}, seguro(async ({ nombre }) => texto(rbFicha(nombre))));
+
+server.registerTool('rb_codigo', {
+  title: 'Código de un componente de react-bits',
+  description: 'Devuelve solo la parte pedida del .jsx original, con números de línea: resumen (mapa del archivo), shaders, props, bucle (efectos con animación), eventos, css, uso o presets; o un rango desde/hasta (máx. 400 líneas).',
+  inputSchema: {
+    nombre: z.string(), parte: z.enum(['resumen', 'shaders', 'props', 'bucle', 'eventos', 'css', 'uso', 'presets', 'todo']).default('resumen'),
+    desde: z.number().int().min(1).optional(), hasta: z.number().int().min(1).optional(),
+  },
+  annotations: { readOnlyHint: true },
+}, seguro(async (a) => texto(rbCodigo(a))));
 
 /* ---------- prompt ---------- */
 server.registerPrompt('nueva-presentacion', {
