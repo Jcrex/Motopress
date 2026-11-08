@@ -142,14 +142,16 @@ for (const st of src.styles) {
     r['fg-3'] = ensure(r['fg-3'], r.bg, 4.6, dir);
     r['on-accent'] = bestOn(r.accent, [r['on-accent'], r.bg, r['bg-2'], r.fg, mode === 'dark' ? '#0d0d12' : '#ffffff', '#ffffff', '#101014']);
     for (const k of ['accent', 'accent-2', 'accent-3']) r[k + '-ink'] = ensure(r[k], r.bg, 4.6, dir);
+    // ok, warn y err como texto (deltas, marcas, tablas): misma corrección de legibilidad
+    for (const k of ['ok', 'warn', 'err']) r[k + '-ink'] = ensure(r[k], r.bg, 4.6, dir);
     m.roles = r;
-    const lines = [...order, 'accent-ink', 'accent-2-ink', 'accent-3-ink'].map((k) => `--${k}:${r[k]}`);
+    const lines = [...order, 'accent-ink', 'accent-2-ink', 'accent-3-ink', 'ok-ink', 'warn-ink', 'err-ink'].map((k) => `--${k}:${r[k]}`);
     cats.forEach((c, i) => lines.push(`--cat-${i + 1}:${c}`));
     seq.forEach((c, i) => lines.push(`--seq-${i + 1}:${c}`));
     div.forEach((c, i) => lines.push(`--div-${i + 1}:${c}`));
     lines.push(`--is-dark:${mode === 'dark' ? 1 : 0}`);
     computed[mode].vars = lines;
-    report.push({ style: st.id, mode, fg: contrast(r.fg, r.bg).toFixed(2), fg2: contrast(r['fg-2'], r.bg).toFixed(2), fg3: contrast(r['fg-3'], r.bg).toFixed(2), ink: contrast(r['accent-ink'], r.bg).toFixed(2), onAcc: contrast(r['on-accent'], r.accent).toFixed(2), cats: cats.join(',') });
+    report.push({ style: st.id, mode, fg: contrast(r.fg, r.bg).toFixed(2), fg2: contrast(r['fg-2'], r.bg).toFixed(2), fg3: contrast(r['fg-3'], r.bg).toFixed(2), ink: contrast(r['accent-ink'], r.bg).toFixed(2), estados: ['ok', 'warn', 'err'].map((k) => contrast(r[k + '-ink'], r.bg).toFixed(1)).join('/'), onAcc: contrast(r['on-accent'], r.accent).toFixed(2), cats: cats.join(',') });
   }
   const sh = Object.entries(st.shape).map(([k, v]) => `--${k}:${v}`);
   const fo = Object.entries(st.fonts).map(([k, v]) => `--font-${k}:${v}`);

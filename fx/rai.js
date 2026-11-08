@@ -18,6 +18,14 @@
     });
   }
 
+  // En SVG el origen de transform es la esquina del viewBox: grow/rise/pop crecerían desde ahí.
+  // Si el autor no ha fijado otro, se usa la caja del propio elemento.
+  const originFix = (e, kind) => {
+    if (!(e instanceof SVGElement) || e.style.transformOrigin || getComputedStyle(e).transformBox !== 'view-box') return;
+    e.style.transformBox = 'fill-box';
+    e.style.transformOrigin = kind === 'grow' ? 'left center' : kind === 'rise' ? 'center bottom' : 'center';
+  };
+  Motor.fxOrigin = originFix;
   Motor.fx('secuencia', {
     render(api) { (api.anims || []).forEach((a) => a.cancel()); api.anims = []; restDots(api); },
     play(api) {
@@ -34,6 +42,7 @@
         else if (kind === 'rise') frames = [{ transform: 'scaleY(0)' }, { transform: 'scaleY(1)' }];
         else if (kind === 'pop') frames = [{ opacity: 0, transform: 'scale(.82)' }, { opacity: 1, transform: 'scale(1)' }];
         else frames = [{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }];
+        if (kind === 'grow' || kind === 'rise' || kind === 'pop') originFix(e, kind);
         try { api.anims.push(e.animate(frames, opt)); } catch (err) { /* sin WAAPI: queda el estado final */ }
       });
       const dots = api.qa('[data-travel]');

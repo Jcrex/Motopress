@@ -65,12 +65,14 @@
     rest(el);
   }
   function rest(el) {
+    el._gen = (el._gen || 0) + 1; // corta el bucle que esté en marcha
     ['--g-a-top', '--g-b-top', '--g-a-x', '--g-a-y', '--g-b-x', '--g-b-y', '--g-a-shadow', '--g-b-shadow', '--g-skew', '--g-alpha', '--g-split', '--g-a-bottom', '--g-b-bottom'].forEach((k) => el.style.removeProperty(k));
     (el._cells || []).forEach((c) => c.removeAttribute('data-glyph'));
   }
 
   // Bucle del original con api.raf y api.rng; «hasta» limita la ráfaga del modo paso.
   function play(el, api, hasta = Infinity) {
+    const gen = el._gen = (el._gen || 0) + 1; // un solo bucle por elemento: el anterior se detiene
     const o = opts(el), R = api.rng(7 + el._texto.length), w = (k, v) => el.style.setProperty(k, v);
     const swaps = new Map(), cells = el._cells || [];
     let clock = 0, last = 0, nextStep = 0, event = null, alpha = 1, jitter = [1, 1, 0, 0], t0 = null;
@@ -90,6 +92,7 @@
       nextStep = now + ms * (0.7 + R() * 0.6);
     };
     api.raf((t) => {
+      if (el._gen !== gen) return false;
       const now = t; if (t0 == null) t0 = now; // api.raf da milisegundos desde que empezó
       if (now - t0 > hasta) { rest(el); return false; }
       const dt = last ? Math.min(0.1, (now - last) / 1000) : 0; last = now; clock += dt;
@@ -126,8 +129,11 @@
   });
   document.addEventListener('motor:step', (e) => {
     const { el, api, dir, animate } = e.detail;
-    if (dir !== 'next' || !animate || !el) return;
-    [...(el.matches(SEL) ? [el] : []), ...el.querySelectorAll(SEL)].forEach((g) => { const o = opts(g); play(g, api, o.paso ? o.rafaga * 1000 : Infinity); });
+    if (!el) return;
+    const list = [...(el.matches(SEL) ? [el] : []), ...el.querySelectorAll(SEL)];
+    if (dir !== 'next') { list.forEach(rest); return; } // paso ocultado: se para
+    if (!animate) return;
+    list.forEach((g) => { const o = opts(g); play(g, api, o.paso ? o.rafaga * 1000 : Infinity); });
   });
   document.addEventListener('motor:leave', (e) => e.detail.slide.querySelectorAll(SEL).forEach(rest));
   const boot = () => document.querySelectorAll(SEL).forEach(render);

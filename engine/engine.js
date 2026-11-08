@@ -115,6 +115,7 @@
 
   /* ------------------------------------------------------------------ estado */
   let viewport, stage, slides = [], idx = 0, overview = false, scale = 1, hud, progress, idleTimer = 0, refreshQueued = false;
+  let pendingSwap = null, hudOff = false, refreshing = false; // refreshing: motor:enter/leave de un cambio de estilo o modo
   const sections = [];
 
   const effectiveDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : sysDark.matches);
@@ -122,7 +123,7 @@
 
   /* ------------------------------------------------------------------ API de efectos */
   function makeApi(slide) {
-    let cache = null, rafs = new Set(), timers = new Set();
+    let cache = null, rafs = new Set(), timers = new Set(), rafGen = 0;
     const api = {
       el: slide,
       q: (s) => slide.querySelector(s),
@@ -154,10 +155,13 @@
       rng, noise2, color, util,
       raf(fn) {
         let t0 = null, last = 0, id = 0;
+        const gen = rafGen;
         const loop = (now) => {
+          if (gen !== rafGen) { rafs.delete(id); return; } // stopAll() ya lo paró
           if (t0 === null) { t0 = now; last = now; }
           const keep = fn(now - t0, now - last); last = now;
           if (keep === false) { rafs.delete(id); return; }
+          if (gen !== rafGen) { rafs.delete(id); return; }
           rafs.delete(id); id = requestAnimationFrame(loop); rafs.add(id);
         };
         id = requestAnimationFrame(loop); rafs.add(id);
@@ -169,7 +173,7 @@
           api.after(delay, () => api.raf((t) => { const p = Math.min(1, t / ms); fn(e(p), p); if (p >= 1) { res(); return false; } }));
         });
       },
-      stopAll() { rafs.forEach(cancelAnimationFrame); rafs.clear(); timers.forEach(clearTimeout); timers.clear(); },
+      stopAll() { rafGen++; rafs.forEach(cancelAnimationFrame); rafs.clear(); timers.forEach(clearTimeout); timers.clear(); },
       canvas(host) {
         let cv = host.querySelector(':scope > canvas:not(.gl)');
         if (!cv) { cv = document.createElement('canvas'); host.appendChild(cv); }
@@ -203,15 +207,15 @@
       if (!slide._rendered || slide._dirty) renderSlide(slide);
       if (animate && def.play) { try { def.play(api); } catch (e) { console.error('[motor] play', slide.id, e); } }
     }
-    if (!overview) emit(slide, 'enter', { api, animate });
+    if (!overview) emit(slide, 'enter', { api, animate, refresh: refreshing });
   }
   function deactivate(slide) {
     if (!slide._api) return;
     slide._api.stopAll();
     const def = fxOf(slide);
-    if (def && def.stop) def.stop(slide._api);
+    if (def && def.stop) { try { def.stop(slide._api); } catch (e) { console.error('[motor] stop', slide.id, e); } }
     if (def && def.play) slide._dirty = true; // al volver, se reconstruye y se vuelve a reproducir
-    emit(slide, 'leave', { api: slide._api });
+    emit(slide, 'leave', { api: slide._api, refresh: refreshing });
   }
   // Aviso de paso: el efecto de la diapositiva (si define step) y el evento motor:step.
   function stepped(el, dir) {
@@ -225,10 +229,10 @@
   function refreshAll() {
     if (refreshQueued) return; refreshQueued = true;
     requestAnimationFrame(() => {
-      refreshQueued = false;
+      refreshQueued = false; flushSwap();
       slides.forEach((s) => { if (s._api) s._api._flush(); if (s._rendered) s._dirty = true; });
       if (overview) slides.forEach((s) => { if (fxOf(s)) renderSlide(s); });
-      else { const s = slides[idx]; deactivate(s); activate(s); }
+      else { const s = slides[idx]; refreshing = true; try { deactivate(s); activate(s); } finally { refreshing = false; } }
       updateHud();
     });
   }
@@ -240,11 +244,12 @@
     const n = String(i + 1).padStart(2, '0'), t = String(total).padStart(2, '0');
     const sec = slide.dataset.section || '';
     const si = sections.indexOf(sec);
+    const esc = (v) => String(v).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]); // «a < b» en un título no rompe el decorado
     deco.innerHTML =
       '<div class="deco-grid"></div>' +
-      `<div class="deco-bar"><span class="ws">${sections.map((s, k) => `<b class="${k === si ? 'on' : ''}">${k + 1}</b>`).join('')}</span><span class="title">${slide.dataset.title || ''}</span><span class="sys"><span class="clock">--:--</span><span>${n}/${t}</span></span></div>` +
+      `<div class="deco-bar"><span class="ws">${sections.map((s, k) => `<b class="${k === si ? 'on' : ''}">${k + 1}</b>`).join('')}</span><span class="title">${esc(slide.dataset.title || '')}</span><span class="sys"><span class="clock">--:--</span><span>${n}/${t}</span></span></div>` +
       '<div class="deco-corners"><i></i><i></i><i></i><i></i></div>' +
-      `<div class="deco-folio"><span class="n">${n}</span><span class="sec">${sec}</span></div>` +
+      `<div class="deco-folio"><span class="n">${n}</span><span class="sec">${esc(sec)}</span></div>` +
       '<div class="deco-scan"></div><div class="deco-grain"></div>';
     slide.prepend(deco);
   }
@@ -273,13 +278,17 @@
   }
 
   /* ------------------------------------------------------------------ navegación */
+  // Con View Transitions el cambio real (swap) llega más tarde. Si entra otra orden antes,
+  // se aplica ya el cambio pendiente para que idx y la diapositiva activa estén al día.
+  function flushSwap() { if (pendingSwap) { const f = pendingSwap; pendingSwap = null; f(); } }
   function go(i, instant = false) {
+    flushSwap();
     i = Math.max(0, Math.min(slides.length - 1, i));
     const prev = slides[idx], next = slides[i];
     if (prev === next && next.classList.contains('is-active') && !instant) return;
     root.dataset.dir = i >= idx ? 'next' : 'prev';
     const swap = () => {
-      if (prev && prev !== next) { prev.classList.remove('is-active'); prev.setAttribute('aria-hidden', 'true'); deactivate(prev); }
+      slides.forEach((s) => { if (s !== next && s.classList.contains('is-active')) { s.classList.remove('is-active'); s.setAttribute('aria-hidden', 'true'); deactivate(s); } });
       next.classList.add('is-active'); next.removeAttribute('aria-hidden');
       if (i < idx) {
         const pend = next.querySelectorAll('[data-step]:not(.on)');
@@ -288,18 +297,22 @@
       idx = i;
       activate(next);
       updateHud();
+      if (overview) next.scrollIntoView({ block: 'nearest' });
     };
     if (!instant && !overview && document.startViewTransition && !reduced.matches) {
-      try { document.startViewTransition(swap).ready.catch(() => {}); } catch (e) { swap(); } // al encadenar teclas, la anterior se salta
+      pendingSwap = swap;
+      try { document.startViewTransition(flushSwap).ready.catch(() => {}); } catch (e) { flushSwap(); } // al encadenar teclas, la anterior se salta
     } else swap();
     try { history.replaceState(null, '', '#' + next.id); } catch (e) { /* sin historial */ }
   }
   function next() {
+    flushSwap();
     const pending = slides[idx].querySelector('[data-step]:not(.on)');
     if (pending && !overview) { pending.classList.add('on'); stepped(pending, 'next'); return; }
     go(idx + 1);
   }
   function prev() {
+    flushSwap();
     const shown = [...slides[idx].querySelectorAll('[data-step].on')];
     if (shown.length && !overview) { const el = shown[shown.length - 1]; el.classList.remove('on'); stepped(el, 'prev'); return; }
     go(idx - 1);
@@ -318,13 +331,17 @@
 
   function toggleOverview(on = !overview) {
     if (on === overview) return;
+    flushSwap();
     // api.step cambia (en la vista general cuentan todos los pasos): hay que volver a dibujar
     slides.forEach((s) => { if (s._rendered && s.querySelector('[data-step]')) s._dirty = true; });
     overview = on;
     if (on) {
       // Renderiza en tamaño real lo que aún no tiene contenido, antes de reducir.
+      // La activa se para (stop, motor:leave) y se dibuja en su estado final, no a mitad de animación.
+      const cur = slides[idx];
+      deactivate(cur); cur._dirty = true;
       slides.forEach((s) => { if (fxOf(s) && (!s._rendered || s._dirty)) { s._api && s._api.stopAll(); renderSlide(s); } });
-      slides[idx]._api && slides[idx]._api.stopAll();
+      emit(cur, 'enter', { api: apiOf(cur), animate: false });
     }
     viewport.classList.toggle('is-overview', on);
     if (on) { stage.style.transform = ''; layoutOverview(); requestAnimationFrame(() => slides[idx].scrollIntoView({ block: 'center' })); }
@@ -366,7 +383,7 @@
       if (b.dataset.styleId) return setStyle(b.dataset.styleId);
       ({ prev, next, mode: toggleMode, overview: () => toggleOverview(), fullscreen })[b.dataset.act]?.();
     });
-    hud.addEventListener('pointerenter', () => { clearTimeout(idleTimer); hud.classList.remove('is-idle'); });
+    hud.addEventListener('pointerenter', () => { if (hudOff) return; clearTimeout(idleTimer); hud.classList.remove('is-idle'); });
     progress = document.createElement('div'); progress.className = 'progress';
     document.body.append(progress, hud);
   }
@@ -381,8 +398,12 @@
     hud.querySelector('[data-act="overview"]').setAttribute('aria-pressed', String(overview));
     progress.style.setProperty('--p', slides.length > 1 ? idx / (slides.length - 1) : 1);
   }
+  function setHudOff(off) {
+    hudOff = off; hud.classList.toggle('is-off', off);
+    if (off && hud.contains(document.activeElement)) document.activeElement.blur();
+  }
   function wake() {
-    if (!hud) return;
+    if (!hud || hudOff) return; // oculto con H: no reaparece hasta pulsar H otra vez
     hud.classList.remove('is-idle');
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => { if (!hud.matches(':hover') && !hud.contains(document.activeElement)) hud.classList.add('is-idle'); }, 2800);
@@ -404,7 +425,8 @@
     else if (k === 'S') cycleStyle(-1);
     else if (k === 'd' || k === 'D') toggleMode();
     else if (k === 'f' || k === 'F') fullscreen();
-    else if (k === 'h' || k === 'H') hud.classList.toggle('is-idle');
+    else if (k === 'h' || k === 'H') { setHudOff(!hudOff); if (hudOff) return; }
+    else if (k === 'Tab') { wake(); return; } // el foco va a un HUD visible
     else if (/^[0-9]$/.test(k) && STYLES[(+k + 9) % 10]) setStyle(STYLES[(+k + 9) % 10].id); // 1…9 y 0 para el décimo
     else return;
     wake();
@@ -437,8 +459,9 @@
       s.addEventListener('click', () => { if (overview) { toggleOverview(false); go(i, true); } });
     });
     if (document.startViewTransition) root.classList.add('has-vt');
-    const st = store.get('style');
-    root.dataset.style = STYLES.some((s) => s.id === st) ? st : (root.dataset.style || window.MOTOR_DEFAULT_STYLE || (STYLES[0] && STYLES[0].id));
+    // Estilo inicial: el guardado, el del <html> o MOTOR_DEFAULT_STYLE, siempre que esté en MOTOR_PICK.
+    const want = [store.get('style'), root.dataset.style, window.MOTOR_DEFAULT_STYLE].find((id) => id && STYLES.some((s) => s.id === id));
+    root.dataset.style = want || (STYLES[0] && STYLES[0].id);
     const md = store.get('mode');
     if (md === 'light' || md === 'dark') root.dataset.theme = md;
     buildHud();
@@ -450,12 +473,22 @@
     sysDark.addEventListener('change', refreshAll);
     reduced.addEventListener('change', refreshAll);
     new MutationObserver(refreshAll).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-    const h = decodeURIComponent(location.hash.slice(1));
+    const raw = location.hash.slice(1);
+    let h = raw;
+    try { h = decodeURIComponent(raw); } catch (e) { /* ancla mal codificada (#50%): se usa tal cual */ }
     const start = Math.max(0, slides.findIndex((s) => s.id === h));
     idx = start;
-    go(start, true);
     wake();
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => refreshAll());
+    // La primera diapositiva se activa con las fuentes ya cargadas (máximo 1 s de espera),
+    // para no repetir su entrada al llegar las fuentes. Si tardan más, se redibuja entonces.
+    const fonts = document.fonts && document.fonts.ready && document.fonts.status !== 'loaded' ? document.fonts.ready : null;
+    if (!fonts) go(start, true);
+    else {
+      let started = false;
+      const begin = () => { if (!started) { started = true; go(start, true); } };
+      setTimeout(begin, 1000);
+      fonts.then(() => { if (started) refreshAll(); else begin(); });
+    }
     setInterval(() => updateDeco(slides[idx]), 30000);
   }
 

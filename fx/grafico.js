@@ -28,16 +28,30 @@
   };
 
   /* ---------- datos ---------- */
+  // Número desde JSON o texto: acepta «1,5» (coma decimal) y «1.234,5»; null o vacío = hueco.
+  const num = (v) => {
+    if (v == null || v === '') return null;
+    if (typeof v === 'number') return Number.isFinite(v) ? v : null;
+    let t = String(v).trim().replace(/\s/g, '');
+    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
+    const n = Number(t);
+    if (!Number.isFinite(n)) throw new Error(`valor no numérico: «${v}»`);
+    return n;
+  };
   function parse(el) {
     const raw = el.querySelector('script[type="application/json"]');
     if (!raw) throw new Error('falta <script type="application/json"> con los datos');
     const d = JSON.parse(raw.textContent);
     let labels = d.etiquetas || null, series = d.series || [];
-    if (d.datos) { labels = d.datos.map((r) => r[0]); series = [{ nombre: d.nombre || '', valores: d.datos.map((r) => +r[1]) }]; }
+    if (d.datos) { labels = d.datos.map((r) => r[0]); series = [{ nombre: d.nombre || '', valores: d.datos.map((r) => r[1]) }]; }
     if (d.x) labels = d.x;
+    series = series.map((s) => ({ ...s, valores: s.valores && s.valores.map(num), puntos: s.puntos && s.puntos.map(([a, b]) => [num(a), num(b)]) }));
+    if (d.x) labels = labels.map(num);
+    if (!series.length || !series.some((s) => (s.valores || s.puntos || []).some((v) => v != null && (!Array.isArray(v) || v[1] != null)))) throw new Error('no hay valores');
+    if (!labels && !series.every((s) => s.puntos)) throw new Error('faltan "etiquetas" o "datos"');
     const orden = el.dataset.orden;
     if (orden && series.length === 1 && labels) {
-      const idx = labels.map((_, i) => i).sort((a, b) => (orden === 'asc' ? 1 : -1) * (series[0].valores[a] - series[0].valores[b]));
+      const idx = labels.map((_, i) => i).sort((a, b) => (orden === 'asc' ? 1 : -1) * ((series[0].valores[a] ?? -Infinity) - (series[0].valores[b] ?? -Infinity)));
       labels = idx.map((i) => labels[i]); series = [{ ...series[0], valores: idx.map((i) => series[0].valores[i]) }];
     }
     return { labels, series, numericX: !!d.x };
@@ -52,12 +66,14 @@
     for (let v = a; v <= b + step / 2; v += step) ticks.push(+v.toFixed(10));
     return { lo: a, hi: b, ticks, step };
   }
-  const decOf = (step) => Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
-  const fmtr = (el, step, own = true) => {
-    const dec = own && el.dataset.dec != null ? +el.dataset.dec : decOf(step);
-    const f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-    return (v) => f.format(v);
-  };
+  // Decimales que hacen falta para escribir v sin redondear (2,5 → 1; 0,25 → 2; 25 → 0), hasta max.
+  const decOf = (v, max = 10) => { v = Math.abs(v); for (let d = 0; d < max; d++) { const k = v * 10 ** d; if (Math.abs(k - Math.round(k)) < 1e-6 * Math.max(1, k)) return d; } return max; };
+  const ownDec = (el) => { const d = num(el.dataset.dec); return Number.isInteger(d) && d >= 0 && d <= 20 ? d : null; };
+  const nf = (dec) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  // Marcas del eje: decimales del paso (o data-dec).
+  const fmtr = (el, step, own = true) => { const d = own ? ownDec(el) : null, f = nf(d ?? decOf(step)); return (v) => f.format(v); };
+  // Rótulos de valor: data-dec si existe; si no, los decimales del propio valor (hasta 2), nunca menos que el eje.
+  const fmtVal = (el, step) => { const d = ownDec(el), base = decOf(step), cache = {}; return (v) => { const k = d ?? Math.max(base, decOf(v, 2)); return (cache[k] ||= nf(k)).format(v); }; };
   const lin = (d0, d1, r0, r1) => (v) => r0 + ((v - d0) / (d1 - d0 || 1)) * (r1 - r0);
 
   /* ---------- dibujo ---------- */
@@ -70,9 +86,18 @@
   const txt = (parent, x, y, s, cls, anchor = 'start', extra = {}) => { const t = svgEl('text', { x, y, class: cls, 'text-anchor': anchor, 'dominant-baseline': 'middle', ...extra }, parent); t.textContent = s; return t; };
   const color = (i) => `var(--cat-${(i % 6) + 1})`;
 
+  const fail = (el, e) => {
+    const keep = el.querySelector('script[type="application/json"]');
+    el.textContent = ''; if (keep) el.appendChild(keep);
+    el.insertAdjacentHTML('beforeend', `<p class="note">Gráfico sin datos válidos: ${esc(e.message)}</p>`);
+    console.error('[grafico]', e);
+  };
   function render(el) {
     let data;
-    try { data = parse(el); } catch (e) { el.innerHTML = `<p class="note">Gráfico sin datos válidos: ${esc(e.message)}</p>`; console.error('[grafico]', e); return; }
+    try { data = parse(el); } catch (e) { fail(el, e); return; }
+    try { draw(el, data); } catch (e) { fail(el, e); }
+  }
+  function draw(el, data) {
     const keep = el.querySelector('script[type="application/json"]');
     const cap = el.querySelector('figcaption');
     el.textContent = ''; el.appendChild(keep);
@@ -93,14 +118,14 @@
 
     if (tipo === 'barras' || tipo === 'columnas') {
       const n = labels.length, m = series.length;
-      const totals = labels.map((_, j) => series.reduce((a, s) => a + (+s.valores[j] || 0), 0));
-      const all = stack ? totals : series.flatMap((s) => s.valores.map(Number));
+      const totals = labels.map((_, j) => series.reduce((a, s) => a + (s.valores[j] ?? 0), 0));
+      const all = stack ? totals : series.flatMap((s) => s.valores.filter((v) => v != null));
       const sc = nice(Math.min(0, ...all), Math.max(0, ...all));
-      const fmt = fmtr(el, sc.step), lab = (v) => fmt(v) + unit;
+      const fmt = fmtr(el, sc.step), lab = (v) => fmt(v) + unit, fv = fmtVal(el, sc.step), labV = (v) => fv(v) + unit;
       const horiz = tipo === 'barras';
       if (horiz) {
         const left = Math.min(W * 0.4, Math.max(...labels.map((l) => textW(el, l, 26))) + 24);
-        const valW = showVals ? Math.max(...all.map((v) => textW(el, lab(v), 22, 'mono'))) + 16 : 12;
+        const valW = showVals ? Math.max(...all.map((v) => textW(el, labV(v), 22, 'mono'))) + 16 : 12;
         const top = 4, bottom = H - (axisX ? 84 : 48), x = lin(sc.lo, sc.hi, left, W - valW);
         const band = (bottom - top) / n, bh = Math.min(84, band * 0.72);
         sc.ticks.forEach((t) => { svgEl('line', { x1: x(t), x2: x(t), y1: top, y2: bottom, class: t === 0 ? 'g-zero' : 'g-grid' }, svg); txt(svg, x(t), bottom + 22, lab(t), 'g-tick', 'middle'); });
@@ -110,12 +135,13 @@
           txt(svg, left - 16, y0 + bh / 2, l, 'g-label', 'end', { opacity: opOf(l) });
           let acc = 0;
           series.forEach((s, i) => {
-            const v = +s.valores[j] || 0, h = stack ? bh : bh / m, y = stack ? y0 : y0 + h * i;
+            const raw = s.valores[j], v = raw ?? 0, h = stack ? bh : bh / m, y = stack ? y0 : y0 + h * i;
+            if (raw == null) { if (showVals && !stack) txt(svg, x(0) + 10, y + h / 2, 'sin dato', 'g-val g-nd', 'start'); return; } // hueco: sin barra
             const a = stack ? acc : 0, b = a + v; acc = stack ? b : acc;
             svgEl('rect', { x: x(Math.min(a, b)), y, width: Math.abs(x(b) - x(a)), height: Math.max(1, h - (stack ? 0 : 3)), rx: 3, class: 'g-bar', style: `fill:${fillOf(i, l)}`, opacity: opOf(l), 'data-o': x(0), 'data-dir': 'x' }, svg);
-            if (showVals && !stack) txt(svg, x(Math.max(0, v)) + 10, y + h / 2, lab(v), 'g-val', 'start');
+            if (showVals && !stack) txt(svg, x(Math.max(0, v)) + 10, y + h / 2, labV(v), 'g-val', 'start');
           });
-          if (showVals && stack) txt(svg, x(totals[j]) + 10, y0 + bh / 2, lab(totals[j]), 'g-val', 'start');
+          if (showVals && stack) txt(svg, x(totals[j]) + 10, y0 + bh / 2, labV(totals[j]), 'g-val', 'start');
         });
       } else {
         const tickW = Math.max(...sc.ticks.map((t) => textW(el, lab(t), 22, 'mono')));
@@ -129,26 +155,29 @@
           txt(svg, x0 + bw / 2, bottom + 28, l, 'g-label', 'middle', { opacity: opOf(l) });
           let acc = 0;
           series.forEach((s, i) => {
-            const v = +s.valores[j] || 0, w = stack ? bw : bw / m, xx = stack ? x0 : x0 + w * i;
+            const raw = s.valores[j], v = raw ?? 0, w = stack ? bw : bw / m, xx = stack ? x0 : x0 + w * i;
+            if (raw == null) { if (showVals && !stack && m * n <= 24) txt(svg, xx + w / 2, y(0) - 18, 's/d', 'g-val g-nd', 'middle'); return; } // hueco: sin barra
             const a = stack ? acc : 0, b = a + v; acc = stack ? b : acc;
             svgEl('rect', { x: xx, y: y(Math.max(a, b)), width: Math.max(1, w - (stack ? 0 : 3)), height: Math.abs(y(a) - y(b)), rx: 3, class: 'g-bar', style: `fill:${fillOf(i, l)}`, opacity: opOf(l), 'data-o': y(0), 'data-dir': 'y' }, svg);
-            if (showVals && !stack && m * n <= 24) txt(svg, xx + w / 2, y(Math.max(0, v)) - 18, lab(v), 'g-val', 'middle');
+            if (showVals && !stack && m * n <= 24) txt(svg, xx + w / 2, y(Math.max(0, v)) - 18, labV(v), 'g-val', 'middle');
           });
-          if (showVals && stack) txt(svg, x0 + bw / 2, y(totals[j]) - 18, lab(totals[j]), 'g-val', 'middle');
+          if (showVals && stack) txt(svg, x0 + bw / 2, y(totals[j]) - 18, labV(totals[j]), 'g-val', 'middle');
         });
       }
     } else if (tipo === 'lineas' || tipo === 'dispersion') {
       const pts = tipo === 'dispersion'
-        ? series.map((s) => s.puntos.map(([a, b]) => [+a, +b]))
-        : series.map((s) => s.valores.map((v, j) => [data.numericX ? +labels[j] : j, v == null ? null : +v]));
+        ? series.map((s) => s.puntos.filter(([a, b]) => a != null && b != null))
+        : series.map((s) => s.valores.map((v, j) => [data.numericX ? labels[j] : j, v]));
       const flat = pts.flat().filter((p) => p[1] != null);
       const ys = flat.map((p) => p[1]), xs = flat.map((p) => p[0]);
       const sy = nice(el.dataset.cero != null ? Math.min(0, ...ys) : Math.min(...ys), Math.max(...ys));
       const categorical = tipo === 'lineas' && !data.numericX;
       const sx = categorical ? null : nice(Math.min(...xs), Math.max(...xs));
       const fy = fmtr(el, sy.step), ly = (v) => fy(v) + unit, fx = sx ? fmtr(el, sx.step, false) : null;
+      const fyv = fmtVal(el, sy.step), lyv = (v) => fyv(v) + unit;
+      const lastOf = (s) => { for (let k = s.valores.length - 1; k >= 0; k--) if (s.valores[k] != null) return s.valores[k]; return null; };
       const tickW = Math.max(...sy.ticks.map((t) => textW(el, ly(t), 22, 'mono')));
-      const endW = tipo === 'lineas' && showVals ? Math.max(...series.map((s) => textW(el, ly(s.valores[s.valores.length - 1]), 22, 'mono'))) + 20 : 16;
+      const endW = tipo === 'lineas' && showVals ? Math.max(...series.map((s) => (lastOf(s) == null ? 0 : textW(el, lyv(lastOf(s)), 22, 'mono')))) + 20 : 16;
       const left = tickW + (axisY ? 64 : 20), top = 16, bottom = H - (axisX ? 96 : 56), right = W - endW;
       const y = lin(sy.lo, sy.hi, bottom, top);
       const x = categorical ? (j) => left + (labels.length < 2 ? 0 : (j / (labels.length - 1)) * (right - left)) : lin(sx.lo, sx.hi, left, right);
@@ -162,11 +191,12 @@
       pts.forEach((p, i) => {
         const c = color(i), ok = p.filter((q) => q[1] != null);
         if (tipo === 'lineas') {
-          const d = ok.map((q, k) => `${k ? 'L' : 'M'}${x(q[0]).toFixed(1)},${y(q[1]).toFixed(1)}`).join('');
+          // Un hueco (null) corta la línea: el tramo siguiente empieza con M.
+          const d = p.map((q, k) => (q[1] == null ? '' : `${k && p[k - 1][1] != null ? 'L' : 'M'}${x(q[0]).toFixed(1)},${y(q[1]).toFixed(1)}`)).join('');
           svgEl('path', { d, class: 'g-line', style: `stroke:${c}` }, svg);
           if (ok.length <= 24) ok.forEach((q) => svgEl('circle', { cx: x(q[0]), cy: y(q[1]), r: 6, class: 'g-dot', style: `fill:${c}` }, svg));
           const last = ok[ok.length - 1];
-          if (showVals && last) txt(svg, x(last[0]) + 14, y(last[1]), ly(last[1]), 'g-val', 'start');
+          if (showVals && last) txt(svg, x(last[0]) + 14, y(last[1]), lyv(last[1]), 'g-val', 'start');
         } else ok.forEach((q) => svgEl('circle', { cx: x(q[0]), cy: y(q[1]), r: 11, class: 'g-dot g-pt', style: `fill:${c}` }, svg));
       });
     } else {

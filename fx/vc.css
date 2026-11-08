@@ -15,11 +15,11 @@ pre.code { margin: 0; padding: 22px 26px; background: var(--bg-2); border: var(-
   font: 400 24px/1.5 var(--font-mono); color: var(--fg); white-space: pre; overflow: hidden; tab-size: 4; }
 pre.code.sm { font-size: 22px; line-height: 1.42; }
 pre.code .c-kw { color: var(--accent-2, var(--accent)); font-weight: 600; }
-pre.code .c-fn { color: var(--accent); }
+pre.code .c-fn { color: var(--accent-ink); }
 pre.code .c-num { color: var(--cat-3); }
 pre.code .c-str { color: var(--cat-2); }
 pre.code .c-com { color: var(--fg-3); font-style: italic; }
-code { font-family: var(--font-mono); font-size: .92em; color: var(--accent); }
+code { font-family: var(--font-mono); font-size: .92em; color: var(--accent-ink); }
 
 /* Ficha de función (API) */
 .api { display: grid; gap: 14px; }
@@ -27,13 +27,13 @@ code { font-family: var(--font-mono); font-size: .92em; color: var(--accent); }
 .api table { border-collapse: collapse; font-size: 23px; width: 100%; }
 .api td, .api th { padding: 8px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--fg-2); }
 .api th { color: var(--fg-3); font: 500 20px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
-.api td:first-child { font-family: var(--font-mono); color: var(--accent); white-space: nowrap; }
+.api td:first-child { font-family: var(--font-mono); color: var(--accent-ink); white-space: nowrap; }
 
 /* Tablas genéricas */
 table.t { border-collapse: collapse; font-size: 24px; width: 100%; }
 table.t th, table.t td { padding: 10px 16px; border-bottom: 1px solid var(--line); text-align: left; color: var(--fg-2); }
 table.t th { color: var(--fg-3); font: 500 20px var(--font-mono); text-transform: uppercase; letter-spacing: .08em; }
-table.t td.ok { color: var(--ok); } table.t td.warn { color: var(--warn); } table.t td.err { color: var(--err); }
+table.t td.ok { color: var(--ok-ink); } table.t td.warn { color: var(--warn-ink); } table.t td.err { color: var(--err-ink); }
 
 /* Avisos */
 .tip, .trap, .exam { padding: 18px 24px; border: var(--stroke) solid var(--line-2); border-left-width: 6px; border-radius: var(--radius); font-size: 24px; line-height: 1.4; color: var(--fg-2); }
@@ -41,7 +41,7 @@ table.t td.ok { color: var(--ok); } table.t td.warn { color: var(--warn); } tabl
 .trap { border-left-color: var(--err); }
 .exam { border-left-color: var(--accent); }
 .tip b:first-child, .trap b:first-child, .exam b:first-child { display: block; font: 600 20px var(--font-mono); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 6px; }
-.tip b:first-child { color: var(--ok); } .trap b:first-child { color: var(--err); } .exam b:first-child { color: var(--accent); }
+.tip b:first-child { color: var(--ok-ink); } .trap b:first-child { color: var(--err-ink); } .exam b:first-child { color: var(--accent-ink); }
 
 /* Áreas de gráfico */
 .fx.plot, [data-role="plot"] { width: 100%; height: 100%; min-height: 380px; }
@@ -54,14 +54,15 @@ table.t td.ok { color: var(--ok); } table.t td.warn { color: var(--warn); } tabl
 .g21 { display: grid; grid-template-columns: 1.35fr 1fr; gap: 40px; align-items: start; }
 .g12 { display: grid; grid-template-columns: 1fr 1.35fr; gap: 40px; align-items: start; }
 .vstack { display: grid; gap: 18px; align-content: start; }
-.big-num { font: 600 120px/1 var(--font-display); color: var(--accent); }
-.muted { color: var(--fg-3); }
+.big-num { font: 600 120px/1 var(--font-display); color: var(--accent-ink); }
+.muted { color: var(--fg-3); } /* a propósito: en los decks VC, .muted es un escalón más suave que en el motor (fg-2) */
 p.txt { font-size: 26px; line-height: 1.45; color: var(--fg-2); margin: 0; }
 ul.pts { margin: 0; padding-left: 28px; font-size: 26px; line-height: 1.5; color: var(--fg-2); }
 ul.pts li::marker { color: var(--accent); }
-.step-n { display: inline-grid; place-items: center; width: 44px; height: 44px; border: var(--stroke) solid var(--accent); color: var(--accent); font: 600 22px var(--font-mono); margin-right: 12px; }
+.step-n { display: inline-grid; place-items: center; width: 44px; height: 44px; border: var(--stroke) solid var(--accent); color: var(--accent-ink); font: 600 22px var(--font-mono); margin-right: 12px; }
 
-/* Folio de Noche: cada deck define --folio en :root, p. ej. :root { --folio: "VC.T1 // "; } */
+/* Folio de Noche: cada deck define --folio en :root, p. ej. :root { --folio: "VC.T1 // "; }
+   Sin él, el código de la asignatura: esta hoja solo la cargan los decks de VC. */
 [data-style="noche"] .deco-folio .n::before { content: var(--folio, "VC.SJK002 // "); }
 
 /* Notas del orador: solo en la ventana de la tecla N (fx/rai.js), nunca en la diapositiva */

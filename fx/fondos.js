@@ -18,10 +18,29 @@
      (sin él, program() devuelve null y el pintor usa su respaldo 2D). */
   const VS_FULL = 'attribute vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
   const VS_FULL2 = '#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0.,1.);}';
+  // Extremos claros y oscuros del estilo (para aclarar u oscurecer sin colores literales).
+  const lightest = (api) => api.tok(api.dark ? 'fg' : 'bg'), darkest = (api) => api.tok(api.dark ? 'bg' : 'fg');
   const isES3 = (src) => /^\s*#version\s+300\s+es/.test(src);
+  // Chrome mantiene unos 16 contextos WebGL vivos y descarta los más antiguos sin avisar.
+  // Se guardan como mucho MAX_GL: al pasar de ahí se libera el usado hace más tiempo, y
+  // un lienzo perdido (por el límite o por la GPU) se sustituye por uno nuevo al volver a pintarlo.
+  const MAX_GL = 14, liveGL = [];
+  function touchGL(cv) {
+    const i = liveGL.indexOf(cv); if (i >= 0) liveGL.splice(i, 1);
+    liveGL.push(cv);
+    while (liveGL.length > MAX_GL) {
+      const old = liveGL.shift();
+      try { const ext = old._gl && old._gl.getExtension('WEBGL_lose_context'); if (ext) ext.loseContext(); } catch (e) { /* nada */ }
+      old._lost = true;
+    }
+  }
   function glLayer(s, scale) {
     let cv = s.host.querySelector(':scope > canvas.gl');
-    if (!cv) { cv = document.createElement('canvas'); cv.className = 'gl'; cv.setAttribute('aria-hidden', 'true'); s.host.insertBefore(cv, s.host.firstChild); }
+    if (cv && cv._lost) { const i = liveGL.indexOf(cv); if (i >= 0) liveGL.splice(i, 1); cv.remove(); cv = null; }
+    if (!cv) {
+      cv = document.createElement('canvas'); cv.className = 'gl'; cv.setAttribute('aria-hidden', 'true'); s.host.insertBefore(cv, s.host.firstChild);
+      cv.addEventListener('webglcontextlost', (e) => { e.preventDefault(); cv._lost = true; });
+    }
     const W = Math.max(2, Math.round(s.w * scale)), H = Math.max(2, Math.round(s.h * scale));
     if (cv.width !== W || cv.height !== H) { cv.width = W; cv.height = H; }
     if (!('_gl' in cv)) {
@@ -33,6 +52,7 @@
     }
     const gl = cv._gl;
     if (!gl || gl.isContextLost()) { cv.style.display = 'none'; return null; }
+    touchGL(cv);
     cv.style.display = '';
     gl.viewport(0, 0, W, H);
     return { gl, cv, W, H, gl2: cv._gl2 };
@@ -165,7 +185,8 @@ void main(){
       // respaldo 2D: esferas con degradado metálico
       [[0.77, 0.5, 190], [0.89, 0.67, 120], [0.69, 0.68, 96], [0.88, 0.3, 108], [0.7, 0.28, 80, true]].forEach(([x, y, r, lm]) => {
         const g = ctx.createRadialGradient(x * w - r * 0.35, y * h - r * 0.4, r * 0.1, x * w, y * h, r);
-        g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, lm ? api.tok('accent') : '#9aa1ab'); g.addColorStop(0.8, '#2a2e35'); g.addColorStop(1, api.dark ? '#d9dde3' : '#5b616b');
+        const hi = lightest(api), lo = darkest(api);
+        g.addColorStop(0, hi); g.addColorStop(0.45, lm ? api.tok('accent') : color.mix(hi, lo, 0.4)); g.addColorStop(0.8, color.mix(lo, hi, 0.12)); g.addColorStop(1, api.dark ? color.mix(hi, lo, 0.12) : color.mix(lo, hi, 0.35));
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x * w, y * h, r, 0, TAU); ctx.fill();
       });
     },
@@ -285,9 +306,9 @@ void main(){
       // respaldo 2D: formas blandas con sombra
       const col = [api.tok('bg-3'), api.tok('accent'), api.tok('accent-2'), api.tok('accent-3')];
       [[0.78, 0.62, 150, 0], [0.86, 0.42, 70, 1], [0.66, 0.74, 60, 3], [0.93, 0.76, 64, 2]].forEach(([x, y, r, c]) => {
-        ctx.fillStyle = color.alpha('#000000', api.dark ? 0.4 : 0.12); ctx.beginPath(); ctx.ellipse(x * w + 20, y * h + r * 0.95, r * 1.05, r * 0.25, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = color.alpha(darkest(api), api.dark ? 0.4 : 0.12); ctx.beginPath(); ctx.ellipse(x * w + 20, y * h + r * 0.95, r * 1.05, r * 0.25, 0, 0, TAU); ctx.fill();
         const g = ctx.createRadialGradient(x * w - r * 0.4, y * h - r * 0.4, r * 0.1, x * w, y * h, r);
-        g.addColorStop(0, color.mix(col[c], '#ffffff', 0.35)); g.addColorStop(1, color.mix(col[c], '#000000', 0.25));
+        g.addColorStop(0, color.mix(col[c], lightest(api), 0.35)); g.addColorStop(1, color.mix(col[c], darkest(api), 0.25));
         ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x * w, y * h, r, 0, TAU); ctx.fill();
       });
     },
@@ -392,7 +413,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
       const { ctx, w, h } = s; ctx.clearRect(0, 0, w, h);
       const sc = s.scan, M = nubeMatrix(w, h, t), sweep = (t * 1.3) % TAU;
       const ramp = (api.meta.modes[api.dark ? 'dark' : 'light'].raw || []).slice(0, 10).map(rgb);
-      const L = glLayer(s, Math.min(2, s.ratio || 1));
+      const L = glLayer(s, glScale(s, 1, 1.25)); // con techo, como el resto de pintores
       const pg = L && program(L, 'nube', VS_NUBE, FS_NUBE);
       if (pg && ramp.length === 10) {
         const { gl, cv } = L;
@@ -437,6 +458,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
   };
 
   /* ============================================================ TÉRMICA */
+  // color-literal: paleta «iron» de las cámaras térmicas, fija a propósito (es la escala de medida)
   const IRON = [[0.12, '#1c0a4a'], [0.26, '#53108a'], [0.4, '#9a1a8c'], [0.54, '#d9334f'], [0.66, '#f2682a'], [0.78, '#fbaa23'], [0.9, '#fde26a'], [1, '#fffbe6']];
   function thermalLut(api) {
     const bg = rgb(api.tok('bg')), fg = rgb(api.tok('fg')), acc = rgb(api.tok('accent'));
@@ -478,18 +500,33 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
       const a1 = -0.5 + 0.12 * Math.sin(t * 0.5), a2 = a1 + 1.85 + 0.2 * Math.sin(t * 0.7 + 1);
       const El = [S[0] + 230 * Math.sin(a1), S[1] - 230 * Math.cos(a1)], Wr = [El[0] + 190 * Math.sin(a2), El[1] - 190 * Math.cos(a2)];
       const puls = (k, ph) => 0.94 + 0.06 * Math.sin(t * k + ph);
+      // La parte fija (ambiente, radiador, reflejo y chasis) se calcula una vez por tamaño.
+      if (!s.base || s.baseKey !== w + 'x' + h) {
+        s.base = new Float32Array(gw * gh); s.baseKey = w + 'x' + h;
+        for (let j = 0; j < gh; j++) {
+          const y = (j + 0.5) * ch;
+          for (let i = 0; i < gw; i++) {
+            const x = (i + 0.5) * cw;
+            // ambiente: pared fría a la izquierda, suelo templado, radiador en la pared del fondo
+            let v = 0.03 + 0.12 * smooth(0.45 * w, 1.0 * w, x) + 0.1 * smooth(h - 260, h, y) * smooth(0.5 * w, 0.75 * w, x) + 0.025 * n(x * 0.005, y * 0.005);
+            if (x > 0.865 * w && x < 0.965 * w && y > 0.1 * h && y < 0.36 * h) v = Math.max(v, (0.26 + 0.1 * Math.cos(x * 0.33)) * (1 - smooth(0.33 * h, 0.36 * h, y)));
+            v += 0.16 * Math.exp(-(((x - bx) / 300) ** 2) - (((y - h + 40) / 50) ** 2)); // reflejo en el suelo
+            // chasis con gradiente interno hacia la batería
+            const dc = rboxDist(x, y, bx, by, 240, 74, 30);
+            if (dc < 14) v = Math.max(v, solid(dc, 0.34, 10) + 0.14 * Math.exp(-(((x - bx - 70) / 190) ** 2) - (((y - by) / 70) ** 2)) * (dc < 0 ? 1 : 0));
+            s.base[j * gw + i] = v;
+          }
+        }
+      }
+      // Lo que se mueve solo vive alrededor del robot: fuera de esa caja el campo es la parte fija.
+      const rx0 = bx - 440, ry0 = Math.min(S[1], El[1], Wr[1], by - 340) - 100;
       let mx = 0, mi = 0;
       for (let j = 0; j < gh; j++) {
         const y = (j + 0.5) * ch;
         for (let i = 0; i < gw; i++) {
-          const x = (i + 0.5) * cw;
-          // ambiente: pared fría a la izquierda, suelo templado, radiador en la pared del fondo
-          let v = 0.03 + 0.12 * smooth(0.45 * w, 1.0 * w, x) + 0.1 * smooth(h - 260, h, y) * smooth(0.5 * w, 0.75 * w, x) + 0.025 * n(x * 0.005, y * 0.005);
-          if (x > 0.865 * w && x < 0.965 * w && y > 0.1 * h && y < 0.36 * h) v = Math.max(v, (0.26 + 0.1 * Math.cos(x * 0.33)) * (1 - smooth(0.33 * h, 0.36 * h, y)));
-          v += 0.16 * Math.exp(-(((x - bx) / 300) ** 2) - (((y - h + 40) / 50) ** 2)); // reflejo en el suelo
-          // chasis con gradiente interno hacia la batería
-          const dc = rboxDist(x, y, bx, by, 240, 74, 30);
-          if (dc < 14) v = Math.max(v, solid(dc, 0.34, 10) + 0.14 * Math.exp(-(((x - bx - 70) / 190) ** 2) - (((y - by) / 70) ** 2)) * (dc < 0 ? 1 : 0));
+          const x = (i + 0.5) * cw, k0 = j * gw + i;
+          let v = s.base[k0];
+          if (x < rx0 || y < ry0) { field[k0] = v; if (v > mx && x > w * 0.5) { mx = v; mi = k0; } continue; }
           // batería: núcleo caliente
           const db = rboxDist(x, y, bx + 70, by + 4, 92, 40, 14);
           v = Math.max(v, solid(db, 0.5, 14) + 0.28 * puls(0.6, 0) * Math.exp(-(((x - bx - 70) / 60) ** 2) - (((y - by - 4) / 30) ** 2)));
@@ -519,7 +556,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
       ctx.clearRect(0, 0, w, h); ctx.drawImage(s.off, 0, 0, w, h);
       // medidor de punto en el máximo y caja de medida sobre la batería
-      const ink = api.dark ? '#ffffff' : api.tok('fg'), pad = api.dark ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.8)';
+      const ink = api.tok('fg'), pad = color.alpha(api.tok('bg'), api.dark ? 0.55 : 0.8);
       const tc = (v) => (18 + v * 56).toFixed(1).replace('.', ',') + ' °C';
       const X = ((mi % gw) + 0.5) * cw, Y = (Math.floor(mi / gw) + 0.5) * ch;
       ctx.strokeStyle = ink; ctx.lineWidth = 2;
@@ -562,14 +599,14 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
           g.quadraticCurveTo(cl.x + Math.cos(a + 0.5) * cl.r * 0.6, cl.y + Math.sin(a + 0.5) * cl.r * 0.6, cl.x + Math.cos(a + 0.2) * r1, cl.y + Math.sin(a + 0.2) * r1); g.stroke();
         }
         // núcleo (azul), a veces dividiéndose
-        const nuc = (x, y, r) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, color.alpha(color.mix(a3, '#ffffff', 0.55), 0.95)); gr.addColorStop(0.55, color.alpha(a3, 0.75)); gr.addColorStop(1, color.alpha(a3, 0)); g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, r, r * 0.82, cl.a, 0, TAU); g.fill(); };
+        const nuc = (x, y, r) => { const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, color.alpha(color.mix(a3, lightest(api), 0.55), 0.95)); gr.addColorStop(0.55, color.alpha(a3, 0.75)); gr.addColorStop(1, color.alpha(a3, 0)); g.fillStyle = gr; g.beginPath(); g.ellipse(x, y, r, r * 0.82, cl.a, 0, TAU); g.fill(); };
         if (cl.k < 0.07) { nuc(cl.x - cl.r * 0.22, cl.y, cl.r * 0.3); nuc(cl.x + cl.r * 0.22, cl.y, cl.r * 0.3); } else nuc(cl.x, cl.y, cl.r * 0.4);
         for (let k = 0; k < 4; k++) { const a = rnd() * TAU, r = cl.r * (0.5 + rnd() * 0.35); g.fillStyle = color.alpha(a1, 0.8); g.beginPath(); g.arc(cl.x + Math.cos(a) * r, cl.y + Math.sin(a) * r, 1.6, 0, TAU); g.fill(); }
       });
     } else {
       g.fillStyle = color.alpha(a1, 0.1); g.fillRect(0, 0, D, D);
       g.globalCompositeOperation = 'multiply';
-      const eos = color.mix(a1, '#ffffff', 0.5);
+      const eos = color.mix(a1, lightest(api), 0.5);
       cells.forEach((cl) => {
         if (cl.k > 0.93) return; // luz entre células
         blob(cl, 0.96); g.fillStyle = color.alpha(eos, 0.55); g.fill();
@@ -583,7 +620,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
       g.globalCompositeOperation = 'source-over';
       for (let k = 0; k < 26; k++) {
         const u = k / 26, x = D * 0.15 + u * D * 0.7, y = D * 0.72 + Math.sin(u * 5) * 40 + (rnd() - 0.5) * 30;
-        const gr = g.createRadialGradient(x, y, 2, x, y, 11); gr.addColorStop(0, color.mix(a1, '#ffffff', 0.25)); gr.addColorStop(1, color.alpha(color.mix(a1, '#d63a4f', 0.6), 0.95));
+        const gr = g.createRadialGradient(x, y, 2, x, y, 11); gr.addColorStop(0, color.mix(a1, lightest(api), 0.25)); gr.addColorStop(1, color.alpha(color.mix(a1, api.tok('err'), 0.6), 0.95));
         g.fillStyle = gr; g.beginPath(); g.arc(x, y, 10, 0, TAU); g.fill();
       }
     }
@@ -621,7 +658,7 @@ void main(){ vec2 q = gl_PointCoord - .5; if (dot(q, q) > .25) discard; float a 
       ctx.strokeStyle = color.alpha(api.tok('fg-3'), 0.5); ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(cx, cy, r + 16, 0, TAU); ctx.stroke();
       ctx.strokeStyle = color.alpha(api.tok('fg'), 0.8); ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(cx + r * 0.97, cy - r * 0.2); ctx.lineTo(cx + r * 0.42, cy - r * 0.06); ctx.stroke();
       const bx = cx + r * 0.18, by = cy + r * 0.78;
-      ctx.fillStyle = api.dark ? '#ffffff' : api.tok('fg'); ctx.fillRect(bx, by, 110, 5);
+      ctx.fillStyle = api.tok('fg'); ctx.fillRect(bx, by, 110, 5);
       ctx.font = api.font('mono', 17, 400); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillText('20 µm', bx + 55, by - 8);
     },
   };
@@ -704,9 +741,10 @@ void main(){
   // Borra con un degradado la parte izquierda (columna del título) y, opcionalmente, la de arriba.
   function fadeOut(ctx, w, h, x0 = 0.3, x1 = 0.56, top = 0) {
     ctx.save(); ctx.globalCompositeOperation = 'destination-out';
+    // color-literal: máscaras de recorte (destination-out): solo cuenta el alfa
     let g = ctx.createLinearGradient(w * x0, 0, w * x1, 0); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = g; ctx.fillRect(0, 0, w * x1, h);
-    if (top) { g = ctx.createLinearGradient(0, h * top * 0.6, 0, h * top); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * top); }
+    if (top) { g = ctx.createLinearGradient(0, h * top * 0.6, 0, h * top); g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, w, h * top); } // color-literal: máscara
     ctx.restore();
   }
   const fbm = (n, x, y) => 0.6 * n(x, y) + 0.3 * n(x * 2.1 + 3.3, y * 2.1 - 1.7) + 0.1 * n(x * 4.3 - 7.1, y * 4.3 + 2.9);
@@ -849,6 +887,7 @@ void main(){
       const g = ctx.createLinearGradient(0, 0, w, 0); g.addColorStop(0, c1); g.addColorStop(0.5, c2); g.addColorStop(1, c3);
       ctx.save(); ctx.globalAlpha = 0.55; ctx.fillStyle = g; ctx.fillRect(0, -h * 0.4 * (1 - rev), w, h * 0.3); ctx.restore();
       const m = ctx.createLinearGradient(0, h * 0.05, 0, h * 0.3);
+      // color-literal: máscara (solo alfa)
       ctx.save(); ctx.globalCompositeOperation = 'destination-out'; m.addColorStop(0, 'rgba(0,0,0,0)'); m.addColorStop(1, 'rgba(0,0,0,1)'); ctx.fillStyle = m; ctx.fillRect(0, h * 0.05, w, h * 0.3); ctx.restore();
     },
   };

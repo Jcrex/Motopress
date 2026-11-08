@@ -165,7 +165,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .cifra .dg > span { display: flex; flex-direction: column; transform: translateY(calc(var(--d, 0) * -1.1em)); }
 .cifra .dg > span > i { font-style: normal; height: 1.1em; }
 .cifra-delta { display: inline-flex; gap: 10px; align-items: baseline; font: 500 26px/1.2 var(--font-mono); color: var(--fg-2); }
-.cifra-delta b { font-weight: 600; } .cifra-delta.sube b { color: var(--ok); } .cifra-delta.baja b { color: var(--err); }
+.cifra-delta b { font-weight: 600; } .cifra-delta.sube b { color: var(--ok-ink); } .cifra-delta.baja b { color: var(--err-ink); }
 
 /* etapas: proceso lineal; los [data-step] siempre se ven y .on marca «hecho» */
 .etapas { list-style: none; margin: 0; padding: 0; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); counter-reset: etapa; }
@@ -211,11 +211,11 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .checklist > li:not(.on):first-child::before, .checklist > li.on + li:not(.on)::before { border-color: var(--accent); border-style: dashed; }
 .checklist > li:not(.on):first-child::after, .checklist > li.on + li:not(.on)::after { content: "en curso"; color: var(--accent-ink); }
 .checklist > li.on { color: var(--fg); }
-.checklist > li.on::before { content: "✓"; border-color: var(--ok); color: var(--ok); transform: scale(1.06); }
+.checklist > li.on::before { content: "✓"; border-color: var(--ok); color: var(--ok-ink); transform: scale(1.06); }
 .checklist > li.on::after { content: "hecho"; color: var(--fg-2); }
-.checklist > li.on[data-end="warn"]::before { content: "!"; border-color: var(--warn); color: var(--warn); }
+.checklist > li.on[data-end="warn"]::before { content: "!"; border-color: var(--warn); color: var(--warn-ink); }
 .checklist > li.on[data-end="warn"]::after { content: "revisar"; }
-.checklist > li.on[data-end="err"]::before { content: "✕"; border-color: var(--err); color: var(--err); }
+.checklist > li.on[data-end="err"]::before { content: "✕"; border-color: var(--err); color: var(--err-ink); }
 .checklist > li.on[data-end="err"]::after { content: "falló"; }
 .checklist.tacha > li.on:not([data-end="err"]):not([data-end="warn"]) { color: var(--fg-3); text-decoration-color: var(--fg-3); }
 
@@ -290,6 +290,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .deposito .lectura { display: flex; flex-direction: column; gap: 6px; }
 .deposito .estado { margin: 0; font: 500 22px/1.2 var(--font-mono); color: var(--fg-2); }
 .deposito.bajo .estado b { color: var(--warn); } .deposito.critico .estado b { color: var(--err); } .deposito .estado b { color: var(--ok); }
+.deposito.sin-dato .estado b { color: var(--fg-3); } .deposito .cifra-nd { font: var(--title-weight) var(--cifra-size, 140px)/1.1 var(--font-display); color: var(--fg-3); }
 
 /* ---------- decorado (lo enciende cada estilo) ---------- */
 .deco { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
@@ -313,7 +314,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   transition: opacity .35s ease, transform .35s ease;
   view-transition-name: hud;
 }
-.hud.is-idle { opacity: 0; transform: translateY(12px); pointer-events: none; }
+.hud.is-idle, .hud.is-off { opacity: 0; transform: translateY(12px); pointer-events: none; visibility: hidden; transition: opacity .35s ease, transform .35s ease, visibility 0s linear .35s; }
 .hud button {
   appearance: none; border: 0; background: transparent; color: inherit; font: inherit;
   display: inline-flex; align-items: center; gap: 6px;
@@ -399,6 +400,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .grafico .g-tick { fill: var(--fg-3); font: 500 22px/1 var(--font-mono); }
 .grafico .g-label { fill: var(--fg); font: 500 26px/1 var(--font-text); }
 .grafico .g-val { fill: var(--fg-2); font: 500 22px/1 var(--font-mono); }
+.grafico .g-nd { fill: var(--fg-3); }
 .grafico .g-axis { fill: var(--fg-2); font: 500 22px/1 var(--font-text); }
 .grafico .g-line { fill: none; stroke-width: 4; stroke-linejoin: round; stroke-linecap: round; }
 .grafico .g-dot { stroke: var(--bg); stroke-width: 2.5; }

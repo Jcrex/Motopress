@@ -4,6 +4,7 @@
 // Registro en Claude Code: .mcp.json en la raíz (ya incluido). A mano: node tools/mcp/servidor.mjs
 // Nada se escribe en stdout salvo el protocolo: los avisos van a stderr.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -24,16 +25,32 @@ const Estilo = z.enum(STYLES);
 const Deck = z.string().describe('Nombre del deck en decks/ (p. ej. «roscon-2026»)');
 
 /* ---------- navegador y servidor perezosos, compartidos entre llamadas ---------- */
-let web = null;
+// Se guarda la promesa: dos llamadas a la vez comparten el mismo navegador en lugar de abrir dos.
+let webP = null;
 async function navegador() {
-  if (web && web.browser.isConnected()) return web;
-  const srv = await servir();
-  web = { srv, browser: await abrirNavegador() };
-  return web;
+  if (webP) {
+    const w = await webP.catch(() => null);
+    if (w && w.browser.isConnected()) return w;
+    if (w) { await w.browser.close().catch(() => {}); await w.srv.close().catch(() => {}); }
+    webP = null;
+  }
+  webP = (async () => {
+    const srv = await servir();
+    try { return { srv, browser: await abrirNavegador() }; } catch (e) { await srv.close().catch(() => {}); throw e; }
+  })();
+  webP.catch(() => { webP = null; });
+  return webP;
 }
-async function cerrar() { if (web) { await web.browser.close().catch(() => {}); await web.srv.close(); web = null; } }
-process.on('SIGINT', () => cerrar().then(() => process.exit(0)));
-process.on('SIGTERM', () => cerrar().then(() => process.exit(0)));
+async function cerrar() {
+  const p = webP; webP = null;
+  const w = p && (await p.catch(() => null));
+  if (w) { await w.browser.close().catch(() => {}); await w.srv.close().catch(() => {}); }
+}
+const salir = () => cerrar().finally(() => process.exit(0));
+process.on('SIGINT', salir);
+process.on('SIGTERM', salir);
+process.stdin.on('end', salir); // el cliente se ha ido: no dejar Chromium ni el servidor HTTP vivos
+process.stdin.on('close', salir);
 
 /* ---------- respuestas ---------- */
 const texto = (s) => ({ content: [{ type: 'text', text: typeof s === 'string' ? s : JSON.stringify(s, null, 2) }] });
@@ -87,7 +104,7 @@ server.registerTool('crear_deck', {
 server.registerTool('indice', {
   title: 'Índice del deck', description: 'Diapositivas del deck en orden (id, sección, título, efecto, pasos) y número de errores y avisos.',
   inputSchema: { deck: Deck }, annotations: { readOnlyHint: true },
-}, seguro(async ({ deck }) => { const r = revisar(deck); return texto({ deck: r.deck, errores: r.errores, avisos: r.avisos, diapositivas: r.indice }); }));
+}, seguro(async ({ deck }) => { rutaDeck(deck); const r = revisar(deck); return texto({ deck: r.deck, errores: r.errores, avisos: r.avisos, diapositivas: r.indice }); }));
 
 server.registerTool('leer_diapositiva', {
   title: 'Leer diapositiva', description: 'Devuelve el HTML de una <section class="slide"> por su id.',
@@ -95,7 +112,8 @@ server.registerTool('leer_diapositiva', {
 }, seguro(async ({ deck, id }) => texto(leerDiapositiva(deck, id))));
 
 const Despues = z.string().optional().describe('id tras el que colocarla; sin él, una nueva va antes del cierre y una existente se sustituye en su sitio');
-const informe = (r) => texto(`${r.guardado === false ? 'NO GUARDADA' : 'Diapositiva #' + r.id + ' ' + r.accion}${r.motivo ? ': ' + r.motivo : ''}\n${lineas(r.hallazgos)}`);
+// Un rechazo (guardado: false) se marca como error del protocolo, no solo en el texto.
+const informe = (r) => ({ ...(r.guardado === false ? { isError: true } : {}), ...texto(`${r.guardado === false ? 'NO GUARDADA' : 'Diapositiva #' + r.id + ' ' + r.accion}${r.motivo ? ': ' + r.motivo : ''}\n${lineas(r.hallazgos)}`) });
 
 server.registerTool('diapositiva_desde_spec', {
   title: 'Diapositiva desde especificación',
@@ -124,7 +142,7 @@ server.registerTool('mover_diapositiva', {
 server.registerTool('revisar', {
   title: 'Revisar deck', description: 'Revisión estática, sin navegador: atributos, scripts, efectos, colores literales, tamaños, títulos largos y JSON de los gráficos.',
   inputSchema: { deck: Deck }, annotations: { readOnlyHint: true },
-}, seguro(async ({ deck }) => { const r = revisar(deck); return texto(`${r.deck}: ${r.diapositivas} diapositivas, ${r.errores} errores, ${r.avisos} avisos\n${lineas(r.hallazgos)}`); }));
+}, seguro(async ({ deck }) => { rutaDeck(deck); const r = revisar(deck); return texto(`${r.deck}: ${r.diapositivas} diapositivas, ${r.errores} errores, ${r.avisos} avisos\n${lineas(r.hallazgos)}`); }));
 
 server.registerTool('capturar', {
   title: 'Capturar diapositiva',
@@ -150,7 +168,7 @@ server.registerTool('verificar', {
   title: 'Verificar deck',
   description: 'Recorre todas las diapositivas en varios estilos y en claro y oscuro; guarda las capturas en output/capturas/<deck>/ y devuelve los problemas, con la imagen de hasta 4 diapositivas afectadas.',
   inputSchema: { deck: Deck, estilos: z.array(Estilo).default(['suizo', 'noche']), paso: z.string().default('ultimo') },
-  annotations: { readOnlyHint: true },
+  annotations: { readOnlyHint: false }, // escribe las capturas en output/capturas/
 }, seguro(async ({ deck, estilos, paso }) => {
   rutaDeck(deck);
   const { srv, browser } = await navegador();
@@ -167,10 +185,18 @@ server.registerTool('verificar', {
 const run = promisify(execFile);
 server.registerTool('empaquetar', {
   title: 'Empaquetar deck', description: 'Genera un único HTML con el motor en línea (para enviar o abrir con doble clic).',
-  inputSchema: { deck: Deck, carpeta: z.string().optional().describe('Carpeta de salida; por defecto output/') },
+  inputSchema: { deck: Deck, carpeta: z.string().optional().describe('Carpeta de salida dentro del repositorio o de la carpeta personal; por defecto output/') },
 }, seguro(async ({ deck, carpeta }) => {
   const f = rutaDeck(deck);
-  const { stdout } = await run(process.execPath, [path.join(ROOT, 'tools/bundle.mjs'), f, `--out=${carpeta || outDir()}`], { cwd: ROOT });
+  let out = outDir();
+  if (carpeta) {
+    out = path.resolve(ROOT, carpeta);
+    const dentro = (b) => out === b || out.startsWith(b + path.sep);
+    const oculta = (b) => path.relative(b, out).split(path.sep).some((seg) => seg.startsWith('.') && seg !== '..');
+    const ok = (dentro(ROOT) && !oculta(ROOT)) || (dentro(os.homedir()) && !oculta(os.homedir()));
+    if (!ok) throw new Error(`Carpeta de salida no permitida: ${out} (debe estar en el repositorio o en tu carpeta personal, y no en una carpeta oculta)`);
+  }
+  const { stdout } = await run(process.execPath, [path.join(ROOT, 'tools/bundle.mjs'), f, `--out=${out}`], { cwd: ROOT });
   return texto(stdout.trim());
 }));
 

@@ -50,7 +50,8 @@
   document.addEventListener('motor:enter', (e) => {
     const s = e.detail.slide;
     if (!s || reduced() || e.detail.animate === false) return;
-    s.querySelectorAll('video[data-auto]').forEach((v) => { try { v.currentTime = 0; } catch (err) { /* nada */ } v.play().catch(() => {}); });
+    // Un refresco (cambio de estilo o de modo) no rebobina: el vídeo sigue donde iba.
+    s.querySelectorAll('video[data-auto]').forEach((v) => { if (!e.detail.refresh) { try { v.currentTime = 0; } catch (err) { /* nada */ } } v.play().catch(() => {}); });
   });
   document.addEventListener('motor:leave', (e) => {
     const s = e.detail.slide;
@@ -60,12 +61,16 @@
   /* ---------------- ns-g1: G1 en 3D ---------------- */
   const YAW0 = -0.5;
   const G1_VUELTA_MS = 30000; // una vuelta completa cada 30 s: giro lento para ver el robot entero
-  let geoP = null;
+  const geos = new Map(); // una geometría por URL; si falla, se puede reintentar
   function loadGeo(url) {
-    if (!geoP) geoP = new Promise((ok, ko) => {
-      try { new THREE.STLLoader().load(url, (g) => { g.rotateX(-Math.PI / 2); g.computeBoundingBox(); const b = g.boundingBox, c = new THREE.Vector3(); b.getCenter(c); g.translate(-c.x, -b.min.y, -c.z); g.computeVertexNormals(); ok(g); }, undefined, ko); } catch (e) { ko(e); }
-    });
-    return geoP;
+    if (!geos.has(url)) {
+      const p = new Promise((ok, ko) => {
+        try { new THREE.STLLoader().load(url, (g) => { g.rotateX(-Math.PI / 2); g.computeBoundingBox(); const b = g.boundingBox, c = new THREE.Vector3(); b.getCenter(c); g.translate(-c.x, -b.min.y, -c.z); g.computeVertexNormals(); ok(g); }, undefined, ko); } catch (e) { ko(e); }
+      });
+      p.catch(() => geos.delete(url));
+      geos.set(url, p);
+    }
+    return geos.get(url);
   }
   function fallback(api, on) { api.el.classList.toggle('g1-sin-webgl', on); }
   function g1Draw(api) {
@@ -76,7 +81,8 @@
     render(api) {
       const host = api.q('[data-role="g1"]'); if (!host) return;
       const old = api.el._g1;
-      if (old) { old.renderer.dispose(); host.querySelectorAll('canvas').forEach((c) => c.remove()); }
+      // Libera el contexto WebGL anterior: Chrome solo mantiene unos 16 vivos.
+      if (old) { old.renderer.dispose(); try { old.renderer.forceContextLoss(); } catch (e) { /* sin extensión */ } host.querySelectorAll('canvas').forEach((c) => c.remove()); }
       api.el._g1 = null;
       if (!window.THREE || !THREE.STLLoader) { fallback(api, true); return; }
       let renderer;

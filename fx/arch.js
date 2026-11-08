@@ -151,5 +151,11 @@ ${info.map(([k, v]) => `<b>${k.padEnd(9, ' ')}</b> ${esc(v)}`).join('\n')}</pre>
       gsap.fromTo(lines, { clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0% 0)', duration: 1.1, delay: 0.5, ease: 'steps(12)' });
       gsap.fromTo(api.qa('.blocks i'), { scaleY: 0, transformOrigin: '50% 100%' }, { scaleY: 1, duration: 0.3, stagger: 0.04, delay: 1.5 });
     },
+    // Al salir se cortan las animaciones y queda el estado final.
+    stop(api) {
+      if (!window.gsap) return;
+      const els = [api.q('.art'), api.q('.info'), ...api.qa('.blocks i')].filter(Boolean);
+      gsap.killTweensOf(els); gsap.set(els, { clearProps: 'opacity,transform,clipPath' });
+    },
   });
 })();

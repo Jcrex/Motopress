@@ -27,7 +27,7 @@ const Grafico = z.object({
   ejeX: z.string().optional(), ejeY: z.string().optional(),
   resalta: z.array(z.string()).optional(), orden: z.enum(['desc', 'asc']).optional(),
   apilar: z.boolean().optional(), cero: z.boolean().optional(), valores: z.boolean().optional(),
-});
+}).refine((g) => (g.datos && g.datos.length) || (g.series && g.series.length), { message: 'El gráfico necesita "datos" o "series" con algún valor' });
 
 export const Spec = z.discriminatedUnion('tipo', [
   z.object({ tipo: z.literal('portada'), ...base, lead: z.string().optional(), fondo: z.string().optional().describe('data-painter: grano, hilos, radar, topo, isolineas, escaner, velo…'), semilla: z.number().int().optional() }),

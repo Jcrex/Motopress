@@ -38,15 +38,16 @@
       const svg = svgIn(host, RG.W, RG.H);
       const cats = api.cats(3), line = api.tok('line-2'), fg = api.tok('fg'), fg2 = api.tok('fg-2');
       const defs = el('defs', {}, svg);
-      const mk = el('marker', { id: 'rg-arrow', viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+      const aid = 'rg-arrow-' + (api.el.id || 'x'); // id por diapositiva: dos instancias no comparten el marcador
+      const mk = el('marker', { id: aid, viewBox: '0 0 10 10', refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
       el('path', { d: 'M0,0 L10,5 L0,10 z', fill: line }, mk);
       const gE = el('g', {}, svg), gN = el('g', {}, svg), gD = el('g', {}, svg);
       api.edges = [];
       Object.keys(RG.topics).forEach((t) => {
         const T = boxOf(t, true), P = boxOf(RG.pubs[t], false);
         const chain = RG.topics[t][3];
-        const pe = el('path', { d: edgePath(P, T), fill: 'none', stroke: line, 'stroke-width': 2.2, 'marker-end': 'url(#rg-arrow)' }, gE);
-        const subs = RG.subs[t].map((s) => el('path', { d: edgePath(T, boxOf(s, false)), fill: 'none', stroke: line, 'stroke-width': 2.2, 'marker-end': 'url(#rg-arrow)' }, gE));
+        const pe = el('path', { d: edgePath(P, T), fill: 'none', stroke: line, 'stroke-width': 2.2, 'marker-end': `url(#${aid})` }, gE);
+        const subs = RG.subs[t].map((s) => el('path', { d: edgePath(T, boxOf(s, false)), fill: 'none', stroke: line, 'stroke-width': 2.2, 'marker-end': `url(#${aid})` }, gE));
         api.edges.push({ t, hz: RG.topics[t][2], pub: pe, subs, col: cats[chain] });
       });
       Object.keys(RG.nodes).forEach((n) => {
@@ -320,12 +321,13 @@
       const s = 1.05; // px por mm
       const defs = el('defs', {}, svg);
       const mk = (id, col) => { const m = el('marker', { id, viewBox: '0 0 12 12', refX: 11, refY: 6, markerWidth: 12, markerHeight: 12, orient: 'auto-start-reverse', markerUnits: 'userSpaceOnUse' }, defs); el('path', { d: 'M0,2 L12,6 L0,10 z', fill: col }, m); };
-      mk('bp-a', acc);
+      const bpa = 'bp-a-' + (api.el.id || 'x'); // id por diapositiva
+      mk(bpa, acc);
       const draw = el('g', { class: 'bp-draw' }, svg), dims = el('g', { class: 'bp-dims' }, svg);
       const P = (d, st = {}) => el('path', { d, fill: 'none', stroke: fg, 'stroke-width': 2.2, 'stroke-linejoin': 'round', ...st }, draw);
       const T = (x, y, txt, st = {}, parent = dims) => { const t = el('text', { x, y, fill: acc, style: fontAttr(api, 'mono', 21, 500), 'text-anchor': 'middle', ...st }, parent); t.textContent = txt; return t; };
-      const dimH = (x1, x2, y, label, yref) => { el('line', { x1, y1: yref, x2: x1, y2: y - 10, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x2, y1: yref, x2, y2: y - 10, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x1 + 1, y1: y, x2: x2 - 1, y2: y, stroke: acc, 'stroke-width': 1.6, 'marker-start': 'url(#bp-a)', 'marker-end': 'url(#bp-a)' }, dims); T((x1 + x2) / 2, y - 10, label); };
-      const dimV = (y1, y2, x, label, xref) => { el('line', { x1: xref, y1, x2: x + 10, y2: y1, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: xref, y1: y2, x2: x + 10, y2, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x, y1: y1 + 1, x2: x, y2: y2 - 1, stroke: acc, 'stroke-width': 1.6, 'marker-start': 'url(#bp-a)', 'marker-end': 'url(#bp-a)' }, dims); const t = T(x - 12, (y1 + y2) / 2, label); t.setAttribute('transform', `rotate(-90 ${x - 12} ${(y1 + y2) / 2})`); };
+      const dimH = (x1, x2, y, label, yref) => { el('line', { x1, y1: yref, x2: x1, y2: y - 10, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x2, y1: yref, x2, y2: y - 10, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x1 + 1, y1: y, x2: x2 - 1, y2: y, stroke: acc, 'stroke-width': 1.6, 'marker-start': `url(#${bpa})`, 'marker-end': `url(#${bpa})` }, dims); T((x1 + x2) / 2, y - 10, label); };
+      const dimV = (y1, y2, x, label, xref) => { el('line', { x1: xref, y1, x2: x + 10, y2: y1, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: xref, y1: y2, x2: x + 10, y2, stroke: fg3, 'stroke-width': 1.2 }, dims); el('line', { x1: x, y1: y1 + 1, x2: x, y2: y2 - 1, stroke: acc, 'stroke-width': 1.6, 'marker-start': `url(#${bpa})`, 'marker-end': `url(#${bpa})` }, dims); const t = T(x - 12, (y1 + y2) / 2, label); t.setAttribute('transform', `rotate(-90 ${x - 12} ${(y1 + y2) / 2})`); };
 
       // ---- vista superior (planta) ----
       const cx = 530, cy = 330, L = 420 * s, Wd = 360 * s;
@@ -342,7 +344,7 @@
       el('circle', { cx: x0 + 40 * s, cy, r: 25 * s, fill: 'none', stroke: fg, 'stroke-width': 2.2 }, draw);
       P(`M${x0 + L - 14},${cy - 34} h14 v68 h-14 Z`);
       const ax = cx + 40, ay = cy + 120;
-      el('line', { x1: ax, y1: ay, x2: ax + 70, y2: ay, stroke: api.tok('x'), 'stroke-width': 4, 'marker-end': 'url(#bp-a)' }, draw);
+      el('line', { x1: ax, y1: ay, x2: ax + 70, y2: ay, stroke: api.tok('x'), 'stroke-width': 4, 'marker-end': `url(#${bpa})` }, draw);
       el('line', { x1: ax, y1: ay, x2: ax, y2: ay - 70, stroke: api.tok('y'), 'stroke-width': 4 }, draw);
       T(ax + 84, ay + 7, 'x', { fill: api.tok('x'), 'text-anchor': 'start' }, draw); T(ax + 10, ay - 76, 'y', { fill: api.tok('y'), 'text-anchor': 'start' }, draw);
       dimH(x0, x0 + L, y0 - 74, '420', y0 - 40);

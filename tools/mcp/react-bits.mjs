@@ -5,7 +5,6 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 import { ROOT } from '../salida.mjs';
 
 export const RB = path.resolve(process.env.RB_PATH || path.join(os.homedir(), 'Proyectos/react-bits'));
@@ -17,7 +16,11 @@ let db = null;
 const base = () => {
   if (!db) {
     if (!fs.existsSync(DB)) throw new Error('No existe planning/atlas/atlas.db: ejecuta planning/atlas/construir_db.py y react_bits.py');
-    db = new DatabaseSync(DB, { readOnly: true });
+    // Carga perezosa: sin node:sqlite (Node < 22.13) fallan solo las herramientas rb_*, no todo el servidor.
+    let sqlite = null;
+    try { sqlite = process.getBuiltinModule && process.getBuiltinModule('node:sqlite'); } catch { sqlite = null; }
+    if (!sqlite) throw new Error(`Las herramientas rb_* necesitan node:sqlite (Node 22.13 o posterior; tienes ${process.version})`);
+    db = new sqlite.DatabaseSync(DB, { readOnly: true });
   }
   return db;
 };
@@ -180,7 +183,8 @@ export function rbTecnica(tecnica) {
   const md = recetas();
   if (!md) throw new Error('Falta .claude/skills/portar-react-bits/recetas.md');
   const secciones = md.split(/\n(?=## )/);
-  const sec = secciones.find((s) => new RegExp(`^## .*\\b${tecnica}\\b`, 'i').test(s));
+  const t = String(tecnica).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // texto literal, no expresión regular
+  const sec = secciones.find((s) => new RegExp(`^## .*(?:^|[^\\w])${t}(?:[^\\w]|$)`, 'im').test(s.split('\n')[0]));
   const lista = secciones.filter((s) => s.startsWith('## ')).map((s) => s.split('\n')[0].slice(3));
   if (!sec) return `No hay receta para «${tecnica}». Recetas: ${lista.join(' · ')}`;
   // Dos ejemplos ya portados que usan esa técnica: original y port, para compararlos.

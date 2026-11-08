@@ -105,4 +105,7 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
   const opt = (k) => (process.argv.find((a) => a.startsWith(`--${k}=`)) || '').split('=')[1];
   const r = await verificar({ deck, estilos: (list || 'suizo,noche').split(','), paso: opt('paso') || 'primero', solo: opt('solo') ? opt('solo').split(',') : null, log: console.log });
   console.log(`Capturas en ${r.dir}`);
+  // Sale con 1 si hay errores de consola o elementos fuera del lienzo (útil en scripts).
+  console.log(r.hallazgos.length ? `${r.hallazgos.length} hallazgos` : 'Sin hallazgos');
+  process.exitCode = r.hallazgos.length ? 1 : 0;
 }

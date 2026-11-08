@@ -80,10 +80,10 @@ JSON: `{"datos": [[etiqueta, valor], …]}` para una serie; `{"etiquetas": […]
 | Efecto | Script | Uso |
 |---|---|---|
 | `backdrop` | `fx/sistema.js` | fondo animado de portadas y separadores |
-| `secuencia` | `fx/rai.js` | revela al entrar los elementos con `data-seq="n"` (mismo n, a la vez). `data-a="fade|draw|grow|rise|pop"` (`draw` traza `<path>`/`<line>` SVG; `grow` y `rise` hacen crecer barras). `data-travel="#id-camino"` en un `<circle>` lo mueve por ese camino. `data-step-ms` en la sección cambia el ritmo. Ideal para diagramas SVG propios |
+| `secuencia` | `fx/rai.js` | revela al entrar los elementos con `data-seq="n"` (mismo n, a la vez). `data-a="fade|draw|grow|rise|pop"` (`draw` traza `<path>`/`<line>` SVG; `grow` y `rise` hacen crecer barras). `data-travel="#id-camino"` en un `<circle>` lo mueve por ese camino (`data-period` en ms por vuelta, 4200 por defecto; `data-rest` de 0 a 1, posición mientras espera). `data-step-ms` en la sección cambia el ritmo. Ideal para diagramas SVG propios |
 | `vc` | `fx/vc.js` (antes de `fx/rai.js`) | activa a la vez `secuencia`, `vc-plot`, `vc-heat` y `vc-conv`, y las fórmulas KaTeX |
 | `vc-plot` | `fx/vc.js` | curvas y = f(x) y barras: `<div class="fx" data-role="plot" data-x="0,255" data-y="0,255" data-fns='[{"f":"x=>x*x/255","label":"cuadrática"}]' data-xl="eje x" data-yl="eje y"></div>`. Opcional: `data-bars='[…]'`, `data-pts='[[x,y],…]'`, `data-legend="tl|tr|bl|br|top"`, `data-xdec`, `data-ydec` |
-| `vc-heat` | `fx/vc.js` | matriz coloreada: `<div class="fx vc-heat" data-m='[[1,2],[3,4]]' data-signed="1" data-dec="2"></div>` |
+| `vc-heat` | `fx/vc.js` | matriz coloreada: `<div class="fx vc-heat" data-m='[[1,2],[3,4]]' data-signed="1" data-dec="2"></div>` (`data-nums="0"` oculta los números) |
 | `vc-conv` | `fx/vc.js` | convolución paso a paso: `data-img='[[…]]' data-k='[[…]]' data-mode="conv|corr" data-pad="zero|none"` |
 
 `fx/vc.js` necesita KaTeX (CSS y JS, con `contrib/auto-render`) desde jsDelivr y los estilos de `fx/vc.css` (`.eq`, `pre.code`, `.tip`, `.trap`, `.exam`, `.g2`, `.g3`, `.vstack`…): `<link rel="stylesheet" href="../../fx/vc.css">`. Copia el bloque de `<link>`/`<script>` de KaTeX de `decks/vc-t1-realce/index.html`.
@@ -98,7 +98,7 @@ Los prefijos `op-*`, `ns-*` y `arq-opus` son de decks concretos: no los reutilic
 
 ## Tokens de color
 
-CSS: `var(--bg)`, `--bg-2`, `--bg-3`, `--fg`, `--fg-2`, `--fg-3`, `--line`, `--line-2`, `--accent`, `--accent-2`, `--accent-3`, `--accent-ink`, `--on-accent`, `--ok`, `--warn`, `--err`, `--cat-1` … `--cat-6`, `--seq-1` … `--seq-7`, `--div-1` … `--div-7`. En JavaScript: `api.tok('fg-2')`, `api.cats(n)`, `api.seq(t)`, `api.div(t)`.
+CSS: `var(--bg)`, `--bg-2`, `--bg-3`, `--fg`, `--fg-2`, `--fg-3`, `--line`, `--line-2`, `--accent`, `--accent-2`, `--accent-3`, `--accent-ink`, `--on-accent`, `--ok`, `--warn`, `--err` (y `--ok-ink`, `--warn-ink`, `--err-ink` para texto: siempre ≥ 4,5:1), `--cat-1` … `--cat-6`, `--seq-1` … `--seq-7`, `--div-1` … `--div-7`. En JavaScript: `api.tok('fg-2')`, `api.cats(n)`, `api.seq(t)`, `api.div(t)`.
 
 | Qué codifica | Token |
 |---|---|

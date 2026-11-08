@@ -27,11 +27,13 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   const err = (msg, where = '') => out.push({ nivel: 'error', msg, where });
   const warn = (msg, where = '') => out.push({ nivel: 'aviso', msg, where });
   const lineOf = (i) => html.slice(0, i).split('\n').length;
+  // Etiqueta de apertura respetando comillas: un «>» dentro de un atributo no la corta.
+  const TAG = `(?:[^>"']|"[^"]*"|'[^']*')*`;
   const attr = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*("([^"]*)"|'([^']*)')`)); return m ? (m[2] ?? m[3]) : null; };
 
   // ---------- estilos ----------
   const STYLES = JSON.parse(fs.readFileSync(path.join(ROOT, 'themes/source.json'), 'utf8')).styles.map((s) => s.id);
-  const htmlTag = html.match(/<html\b[^>]*>/i)?.[0] || '';
+  const htmlTag = html.match(new RegExp(`<html\\b${TAG}>`, 'i'))?.[0] || '';
   const style = attr(htmlTag, 'data-style');
   if (style && !STYLES.includes(style)) err(`data-style="${style}" no existe. Válidos: ${STYLES.join(', ')}`, 'línea 1');
   const pick = html.match(/MOTOR_PICK\s*=\s*\[([^\]]*)\]/);
@@ -42,7 +44,7 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   }
 
   // ---------- scripts y su orden ----------
-  const scripts = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)].map((m) => ({ src: attr(m[0], 'src'), body: m[2], at: m.index }));
+  const scripts = [...html.matchAll(new RegExp(`<script\\b(${TAG})>([\\s\\S]*?)<\\/script>`, 'gi'))].map((m) => ({ src: attr(`<script${m[1]}>`, 'src'), body: m[2], at: m.index }));
   const idx = (re) => scripts.findIndex((s) => (s.src ? re.test(s.src) : re.test(s.body)));
   const ORDER = [['MOTOR_PICK', /MOTOR_PICK/], ['themes/meta.js', /themes\/meta\.js$/], ['engine/engine.js', /engine\/engine\.js$/], ['fx/sistema.js', /fx\/sistema\.js$/], ['fx/fondos.js', /fx\/fondos\.js$/], ['fx/piezas.js', /fx\/piezas\.js$/]];
   const pos = ORDER.map(([n, re]) => [n, idx(re)]);
@@ -57,7 +59,8 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   scripts.forEach((s, i) => { if (s.src && /\/fx\/[^/]+\.js$/.test(s.src) && !/sistema|fondos|piezas/.test(s.src) && i < lastCore) err(`${s.src} se carga antes que el núcleo (meta, engine, sistema, fondos, piezas)`); });
 
   // ---------- registro de efectos y pintores de los scripts locales ----------
-  const local = scripts.filter((s) => s.src && !/^https?:/.test(s.src)).map((s) => path.resolve(dir, s.src));
+  const remote = (src) => /^(?:https?:)?\/\/|^data:/.test(src);
+  const local = scripts.filter((s) => s.src && !remote(s.src)).map((s) => path.resolve(dir, s.src.replace(/[?#].*$/, '')));
   const code = local.filter((f) => { if (fs.existsSync(f)) return true; err(`Script inexistente: ${path.relative(ROOT, f)}`); return false; })
     .map((f) => fs.readFileSync(f, 'utf8')).concat(scripts.filter((s) => !s.src).map((s) => s.body)).join('\n');
   const FX = new Set([...code.matchAll(/Motor\.fx\(\s*['"]([^'"]+)['"]/g)].map((m) => m[1]));
@@ -68,17 +71,20 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   const CDN = scripts.map((s) => s.src || '').join(' ');
   if (/data-fx="(?:sankey|clouds)"/.test(html) && !/d3-(?:sankey|cloud)/.test(CDN)) warn('sankey o clouds sin cargar d3-sankey / d3-cloud desde el CDN');
   if (/data-fx="vc"|class="[^"]*\bvc-(?:conv|heat)\b|data-fns=/.test(html) && !/katex/.test(CDN)) warn('fx/vc.js renderiza fórmulas con KaTeX y no se carga desde el CDN');
-  if (/\bdata-fx="/.test(html) && !/d3@/.test(CDN) && /data-fx="(?:clouds|ridge|calendar|sankey|kpis|training|confusion|latent|nnet|rosgraph|lidar|astar|tftree|blueprint|scope)"/.test(html)) err('Hay efectos que usan D3 y no se carga d3 desde el CDN');
+  const hasD3 = scripts.some((s) => s.src && /(?:^|\/)d3(?:@[\w.]+)?(?:\/|\.(?:v\d+\.)?(?:min\.)?js$)/.test(s.src.replace(/[?#].*$/, '')));
+  if (/\bdata-fx="/.test(html) && !hasD3 && /data-fx="(?:clouds|ridge|calendar|sankey|kpis|training|confusion|latent|nnet|rosgraph|lidar|astar|tftree|blueprint|scope)"/.test(html)) err('Hay efectos que usan D3 y no se carga d3 desde el CDN');
 
   // ---------- diapositivas ----------
   const ids = new Map();
   for (const m of html.matchAll(/\sid\s*=\s*"([^"]+)"/g)) ids.set(m[1], (ids.get(m[1]) || 0) + 1);
   [...ids].filter(([, n]) => n > 1).forEach(([id, n]) => err(`id="${id}" aparece ${n} veces`));
   const indice = [];
-  const slides = [...html.matchAll(/<section\b[^>]*class="[^"]*\bslide\b[^"]*"[^>]*>/g)];
+  // Fuera comentarios: una diapositiva comentada no cuenta.
+  const live = html.replace(/<!--[\s\S]*?-->/g, (c) => c.replace(/[^\n]/g, ' '));
+  const slides = [...live.matchAll(new RegExp(`<section\\b${TAG}>`, 'g'))].filter((m) => /(?:^|\s)slide(?:\s|$)/.test(attr(m[0], 'class') || ''));
   if (!slides.length) err('No hay ninguna <section class="slide">');
   slides.forEach((m, k) => {
-    const tag = m[0], end = slides[k + 1]?.index ?? html.length, body = html.slice(m.index, end);
+    const tag = m[0], end = slides[k + 1]?.index ?? html.length, body = live.slice(m.index, end);
     const id = attr(tag, 'id'), where = `${id ? '#' + id : 'diapositiva ' + (k + 1)} (línea ${lineOf(m.index)})`;
     indice.push({ id, seccion: attr(tag, 'data-section'), titulo: attr(tag, 'data-title'), fx: attr(tag, 'data-fx'), pasos: (body.match(/\sdata-step\b/g) || []).length, linea: lineOf(m.index) });
     if (!id) err('Falta id', where);
@@ -113,9 +119,16 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   });
 
   // ---------- colores literales y tamaños de letra ----------
-  const HEX = /(^|[^&\w-])#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3}(?:[0-9a-fA-F]{2})?)?\b|\b(?:rgba?|hsla?)\(\s*[\d.]/;
-  const scanCss = (text, where, base = 0) => text.split('\n').forEach((l, i) => {
-    if (/^\s*(\/\/|\/\*|\*)/.test(l)) return;
+  // hex, funciones de color (rgb, hsl, oklch, lab…) y nombres CSS en propiedades de color.
+  // Una excepción justificada se marca con «color-literal» en la línea o en el comentario de encima.
+  const NAMES = 'white|black|red|green|blue|yellow|orange|purple|pink|gray|grey|silver|gold|navy|teal|maroon|olive|lime|aqua|fuchsia|cyan|magenta|brown|crimson|tomato|coral|salmon|indigo|violet';
+  const PROPS = String.raw`(?:\bcolor|background(?:-color)?|\bfill|\bstroke|border(?:-[a-z]+)?-color|stop-color|outline-color)\s*:\s*`;
+  const BASE = String.raw`(^|[^&\w-])#[0-9a-fA-F]{3}(?:[0-9a-fA-F]{3}(?:[0-9a-fA-F]{2})?)?\b|\b(?:rgba?|hsla?|oklch|oklab|lab|lch|hwb)\(\s*[\d.]|\bcolor\(\s*(?:srgb|display-p3)`;
+  const HEX = new RegExp(`${BASE}|${PROPS}(?:${NAMES})\\b`, 'i'); // CSS: nombre sin comillas
+  const HEX_JS = new RegExp(`${BASE}|${PROPS}['"\`](?:${NAMES})['"\`]`, 'i'); // JS: el nombre va entre comillas (sin ellas es una variable)
+  const exempt = (lines, i) => /color-literal/.test(lines[i]) || (i > 0 && /^\s*(\/\/|\/\*|\*).*color-literal/.test(lines[i - 1]));
+  const scanCss = (text, where, base = 0) => text.split('\n').forEach((l, i, all) => {
+    if (/^\s*(\/\/|\/\*|\*)/.test(l) || exempt(all, i)) return;
     if (HEX.test(l)) err(`Color literal: ${l.trim().slice(0, 90)}`, `${where}:${base + i + 1}`);
     for (const f of l.matchAll(/font(?:-size)?\s*:[^;]*?\b(\d+(?:\.\d+)?)px/g)) if (+f[1] < 22) warn(`Texto de ${f[1]} px (mínimo 22)`, `${where}:${base + i + 1}`);
   });
@@ -123,9 +136,9 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   for (const m of html.matchAll(/\s(?:style|fill|stroke|stop-color|color)\s*=\s*"([^"]*)"/g)) if (HEX.test(m[1])) err(`Color literal en atributo: ${m[0].trim().slice(0, 90)}`, `index.html:${lineOf(m.index)}`);
   const own = (fs.existsSync(dir) ? fs.readdirSync(dir) : []).filter((f) => /\.(css|js)$/.test(f));
   own.forEach((f) => scanCss(fs.readFileSync(path.join(dir, f), 'utf8'), f));
-  local.filter((f) => f.startsWith(path.join(ROOT, 'fx') + path.sep) && !/\/(sistema|fondos|piezas)\.js$/.test(f)).forEach((f) => {
-    const t = fs.readFileSync(f, 'utf8').replace(/<style[\s\S]*?<\/style>/g, '');
-    t.split('\n').forEach((l, i) => { if (!/^\s*(\/\/|\/\*|\*)/.test(l) && HEX.test(l) && !/#version/.test(l)) warn(`Color literal en efecto: ${l.trim().slice(0, 90)}`, `${path.relative(ROOT, f)}:${i + 1}`); });
+  local.filter((f) => f.startsWith(path.join(ROOT, 'fx') + path.sep) && fs.existsSync(f)).forEach((f) => {
+    const t = fs.readFileSync(f, 'utf8').replace(/<style[\s\S]*?<\/style>/g, (m) => m.replace(/[^\n]/g, ' '));
+    t.split('\n').forEach((l, i, all) => { if (!/^\s*(\/\/|\/\*|\*)/.test(l) && !exempt(all, i) && HEX_JS.test(l) && !/#version/.test(l)) warn(`Color literal en efecto: ${l.trim().slice(0, 90)}`, `${path.relative(ROOT, f)}:${i + 1}`); });
   });
   const errores = out.filter((o) => o.nivel === 'error').length;
   return { deck: path.relative(ROOT, file), diapositivas: slides.length, errores, avisos: out.length - errores, hallazgos: out, indice };

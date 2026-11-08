@@ -27,15 +27,25 @@
   const ROLL = new Set(['noche', 'nube', 'termica', 'matriz', 'arcilla']);
   let grouping = 'always';
   try { new Intl.NumberFormat('es-ES', { useGrouping: 'always' }); } catch (e) { grouping = true; }
+  // Número escrito a mano: acepta «4.1», «4,1» y «1.234,5». Devuelve NaN si no es un número.
+  const parseNum = (t) => {
+    if (t == null) return NaN;
+    let s = String(t).trim().replace(/\s/g, '');
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    return s === '' ? NaN : Number(s);
+  };
+  const decOk = (d) => Number.isInteger(d) && d >= 0 && d <= 20;
   function cifraOpts(el) {
-    const raw = el.dataset.value || '0', dec = el.dataset.dec != null ? +el.dataset.dec : (raw.split('.')[1] || '').length;
+    const raw = el.dataset.value || '0', norm = String(parseNum(raw) || 0), own = parseNum(el.dataset.dec);
+    const dec = decOk(own) ? own : Math.min(20, (/[.,](\d+)$/.exec(raw.trim()) || [, ''])[1].length || (norm.split('.')[1] || '').length);
+    if (!Number.isFinite(parseNum(raw))) console.warn('[motor] cifra con data-value no numérico:', raw);
     // idioma del deck (<html lang>); sin él, español
     const lang = (el.closest('[lang]') || {}).lang || 'es-ES';
     let f;
     try { f = new Intl.NumberFormat(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
     catch (e) { f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
     const mode = el.dataset.mode && el.dataset.mode !== 'auto' ? el.dataset.mode : ROLL.has(style()) ? 'roll' : 'count';
-    return { to: parseFloat(raw), from: parseFloat(el.dataset.from || '0'), fmt: (v) => f.format(v), mode };
+    return { to: parseNum(raw) || 0, from: parseNum(el.dataset.from || '0') || 0, fmt: (v) => f.format(v), mode };
   }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   // strips: tiras 0–9 para la animación «roll»; el estado final deja un solo dígito por columna
@@ -297,17 +307,19 @@
 
   /* ------------------------------------------------------------------ depósito */
   function depositoRender(el) {
-    const v = Math.max(0, Math.min(100, parseFloat(el.dataset.value || '0'))), um = parseFloat(el.dataset.umbral || 'NaN'), cr = parseFloat(el.dataset.critico || 'NaN');
-    const state = v <= cr ? 'critico' : v <= um ? 'bajo' : '';
-    el.classList.toggle('bajo', state === 'bajo'); el.classList.toggle('critico', state === 'critico');
-    const word = state === 'critico' ? 'crítico' : state === 'bajo' ? 'bajo' : 'normal';
+    const n = parseNum(el.dataset.value || '0'), sinDato = !Number.isFinite(n);
+    const v = sinDato ? 0 : Math.max(0, Math.min(100, n)), um = parseNum(el.dataset.umbral), cr = parseNum(el.dataset.critico);
+    const state = sinDato ? 'sin-dato' : v <= cr ? 'critico' : v <= um ? 'bajo' : '';
+    ['bajo', 'critico', 'sin-dato'].forEach((c) => el.classList.toggle(c, state === c));
+    const word = { 'sin-dato': 'sin dato', critico: 'crítico', bajo: 'bajo' }[state] || 'normal';
+    const dec = decOk(parseNum(el.dataset.dec)) ? parseNum(el.dataset.dec) : Math.min(2, ((/[.,](\d+)$/.exec(String(el.dataset.value || '').trim()) || [, ''])[1]).length);
     el.innerHTML = `<div class="vaso" aria-hidden="true"><div class="liq" style="--v:${v}"></div><i style="bottom:25%"></i><i style="bottom:50%"></i><i style="bottom:75%"></i></div>` +
-      `<div class="lectura"><span class="cifra" data-value="${v}" data-suf=" %" data-mode="count" data-dec="${el.dataset.dec || 0}"></span>${el.dataset.label ? `<p class="label">${esc(el.dataset.label)}</p>` : ''}<p class="estado"><b>●</b> ${word}</p></div>`;
+      `<div class="lectura">${sinDato ? '<span class="cifra-nd">—</span>' : `<span class="cifra" data-value="${v}" data-suf=" %" data-mode="count" data-dec="${dec}"></span>`}${el.dataset.label ? `<p class="label">${esc(el.dataset.label)}</p>` : ''}<p class="estado"><b>●</b> ${word}</p></div>`;
     el.querySelectorAll('.cifra').forEach((c) => cifraRender(c));
   }
   function depositoPlay(el, api) {
     const liq = el.querySelector('.liq'); if (!liq) return;
-    const v = parseFloat(el.dataset.value || '0'), w = 2 * Math.PI / 1.1, z = 0.32;
+    const v = Math.max(0, Math.min(100, parseNum(el.dataset.value || '0') || 0)), w = 2 * Math.PI / 1.1, z = 0.32;
     api.raf((ms) => {
       const t = ms / 1000, env = Math.exp(-z * w * t), lvl = v * (1 - env * Math.cos(w * t)), amp = 14 * env;
       liq.style.setProperty('--v', Math.max(0, lvl).toFixed(2));
@@ -342,23 +354,25 @@
 
   /* ------------------------------------------------------------------ ciclo */
   const FINAL = 1e9;
+  // Un fallo en una pieza no deja sin dibujar las demás de la diapositiva.
+  const safe = (fn) => (el) => { try { fn(el); } catch (e) { console.error('[motor] pieza', el, e); } };
   function renderSlide(slide) {
     slide._piezas = true;
-    slide.querySelectorAll('.deposito').forEach(depositoRender);
-    slide.querySelectorAll('.cifra').forEach((el) => cifraRender(el));
-    slide.querySelectorAll('.agenda').forEach((el) => agendaRender(el));
-    slide.querySelectorAll('.reticula').forEach((el) => reticulaPlace(el, FINAL, false));
-    slide.querySelectorAll('.descifra').forEach(descifraOut);
-    slide.querySelectorAll('.paleta').forEach((el) => paletaRender(el, paletaIndex(el, FINAL)));
-    slide.querySelectorAll('.teclea').forEach(tecleaRender);
-    slide.querySelectorAll('.mazo').forEach(mazoRender);
-    if (bordesLayer(slide)) drawBordes(slide, 0);
+    slide.querySelectorAll('.deposito').forEach(safe(depositoRender));
+    slide.querySelectorAll('.cifra').forEach(safe((el) => cifraRender(el)));
+    slide.querySelectorAll('.agenda').forEach(safe((el) => agendaRender(el)));
+    slide.querySelectorAll('.reticula').forEach(safe((el) => reticulaPlace(el, FINAL, false)));
+    slide.querySelectorAll('.descifra').forEach(safe(descifraOut));
+    slide.querySelectorAll('.paleta').forEach(safe((el) => paletaRender(el, paletaIndex(el, FINAL))));
+    slide.querySelectorAll('.teclea').forEach(safe(tecleaRender));
+    slide.querySelectorAll('.mazo').forEach(safe(mazoRender));
+    try { if (bordesLayer(slide)) drawBordes(slide, 0); } catch (e) { console.error('[motor] bordes', e); }
   }
   // Piezas que se animan al entrar o, si están dentro de un paso, al revelarse
   const PLAY = [['.cifra', cifraPlay], ['.descifra', descifraPlay], ['.paleta', paletaPlay], ['.teclea', tecleaPlay], ['.deposito', depositoPlay]];
   const playIn = (root, api, onlyRevealed) => PLAY.forEach(([sel, fn]) => {
     const list = [...(root.matches && root.matches(sel) ? [root] : []), ...root.querySelectorAll(sel)];
-    list.forEach((el) => { if (onlyRevealed || !hidden(el)) fn(el, api); });
+    list.forEach((el) => { if (onlyRevealed || !hidden(el)) { try { fn(el, api); } catch (e) { console.error('[motor] pieza', el, e); } } });
   });
   document.addEventListener('motor:enter', (e) => {
     const { slide, api, animate } = e.detail;

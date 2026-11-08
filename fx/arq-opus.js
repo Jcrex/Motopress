@@ -56,6 +56,9 @@
       else if (kind === 'pop') fr = [{ opacity: 0, transform: 'scale(.8)' }, { opacity: 1, transform: 'scale(1)' }];
       else if (kind === 'grow') fr = [{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }];
       else fr = [{ opacity: 0, transform: 'translateY(14px)' }, { opacity: 1, transform: 'none' }];
+      if ((kind === 'grow' || kind === 'pop') && e instanceof SVGElement && !e.style.transformOrigin && getComputedStyle(e).transformBox === 'view-box') {
+        e.style.transformBox = 'fill-box'; e.style.transformOrigin = kind === 'grow' ? 'left center' : 'center'; // origen en el propio elemento, no en la esquina del SVG
+      }
       anim(api, e, fr, { duration: 560, delay: 150 + n * step });
     });
     return 150 + last * step + 560;
@@ -660,13 +663,19 @@
 
   /* =================================================================== op-cifras */
   Motor.fx('op-cifras', {
-    render(api) { cancel(api); api.qa('[data-count]').forEach((e) => { e.textContent = e.dataset.count; }); const g = api.q('[data-role="glitch"]'); g.style.transform = ''; g.style.opacity = ''; },
+    render(api) { cancel(api); api.qa('[data-count]').forEach((e) => { e.textContent = e.dataset.count; }); const g = api.q('[data-role="glitch"]'); if (g) { g.style.transform = ''; g.style.opacity = ''; } },
     play(api) {
       const end = seqIn(api, 420);
-      api.qa('[data-count]').forEach((e) => { const n = +e.dataset.count, d = 150 + 380 * (+e.closest('[data-seq]').dataset.seq); e.textContent = '0'; api.tween(1300, (p) => { e.textContent = String(Math.round(n * p)); }, { delay: d, ease: (x) => 1 - (1 - x) ** 3 }); });
-      api.qa('.bar i').forEach((b) => anim(api, b, [{ transform: 'scaleX(0)', transformOrigin: 'left' }, { transform: 'scaleX(1)', transformOrigin: 'left' }], { duration: 1200, delay: 500 + 380 * (+b.closest('[data-seq]').dataset.seq) }));
+      const seqOf = (el) => { const g = el.closest('[data-seq]'); return g ? +g.dataset.seq || 0 : 0; };
+      api.qa('[data-count]').forEach((e) => {
+        const n = Number(String(e.dataset.count).replace(',', '.')), d = 150 + 380 * seqOf(e);
+        if (!Number.isFinite(n)) { e.textContent = e.dataset.count; return; } // no es un número: se deja tal cual
+        const dec = (String(e.dataset.count).split(/[.,]/)[1] || '').length, sep = String(e.dataset.count).includes(',') ? ',' : '.';
+        e.textContent = '0'; api.tween(1300, (p) => { e.textContent = (n * p).toFixed(dec).replace('.', sep); }, { delay: d, ease: (x) => 1 - (1 - x) ** 3 });
+      });
+      api.qa('.bar i').forEach((b) => anim(api, b, [{ transform: 'scaleX(0)', transformOrigin: 'left' }, { transform: 'scaleX(1)', transformOrigin: 'left' }], { duration: 1200, delay: 500 + 380 * seqOf(b) }));
       const g = api.q('[data-role="glitch"]'), R = api.rng(7);
-      api.raf((t) => {
+      if (g) api.raf((t) => {
         if (t < end) return;
         const ph = (t % 2600) / 2600;
         if (ph > 0.86) { g.style.transform = `translateX(${(R() - 0.5) * 12}px) skewX(${(R() - 0.5) * 14}deg)`; g.style.opacity = R() > 0.5 ? '0.35' : '1'; }

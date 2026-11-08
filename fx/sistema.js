@@ -141,29 +141,36 @@
       init(s, api) {
         s.n = api.noise2(s.seed); s.R = api.rng(s.seed + 1);
         s.parts = Array.from({ length: 820 }, () => spawn(s));
-        s.cols = api.cats(3);
+        s.cols = api.cats(3); s.styles = null;
         s.ctx.clearRect(0, 0, s.w, s.h);
         for (let k = 0; k < 170; k++) step(s, api, 0, true);
       },
       frame(s, api, t) {
         const { ctx, w, h } = s;
-        ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0,0,0,0.018)'; ctx.fillRect(0, 0, w, h); ctx.restore();
+        ctx.save(); ctx.globalCompositeOperation = 'destination-out'; ctx.fillStyle = 'rgba(0,0,0,0.018)'; // color-literal: máscara (solo alfa) ctx.fillRect(0, 0, w, h); ctx.restore();
         step(s, api, t, false);
       },
     },
   });
   function spawn(s) { const R = s.R; return { x: R() * s.w, y: R() * s.h, life: 60 + R() * 220, c: Math.floor(R() * 3), lw: 0.7 + R() * 1.8 }; }
+  // Los trazos se agrupan por color y grosor (medio píxel): unas 30 llamadas a stroke por paso
+  // en lugar de 820. El precalentado de init (170 pasos) bajó así de ~240 ms a unas decenas.
   function step(s, api, t, pre) {
     const { ctx, w, h, n } = s;
     const a0 = api.dark ? 0.32 : 0.42;
+    if (!s.styles || s.stylesA !== a0) { s.styles = s.cols.map((c) => [color.alpha(c, a0 * 0.35), color.alpha(c, a0)]); s.stylesA = a0; }
+    const groups = new Map();
     s.parts.forEach((p, i) => {
       const ang = n(p.x * 0.0017, p.y * 0.0017 + t * 0.00005) * TAU * 1.4 + t * 0.03;
       const nx = p.x + Math.cos(ang) * 1.7, ny = p.y + Math.sin(ang) * 1.7;
-      ctx.strokeStyle = color.alpha(s.cols[p.c], a0 * (p.x < w * 0.45 ? 0.35 : 1));
-      ctx.lineWidth = p.lw; ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(nx, ny); ctx.stroke();
+      const side = p.x < w * 0.45 ? 0 : 1, lw = Math.max(0.5, Math.round(p.lw * 2) / 2), key = p.c * 100 + side * 10 + lw * 2;
+      let g = groups.get(key);
+      if (!g) { g = { path: new Path2D(), style: s.styles[p.c][side], lw }; groups.set(key, g); }
+      g.path.moveTo(p.x, p.y); g.path.lineTo(nx, ny);
       p.x = nx; p.y = ny; p.life -= 1;
       if (p.life <= 0 || nx < 0 || ny < 0 || nx > w || ny > h) s.parts[i] = spawn(s);
     });
+    groups.forEach((g) => { ctx.strokeStyle = g.style; ctx.lineWidth = g.lw; ctx.stroke(g.path); });
   }
 
   // Pintor vacío: deja el fondo liso (data-painter="none").
@@ -553,11 +560,12 @@
     switch (kind) {
       case 'swiss': ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(80, 44, 30, 0, TAU); ctx.fill(); ctx.fillStyle = fg; [18, 34, 50].forEach((y, i) => ctx.fillRect(16, 70 + i * 14, 88 - i * 22, 7)); break;
       case 'spark': { ctx.strokeStyle = fg2; ctx.lineWidth = 2; ctx.beginPath(); let mn = [0, 99], mx = [0, -1]; for (let i = 0; i < 24; i++) { const v = 60 + Math.sin(i / 2.5) * 18 + R() * 14; if (v < mn[1]) mn = [i, v]; if (v > mx[1]) mx = [i, v]; const x = 12 + i * 4.2; i ? ctx.lineTo(x, v) : ctx.moveTo(x, v); } ctx.stroke(); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(12 + mn[0] * 4.2, mn[1], 4, 0, TAU); ctx.fill(); ctx.beginPath(); ctx.arc(12 + mx[0] * 4.2, mx[1], 4, 0, TAU); ctx.fill(); break; }
-      case 'chrome': { const g = ctx.createLinearGradient(0, 22, 0, 98); [[0, '#ffffff'], [0.42, '#c9ced6'], [0.5, '#3a3f47'], [0.58, '#1b1e23'], [0.75, '#9aa1ab'], [1, '#f1f3f6']].forEach(([o, c]) => g.addColorStop(o, c)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(60, 60, 38, 0, TAU); ctx.fill(); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(92, 30, 12, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.ellipse(48, 42, 10, 5, -0.5, 0, TAU); ctx.fill(); break; }
-      case 'sdf': { ctx.fillStyle = color.alpha(fg, api.dark ? 0.35 : 0.18); ctx.beginPath(); ctx.ellipse(66, 98, 34, 8, 0, 0, TAU); ctx.fill(); const g = ctx.createRadialGradient(48, 44, 4, 58, 58, 36); g.addColorStop(0, color.mix(acc, '#ffffff', 0.45)); g.addColorStop(1, color.mix(acc, '#000000', 0.3)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(58, 58, 34, 0, TAU); ctx.fill(); ctx.strokeStyle = color.alpha(fg2, 0.6); ctx.setLineDash([3, 4]); [44, 52].forEach((r) => { ctx.beginPath(); ctx.arc(58, 58, r, -1.2, 0.3); ctx.stroke(); }); ctx.setLineDash([]); break; }
-      case 'turbo': { const tb = ['#30123b', '#4662d7', '#36aaf9', '#1ae4b6', '#72fe5e', '#c7ef34', '#fabb38', '#f66b19', '#ca2a04', '#7a0403']; tb.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 9.6, 92, 9.6, 14); }); for (let k = 0; k < 260; k++) { const a = R() * TAU, r = 10 + R() * 34, z = 0.5 + 0.5 * Math.sin(a * 2); ctx.fillStyle = tb[Math.min(9, Math.floor(z * 10))]; ctx.fillRect(60 + Math.cos(a) * r, 46 + Math.sin(a) * r * 0.55 - z * 14, 1.6, 1.6); } break; }
-      case 'flir': { const st = ['#1c0a4a', '#53108a', '#9a1a8c', '#d9334f', '#f2682a', '#fbaa23', '#fde26a', '#fffbe6']; for (let y = 0; y < 76; y += 2) for (let x = 0; x < 96; x += 2) { const v = Math.min(1, 0.12 + 0.9 * Math.exp(-((x - 58) ** 2 + (y - 36) ** 2) / 300) + 0.5 * Math.exp(-((x - 28) ** 2 + (y - 58) ** 2) / 120)); ctx.fillStyle = st[Math.min(7, Math.floor(v * 8))]; ctx.fillRect(12 + x, 12 + y, 2.1, 2.1); } st.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 12, 96, 12, 10); }); break; }
-      case 'nikon': { ctx.fillStyle = api.dark ? api.tok('bg-2') : '#0b0d12'; ctx.beginPath(); ctx.arc(60, 58, 46, 0, TAU); ctx.fill(); ctx.save(); ctx.beginPath(); ctx.arc(60, 58, 46, 0, TAU); ctx.clip(); ctx.globalCompositeOperation = 'lighter'; for (let k = 0; k < 9; k++) { const x = 26 + (k % 3) * 34 + R() * 8, y = 24 + Math.floor(k / 3) * 34 + R() * 8; ctx.strokeStyle = 'rgba(255,63,164,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(79,134,255,.9)'; ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(54,226,122,.9)'; ctx.fillRect(x + 8, y - 4, 2, 2); } ctx.restore(); break; }
+      // color-literal: las muestras siguientes reproducen escalas y materiales reales (cromo, turbo, FLIR, viridis)
+      case 'chrome': { const g = ctx.createLinearGradient(0, 22, 0, 98); [[0, '#ffffff'], [0.42, '#c9ced6'], [0.5, '#3a3f47'], [0.58, '#1b1e23'], [0.75, '#9aa1ab'], [1, '#f1f3f6']].forEach(([o, c]) => g.addColorStop(o, c)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(60, 60, 38, 0, TAU); ctx.fill(); ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(92, 30, 12, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.85)'; ctx.beginPath(); ctx.ellipse(48, 42, 10, 5, -0.5, 0, TAU); ctx.fill(); break; } // color-literal
+      case 'sdf': { ctx.fillStyle = color.alpha(fg, api.dark ? 0.35 : 0.18); ctx.beginPath(); ctx.ellipse(66, 98, 34, 8, 0, 0, TAU); ctx.fill(); const g = ctx.createRadialGradient(48, 44, 4, 58, 58, 36); g.addColorStop(0, color.mix(acc, api.tok(api.dark ? 'fg' : 'bg'), 0.45)); g.addColorStop(1, color.mix(acc, api.tok(api.dark ? 'bg' : 'fg'), 0.3)); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(58, 58, 34, 0, TAU); ctx.fill(); ctx.strokeStyle = color.alpha(fg2, 0.6); ctx.setLineDash([3, 4]); [44, 52].forEach((r) => { ctx.beginPath(); ctx.arc(58, 58, r, -1.2, 0.3); ctx.stroke(); }); ctx.setLineDash([]); break; }
+      case 'turbo': { const tb = ['#30123b', '#4662d7', '#36aaf9', '#1ae4b6', '#72fe5e', '#c7ef34', '#fabb38', '#f66b19', '#ca2a04', '#7a0403']; tb.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 9.6, 92, 9.6, 14); }); for (let k = 0; k < 260; k++) { const a = R() * TAU, r = 10 + R() * 34, z = 0.5 + 0.5 * Math.sin(a * 2); ctx.fillStyle = tb[Math.min(9, Math.floor(z * 10))]; ctx.fillRect(60 + Math.cos(a) * r, 46 + Math.sin(a) * r * 0.55 - z * 14, 1.6, 1.6); } break; } // color-literal
+      case 'flir': { const st = ['#1c0a4a', '#53108a', '#9a1a8c', '#d9334f', '#f2682a', '#fbaa23', '#fde26a', '#fffbe6']; for (let y = 0; y < 76; y += 2) for (let x = 0; x < 96; x += 2) { const v = Math.min(1, 0.12 + 0.9 * Math.exp(-((x - 58) ** 2 + (y - 36) ** 2) / 300) + 0.5 * Math.exp(-((x - 28) ** 2 + (y - 58) ** 2) / 120)); ctx.fillStyle = st[Math.min(7, Math.floor(v * 8))]; ctx.fillRect(12 + x, 12 + y, 2.1, 2.1); } st.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 12, 96, 12, 10); }); break; } // color-literal
+      case 'nikon': { ctx.fillStyle = api.dark ? api.tok('bg-2') : '#0b0d12'; ctx.beginPath(); ctx.arc(60, 58, 46, 0, TAU); ctx.fill(); ctx.save(); ctx.beginPath(); ctx.arc(60, 58, 46, 0, TAU); ctx.clip(); ctx.globalCompositeOperation = 'lighter'; for (let k = 0; k < 9; k++) { const x = 26 + (k % 3) * 34 + R() * 8, y = 24 + Math.floor(k / 3) * 34 + R() * 8; ctx.strokeStyle = 'rgba(255,63,164,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(x, y, 15, 0, TAU); ctx.stroke(); ctx.fillStyle = 'rgba(79,134,255,.9)'; ctx.beginPath(); ctx.arc(x, y, 6, 0, TAU); ctx.fill(); ctx.fillStyle = 'rgba(54,226,122,.9)'; ctx.fillRect(x + 8, y - 4, 2, 2); } ctx.restore(); break; } // color-literal
       case 'dots': { const N = ['10001', '11001', '10101', '10011', '10001', '10001', '10001']; for (let r = 0; r < 7; r++) for (let c = 0; c < 5; c++) { const on = N[r][c] === '1'; ctx.fillStyle = on ? fg : color.alpha(fg, 0.12); ctx.beginPath(); ctx.arc(30 + c * 12, 22 + r * 12, 4.2, 0, TAU); ctx.fill(); } ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(98, 100, 6, 0, TAU); ctx.fill(); ctx.fillStyle = fg; ctx.fillRect(98, 20, 4, 60); break; }
       case 'ridge': for (let r = 0; r < 9; r++) { const y0 = 28 + r * 9.5; ctx.beginPath(); ctx.moveTo(10, y0); for (let x = 10; x <= 110; x += 2) { const d = Math.abs(x - 60); ctx.lineTo(x, y0 - Math.max(0, 18 - d * 0.5) * (0.5 + R()) ); } ctx.lineTo(110, y0); ctx.fillStyle = api.tok('bg-2'); ctx.fill(); ctx.strokeStyle = fg; ctx.lineWidth = 1.4; ctx.stroke(); } break;
       case 'hud': ctx.strokeStyle = acc; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(60, 60, 38, -0.4, 4.4); ctx.stroke(); ctx.strokeStyle = a2; ctx.beginPath(); ctx.arc(60, 60, 26, 1, 5.5); ctx.stroke(); ctx.fillStyle = acc; ctx.fillRect(56, 56, 8, 8); [[10, 10, 1, 1], [110, 10, -1, 1], [10, 110, 1, -1], [110, 110, -1, -1]].forEach(([x, y, sx, sy]) => { ctx.beginPath(); ctx.moveTo(x + sx * 16, y); ctx.lineTo(x, y); ctx.lineTo(x, y + sy * 16); ctx.stroke(); }); break;
@@ -565,7 +573,7 @@
       case 'flow': { const n = api.noise2(9); for (let k = 0; k < 40; k++) { let x = R() * S, y = R() * S; ctx.strokeStyle = [acc, a2, a3][k % 3]; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(x, y); for (let j = 0; j < 30; j++) { const a = n(x * 0.03, y * 0.03) * TAU; x += Math.cos(a) * 2.5; y += Math.sin(a) * 2.5; ctx.lineTo(x, y); } ctx.stroke(); } break; }
       case 'itten': for (let i = 0; i < 12; i++) { ctx.fillStyle = color.fromOklch(0.68, 0.15, i * 30); ctx.beginPath(); ctx.moveTo(60, 60); ctx.arc(60, 60, 48, (i / 12) * TAU - 0.02, ((i + 1) / 12) * TAU + 0.02); ctx.closePath(); ctx.fill(); } ctx.fillStyle = api.tok('bg-2'); ctx.beginPath(); ctx.arc(60, 60, 20, 0, TAU); ctx.fill(); break;
       case 'oklch': for (let i = 0; i < 10; i++) { ctx.fillStyle = color.fromOklch(0.3 + i * 0.065, 0.12, 270); ctx.fillRect(12 + i * 9.6, 14, 9.6, 44); ctx.fillStyle = color.fromOklch(0.68, 0.13, i * 36); ctx.fillRect(12 + i * 9.6, 64, 9.6, 44); } break;
-      case 'viri': { const vir = ['#440154', '#46327e', '#365c8d', '#277f8e', '#1fa187', '#4ac16d', '#a0da39', '#fde725']; vir.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 12, 14, 12, 44); }); ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(18 + i * 14, 86, 6, 0, TAU); ctx.fill(); }); break; }
+      case 'viri': { const vir = ['#440154', '#46327e', '#365c8d', '#277f8e', '#1fa187', '#4ac16d', '#a0da39', '#fde725']; vir.forEach((c, i) => { ctx.fillStyle = c; ctx.fillRect(12 + i * 12, 14, 12, 44); }); ['#E69F00', '#56B4E9', '#009E73', '#F0E442', '#0072B2', '#D55E00', '#CC79A7'].forEach((c, i) => { ctx.fillStyle = c; ctx.beginPath(); ctx.arc(18 + i * 14, 86, 6, 0, TAU); ctx.fill(); }); break; } // color-literal
       case 'tiles': { const g = 6; [[10, 10, 52, 100, acc], [10 + 52 + g, 10, 42, 47, null], [10 + 52 + g, 63, 42, 47, null]].forEach(([x, y, w, h, c]) => { ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x, y, w, h, 8) : ctx.rect(x, y, w, h); ctx.fillStyle = api.tok('bg-3'); ctx.fill(); ctx.lineWidth = c ? 3 : 1.5; ctx.strokeStyle = c || api.tok('line-2'); ctx.stroke(); }); break; }
       default: break;
     }

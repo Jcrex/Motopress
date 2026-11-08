@@ -19,12 +19,16 @@ export function listarDecks() {
 }
 
 // Posiciones [inicio, fin) de cada <section class="slide">, contando secciones anidadas.
+// Los comentarios, <script> y <style> no cuentan, y un «>» dentro de un atributo no corta la etiqueta.
+const TAG = `(?:[^>"']|"[^"]*"|'[^']*')*`;
+const attrDe = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`)); return m ? (m[1] ?? m[2]) : null; };
 export function trozos(html) {
-  const out = [], re = /<section\b[^>]*>|<\/section\s*>/gi;
+  const vivo = html.replace(/<!--[\s\S]*?-->|<(script|style)\b[\s\S]*?<\/\1\s*>/gi, (c) => ' '.repeat(c.length)); // mismas posiciones
+  const out = [], re = new RegExp(`<section\\b${TAG}>|<\\/section\\s*>`, 'gi');
   let m, depth = 0, cur = null;
-  while ((m = re.exec(html))) {
-    if (m[0][1] === '/') { depth--; if (cur && depth === cur.depth) { cur.fin = m.index + m[0].length; out.push(cur); cur = null; } continue; }
-    if (!cur && /class="[^"]*\bslide\b/.test(m[0])) cur = { inicio: m.index, depth, id: (m[0].match(/\sid="([^"]+)"/) || [])[1] || null };
+  while ((m = re.exec(vivo))) {
+    if (m[0][1] === '/') { depth = Math.max(0, depth - 1); if (cur && depth === cur.depth) { cur.fin = m.index + m[0].length; out.push(cur); cur = null; } continue; }
+    if (!cur && /(?:^|\s)slide(?:\s|$)/.test(attrDe(m[0], 'class') || '')) cur = { inicio: m.index, depth, id: attrDe(m[0], 'id') };
     depth++;
   }
   return out;
@@ -39,13 +43,18 @@ export function leerDiapositiva(deck, id) {
 }
 
 // Guarda html si no añade errores respecto al estado anterior. Devuelve la revisión de la diapositiva afectada.
+// Un error se identifica por su texto y su diapositiva (sin el número de línea, que cambia al insertar),
+// y se cuentan las repeticiones: el mismo error en otra diapositiva, o una vez más, es nuevo.
 function guardar(deck, nuevo, ids, forzar) {
   const antes = revisar(deck);
   const despues = revisar(deck, { html: nuevo });
-  const clave = (h) => `${h.msg}`;
-  const previos = new Set(antes.hallazgos.filter((h) => h.nivel === 'error').map(clave));
-  const nuevos = despues.hallazgos.filter((h) => h.nivel === 'error' && !previos.has(clave(h)));
-  const propios = despues.hallazgos.filter((h) => ids.some((id) => h.where.startsWith('#' + id + ' ')) || (h.nivel === 'error' && !previos.has(clave(h))));
+  const clave = (h) => `${h.msg}@${(h.where || '').replace(/\s*\(línea \d+\)/, '').replace(/:\d+$/, '')}`;
+  const cuenta = new Map();
+  antes.hallazgos.filter((h) => h.nivel === 'error').forEach((h) => cuenta.set(clave(h), (cuenta.get(clave(h)) || 0) + 1));
+  const nuevosSet = new Set();
+  despues.hallazgos.filter((h) => h.nivel === 'error').forEach((h) => { const k = clave(h), n = cuenta.get(k) || 0; if (n > 0) cuenta.set(k, n - 1); else nuevosSet.add(h); });
+  const nuevos = [...nuevosSet];
+  const propios = despues.hallazgos.filter((h) => ids.some((id) => (h.where || '').startsWith('#' + id + ' ')) || nuevosSet.has(h));
   if (nuevos.length && !forzar) return { guardado: false, motivo: 'La revisión encontró errores nuevos; corrige y vuelve a intentarlo (o usa forzar).', hallazgos: propios };
   fs.writeFileSync(rutaDeck(deck), nuevo);
   return { guardado: true, hallazgos: propios, diapositivas: despues.diapositivas };
@@ -70,7 +79,14 @@ export function escribirDiapositiva(deck, seccion, { despuesDe = null, forzar = 
     const cierre = !despuesDe && [...list].reverse().find((x) => /^<section\b[^>]*class="[^"]*\bclosing\b/.test(base.slice(x.inicio)));
     if (cierre) nuevo = base.slice(0, cierre.inicio) + seccion + '\n\n' + base.slice(cierre.inicio);
     else {
-      const at = d ? d.fin : list.length ? list[list.length - 1].fin : base.indexOf('<div class="stage">') + '<div class="stage">'.length;
+      let at;
+      if (d) at = d.fin;
+      else if (list.length) at = list[list.length - 1].fin;
+      else {
+        const st = base.match(/<div\b[^>]*class="[^"]*\bstage\b[^"]*"[^>]*>/);
+        if (!st) throw new Error('El deck no tiene <div class="stage"> ni diapositivas: no sé dónde colocarla');
+        at = st.index + st[0].length;
+      }
       nuevo = base.slice(0, at) + '\n\n' + seccion + base.slice(at);
     }
     nuevo = nuevo.replace(/\n{3,}(?=<section|<\/div>)/g, '\n\n');

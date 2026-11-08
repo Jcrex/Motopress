@@ -45,7 +45,7 @@ motor/
 ├── atlas/
 │   ├── original/         deck «Atlas» (ejemplo completo, 31 diapositivas) y su atlas.css
 │   └── completo/         «Atlas Completo»: una diapositiva por componente (plan en planning/atlas/)
-├── fx/                   efectos: sistema, fondos (WebGL y 2D de los estilos nuevos), ros, ml, datos, arch
+├── fx/                   efectos: sistema, fondos (WebGL y 2D), piezas, grafico, ros, ml, datos, arch, rai, vc, arq-opus, nav-semantica y experimental/
 ├── tools/
 │   ├── build-themes.mjs  genera tokens.css y meta.js y ajusta las paletas de gráficos
 │   ├── bundle.mjs        empaqueta un deck en un único HTML
@@ -122,11 +122,11 @@ Motor.fx('mi-efecto', {
 
 `render()` debe dibujar el estado de `api.step` (pasos visibles; en la vista general cuentan todos) sobre `api.steps` (total). Al volver desde la diapositiva siguiente, el motor enciende todos los pasos y vuelve a llamar a `render()`.
 
-Eventos DOM en la diapositiva, que burbujean hasta `document`: `motor:enter` (`detail.animate` indica si se puede animar), `motor:leave` y `motor:step` (`detail.step`, `detail.dir`). Presets de título nuevos: `Motor.titleFx('nombre', (title, { api, ease }) => ({ revert() {…} }))`; el preset por estilo va en `Motor.titleStyle[estilo]`.
+Eventos DOM en la diapositiva, que burbujean hasta `document`: `motor:enter` (`detail.animate` indica si se puede animar; `detail.refresh` es `true` cuando la diapositiva se vuelve a activar por un cambio de estilo o modo, sin haber salido de ella), `motor:leave` y `motor:step` (`detail.step`, `detail.dir`). Presets de título nuevos: `Motor.titleFx('nombre', (title, { api, ease }) => ({ revert() {…} }))`; el preset por estilo va en `Motor.titleStyle[estilo]`.
 
 `api` ofrece: `q()` y `qa()` dentro de la diapositiva, `tok('accent')`, `cats(6)`, `seq(t)`, `div(t)`, `font('mono', 22, 500)`, `dark`, `style`, `meta`, `dur`, `ease(t)`, `raf(fn)`, `after(ms, fn)`, `tween(ms, fn)`, `canvas(host)`, `rng(seed)`, `noise2(seed)` y `color` (OKLCH, contraste WCAG, simulación de daltonismo). Al cambiar de estilo o modo, el motor vuelve a llamar a `render()`.
 
-Efectos incluidos: `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, `refs`, `compare`, `rosgraph`, `lidar`, `astar`, `tftree`, `blueprint`, `scope`, `training`, `confusion`, `latent`, `nnet`, `clouds`, `ridge`, `calendar`, `sankey`, `kpis`, `desktop`, `fetch`.
+Efectos incluidos: `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, `refs`, `compare`, `rosgraph`, `lidar`, `astar`, `tftree`, `blueprint`, `scope`, `training`, `confusion`, `latent`, `nnet`, `clouds`, `ridge`, `calendar`, `sankey`, `kpis`, `desktop`, `fetch`, `secuencia` (`fx/rai.js`) y `vc`, `vc-plot`, `vc-heat`, `vc-conv` (`fx/vc.js`).
 
 ## Estilos
 

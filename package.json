@@ -1,4 +1,7 @@
 {
+  "engines": {
+    "node": ">=22.13"
+  },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
     "playwright": "^1.65.0",

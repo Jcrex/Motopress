@@ -19,7 +19,7 @@
 .exp-rotating { display: inline-flex; flex-wrap: nowrap; white-space: pre; position: relative; vertical-align: bottom; overflow: hidden; padding-bottom: .08em; }
 .exp-rotating .exp-r-el { display: inline-block; will-change: transform, opacity; }
 .exp-rotating[data-efecto="flip"] .exp-r-el { transform-origin: 50% 50% -0.45em; backface-visibility: hidden; }
-.exp-rotating[data-resalte] { box-sizing: content-box; justify-content: center; padding: .1em .28em; border-radius: .16em; background: var(--accent); color: var(--on-accent); }
+.exp-rotating[data-resalte] { box-sizing: border-box; justify-content: center; padding: .1em .28em; border-radius: .16em; background: var(--accent); color: var(--on-accent); }
 .exp-rotating .exp-r-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }`;
   const st = document.createElement('style'); st.textContent = CSS; document.head.appendChild(st);
 
@@ -32,7 +32,8 @@
     drop: () => ({ in: [{ transform: 'translateY(-110%)', opacity: 0 }, { transform: 'none', opacity: 1 }], out: [{ transform: 'none', opacity: 1 }, { transform: 'translateY(110%)', opacity: 0 }], easeOut: 'cubic-bezier(.55,0,1,.45)' }),
   };
   const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-  const textos = (el) => (el.dataset.textos || el.textContent).split('|').map((s) => s.trim()).filter(Boolean);
+  // La lista se lee una vez: sin data-textos, el texto original (pinta() reescribe el contenido después).
+  const textos = (el) => (el._textos ||= (el.dataset.textos || el.textContent).split('|').map((s) => s.trim()).filter(Boolean));
   const piezas = (el, txt) => (el.dataset.partir === 'palabras' ? txt.split(/(\s+)/) : [...txt]);
 
   function pinta(el, i) {
@@ -42,24 +43,30 @@
   }
   // Índice que toca: con data-pasos, el número de pasos revelados de la diapositiva.
   const indicePaso = (el, step) => Math.max(0, Math.min(textos(el).length - 1, step));
-  function render(el, step = 0) { pinta(el, el.dataset.pasos != null ? indicePaso(el, step) : 0); }
+  function render(el, step = 0) {
+    el._gen = (el._gen || 0) + 1; el.getAnimations({ subtree: true }).forEach((a) => a.cancel());
+    const i = el.dataset.pasos != null ? indicePaso(el, step) : 0; el._destino = i; pinta(el, i);
+  }
 
   // Cambia al texto i con salida y entrada letra a letra (como animatePresence «wait»).
   function cambia(el, i, api) {
+    const gen = el._gen = (el._gen || 0) + 1; el._destino = i;
+    el.getAnimations({ subtree: true }).forEach((a) => a.cancel());
     const efecto = FX[el.dataset.efecto] ? el.dataset.efecto : 'slide', f = FX[efecto](el.dataset.direccion !== 'down');
     const dur = (api && api.dur) || 600, ease = getComputedStyle(el).getPropertyValue('--ease').trim() || 'ease-out';
     const escalon = (el.dataset.escalon != null ? +el.dataset.escalon : 0.025) * 1000, desde = el.dataset.desde || 'first';
     const orden = (n, R) => { const r = Array.from({ length: n }, (_, k) => k); if (desde === 'random') r.sort(() => R() - 0.5); return r; };
     const retraso = (k, n, rnd) => (desde === 'last' ? n - 1 - k : desde === 'center' ? Math.abs(Math.floor(n / 2) - k) : desde === 'random' ? rnd[k] : /^\d+$/.test(desde) ? Math.abs(+desde - k) : k) * escalon;
-    const R = api ? api.rng(i + 3) : Math.random, w0 = el.getBoundingClientRect().width;
+    // Ancho en píxeles del lienzo (offsetWidth no lo escala el transform del stage).
+    const R = api ? api.rng(i + 3) : Math.random, w0 = el.offsetWidth;
     const viejas = [...el.querySelectorAll('.exp-r-el')], rv = orden(viejas.length, R);
     const salidas = viejas.map((s, k) => s.animate(f.out, { duration: dur * 0.55, delay: retraso(k, viejas.length, rv), easing: f.easeOut || 'ease-in', fill: 'forwards' }));
     Promise.all(salidas.map((a) => a.finished)).then(() => {
-      if (!el.isConnected) return;
+      if (!el.isConnected || el._gen !== gen) return; // otro cambio o la salida de la diapositiva lo ha sustituido
       pinta(el, i);
       const nuevas = [...el.querySelectorAll('.exp-r-el')], rn = orden(nuevas.length, R);
       nuevas.forEach((s, k) => s.animate(f.in, { duration: dur, delay: retraso(k, nuevas.length, rn), easing: f.easeIn || ease, fill: 'backwards' }));
-      if (el.dataset.resalte != null) { const w1 = el.getBoundingClientRect().width; el.animate([{ width: w0 + 'px' }, { width: w1 + 'px' }], { duration: dur * 0.8, easing: ease }); }
+      if (el.dataset.resalte != null) { const w1 = el.offsetWidth; el.animate([{ width: w0 + 'px' }, { width: w1 + 'px' }], { duration: dur * 0.8, easing: ease }); }
     }, () => {});
   }
 
@@ -69,7 +76,7 @@
       render(el, api.step);
       if (!animate || el.dataset.pasos != null || textos(el).length < 2) return;
       const ms = +(el.dataset.intervalo || 2000);
-      const ciclo = () => api.after(ms, () => { cambia(el, (+el.dataset.indice + 1) % textos(el).length, api); ciclo(); });
+      const ciclo = () => api.after(ms, () => { cambia(el, (el._destino + 1) % textos(el).length, api); ciclo(); });
       ciclo();
     });
   });
@@ -77,10 +84,11 @@
     const { slide, api, step, animate } = e.detail;
     slide.querySelectorAll(SEL + '[data-pasos]').forEach((el) => {
       const i = indicePaso(el, step);
-      if (i === +el.dataset.indice) return;
+      if (i === el._destino) return; // destino ya pedido (aunque la salida siga en curso)
       if (animate) cambia(el, i, api); else pinta(el, i);
     });
   });
+  document.addEventListener('motor:leave', (e) => e.detail.slide.querySelectorAll(SEL).forEach((el) => { el._gen = (el._gen || 0) + 1; }));
   const boot = () => document.querySelectorAll(SEL).forEach((el) => render(el, 1e9));
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
 })();

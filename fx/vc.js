@@ -165,7 +165,7 @@
     fns.forEach((d, i) => {
       let f; try { f = new Function('return ' + d.f)(); } catch (e) { console.warn('vc-plot: función no válida', d.f); return; }
       const n = 240; let p = '';
-      for (let j = 0; j <= n; j++) { const x = x0 + (x1 - x0) * j / n; let y = f(x); if (!isFinite(y)) continue; y = Math.max(y0, Math.min(y1, y)); p += (p ? 'L' : 'M') + X(x).toFixed(1) + ',' + Y(y).toFixed(1); }
+      for (let j = 0; j <= n; j++) { const x = x0 + (x1 - x0) * j / n; let y; try { y = f(x); } catch (e) { y = NaN; } if (!isFinite(y)) continue; y = Math.max(y0, Math.min(y1, y)); p += (p ? 'L' : 'M') + X(x).toFixed(1) + ',' + Y(y).toFixed(1); }
       const c = d.c ? api.tok(d.c) : cats[i % 6];
       paths.push(el('path', { d: p, fill: 'none', stroke: c, 'stroke-width': 4, 'stroke-linejoin': 'round', 'stroke-dasharray': d.dash || '' }, svg));
       if (d.label) legend.push([d.label, c]);
@@ -189,8 +189,26 @@
     pts.forEach(([x, y, l]) => { el('circle', { cx: X(x), cy: Y(y), r: 8, fill: api.tok('accent') }, svg); if (l) txt(X(x) + 14, Y(y) - 12, l, 'start', 22, api.tok('fg')); });
     return paths;
   }
+  let clipN = 0;
   function plotPlay(api, paths) {
-    paths.forEach((p, i) => { const L = p.getTotalLength(); try { p.animate([{ strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, { strokeDasharray: `${L} ${L}`, strokeDashoffset: 0 }], { duration: 1100, delay: 200 + i * 350, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' }); } catch (e) { /* estado final ya visible */ } });
+    const opt = (i) => ({ duration: 1100, delay: 200 + i * 350, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' });
+    paths.forEach((p, i) => {
+      try {
+        if (!p.getAttribute('stroke-dasharray')) {
+          const L = p.getTotalLength();
+          api.vcAnims.push(p.animate([{ strokeDasharray: `${L} ${L}`, strokeDashoffset: L }, { strokeDasharray: `${L} ${L}`, strokeDashoffset: 0 }], opt(i)));
+          return;
+        }
+        // Curva discontinua: se revela con un recorte que avanza, así el patrón se ve durante todo el trazo.
+        const svg = p.ownerSVGElement, bb = p.getBBox(), id = 'vc-clip-' + ++clipN;
+        const cp = el('clipPath', { id }, svg), r = el('rect', { x: bb.x - 6, y: bb.y - 6, width: bb.width + 12, height: bb.height + 12 }, cp);
+        r.style.transformBox = 'fill-box'; r.style.transformOrigin = 'left center';
+        p.setAttribute('clip-path', `url(#${id})`);
+        const a = r.animate([{ transform: 'scaleX(0)' }, { transform: 'scaleX(1)' }], opt(i));
+        const done = () => { p.removeAttribute('clip-path'); cp.remove(); };
+        a.finished.then(done, done); api.vcAnims.push(a);
+      } catch (e) { /* estado final ya visible */ }
+    });
   }
 
   /* ---------- vc-heat ---------- */
@@ -211,13 +229,18 @@
 
   /* ---------- registro ---------- */
   const seqFx = () => REG.secuencia;
+  // Cada gráfico por separado: un fallo en uno no deja sin dibujar el resto ni la secuencia.
+  const guard = (h, fn) => { try { return fn(); } catch (e) { console.error('[vc]', h, e); h.innerHTML = '<p class="note">Gráfico con error (ver consola)</p>'; return null; } };
+  function stopAll(api) { (api.vcAnims || []).forEach((a) => { try { a.cancel(); } catch (e) { /* ya terminada */ } }); api.vcAnims = []; }
   function renderAll(api) {
+    stopAll(api);
     api.state = api.state || {};
-    api.qa('.vc-conv').forEach((h, i) => { api.state['c' + i] = {}; convRender(api, h, api.state['c' + i]); });
-    api.state.paths = []; api.qa('[data-role="plot"]').forEach((h) => api.state.paths.push(plotRender(api, h)));
-    api.qa('.vc-heat').forEach((h) => heatRender(api, h));
+    api.qa('.vc-conv').forEach((h, i) => { api.state['c' + i] = {}; guard(h, () => convRender(api, h, api.state['c' + i])); });
+    api.state.paths = []; api.qa('[data-role="plot"]').forEach((h) => { const p = guard(h, () => plotRender(api, h)); if (p) api.state.paths.push(p); });
+    api.qa('.vc-heat').forEach((h) => guard(h, () => heatRender(api, h)));
   }
   function playAll(api) {
+    api.vcAnims = api.vcAnims || [];
     if (api.reduced) return;
     api.qa('.vc-conv').forEach((h, i) => convPlay(api, h, api.state['c' + i]));
     (api.state.paths || []).forEach((p) => plotPlay(api, p));
@@ -225,9 +248,11 @@
   Motor.fx('vc', {
     render(api) { renderAll(api); const s = seqFx(); if (s) s.render(api); },
     play(api) { playAll(api); const s = seqFx(); if (s) s.play(api); },
-    stop(api) { const s = seqFx(); if (s && s.stop) s.stop(api); },
+    stop(api) { stopAll(api); const s = seqFx(); if (s && s.stop) s.stop(api); },
   });
-  Motor.fx('vc-conv', { render: renderAll, play: playAll });
-  Motor.fx('vc-plot', { render: renderAll, play: playAll });
-  Motor.fx('vc-heat', { render: renderAll, play: playAll });
+  // stop: cancela las curvas en curso (los temporizadores de vc-conv los para el motor) y deja el estado final.
+  const finish = (api) => { stopAll(api); renderAll(api); };
+  Motor.fx('vc-conv', { render: renderAll, play: playAll, stop: finish });
+  Motor.fx('vc-plot', { render: renderAll, play: playAll, stop: finish });
+  Motor.fx('vc-heat', { render: renderAll, play: playAll, stop: finish });
 })();
