@@ -16,7 +16,7 @@ import { servir } from '../servidor.mjs';
 import { abrirNavegador, nuevaPagina, capturar, verificar, urlDeck } from '../verificar.mjs';
 import { listarDecks, leerDiapositiva, escribirDiapositiva, borrarDiapositiva, moverDiapositiva, crearDeck, rutaDeck } from './deck.mjs';
 import { Spec, renderSpec, TIPOS } from './tipos.mjs';
-import { rbBuscar, rbFicha, rbCodigo } from './react-bits.mjs';
+import { rbBuscar, rbFicha, rbCodigo, rbTecnica, recetas } from './react-bits.mjs';
 
 const SKILL = path.join(ROOT, '.claude/skills/crear-presentacion');
 const STYLES = JSON.parse(fs.readFileSync(path.join(ROOT, 'themes/source.json'), 'utf8')).styles.map((s) => s.id);
@@ -203,6 +203,15 @@ server.registerTool('rb_codigo', {
   },
   annotations: { readOnlyHint: true },
 }, seguro(async (a) => texto(rbCodigo(a))));
+
+server.registerTool('rb_tecnica', {
+  title: 'Receta para traducir una técnica de react-bits',
+  description: 'Cómo se traduce al motor una técnica de react-bits (webgl, glsl, ogl, three, canvas2d, motion, gsap, svg, css-animacion, raton, raf, matter, webgpu) y ejemplos ya portados para comparar original y port.',
+  inputSchema: { tecnica: z.string() },
+  annotations: { readOnlyHint: true },
+}, seguro(async ({ tecnica }) => texto(rbTecnica(tecnica))));
+server.registerResource('recetas-react-bits', 'motor://react-bits/recetas', { title: 'Recetas para portar react-bits', mimeType: 'text/markdown' },
+  async (uri) => ({ contents: [{ uri: uri.href, text: recetas() }] }));
 
 /* ---------- prompt ---------- */
 server.registerPrompt('nueva-presentacion', {

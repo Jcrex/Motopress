@@ -11,6 +11,8 @@ Un deck es un `decks/<nombre>/index.html` que carga el motor por rutas `../../`.
 
 Si tienes sus herramientas (`.mcp.json` lo registra en este repositorio), úsalas en lugar de editar el HTML a mano: `crear_deck` → `diapositiva_desde_spec` por cada idea (tipos: portada, separador, cierre, cifra, cifras, tarjetas, problema, proceso, comparacion, grafico, tabla, imagen, terminal, cita, checklist, libre) → `revisar` → `capturar` cada diapositiva (devuelve la imagen) → `empaquetar`. Para lo que no cubren los tipos, `escribir_diapositiva` con HTML del catálogo. Cada escritura se revisa y no se guarda si añade errores. Las reglas de abajo siguen valiendo.
 
+Si piden un efecto «como el X de react-bits», `rb_buscar` primero: si ya está en el motor, úsalo; si es un «quizás» o no existe, ofrece portarlo con la skill `portar-react-bits`.
+
 ## Flujo
 
 1. **Guion antes que HTML.** Una idea por diapositiva. Para cada una decide la forma: cifra, tabla, gráfico, diagrama, proceso o imagen. Pregunta al usuario solo lo que no puedas deducir (estilo, carpeta de salida, datos reales).
