@@ -7,20 +7,20 @@ Deck: `atlas/completo/index.html`. Diapositivas con id `l03-<componente>`. Estad
 ## Diapositivas del lote
 
 1. `l03-titulo`: título del lote con la lista de sus demos y el id de cada una.
-2. `l03-estilo-rice`: Estilo Rice
-3. `l03-estilo-noche`: Estilo Noche
-4. `l03-estilo-suizo`: Estilo Suizo
-5. `l03-estilo-aurora`: Estilo Aurora
-6. `l03-estilo-cromo`: Estilo Cromo
-7. `l03-estilo-arcilla`: Estilo Arcilla
-8. `l03-estilo-nube`: Estilo Nube
-9. `l03-estilo-termica`: Estilo Térmica
-10. `l03-estilo-celula`: Estilo Célula
-11. `l03-estilo-matriz`: Estilo Matriz
-12. `l03-tokens-color`: Tokens de color por rol
-13. `l03-tokens-forma-movimiento`: Tokens de forma, fuente y movimiento
-14. `l03-paletas-graficos`: Paletas de gráficos
-15. `l03-meta-estilos`: Metadatos de estilos
+2. `l03-estilo-rice`: Estilo Rice ✓
+3. `l03-estilo-noche`: Estilo Noche ✓
+4. `l03-estilo-suizo`: Estilo Suizo ✓
+5. `l03-estilo-aurora`: Estilo Aurora ✓
+6. `l03-estilo-cromo`: Estilo Cromo ✓
+7. `l03-estilo-arcilla`: Estilo Arcilla ✓
+8. `l03-estilo-nube`: Estilo Nube ✓
+9. `l03-estilo-termica`: Estilo Térmica ✓
+10. `l03-estilo-celula`: Estilo Célula ✓
+11. `l03-estilo-matriz`: Estilo Matriz ✓
+12. `l03-tokens-color`: Tokens de color por rol ✓
+13. `l03-tokens-forma-movimiento`: Tokens de forma, fuente y movimiento ✓
+14. `l03-paletas-graficos`: Paletas de gráficos ✓
+15. `l03-meta-estilos`: Metadatos de estilos ✓
 16. `l03-resumen`: resumen del lote que combina lo visto (la única diapositiva que mezcla componentes).
 
 Total estimado: **16 diapositivas**.

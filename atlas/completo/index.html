@@ -18,6 +18,7 @@
 <!-- CSS de lotes: se añade aquí lote a lote -->
 <link rel="stylesheet" href="lotes/l01.css">
 <link rel="stylesheet" href="lotes/l02.css">
+<link rel="stylesheet" href="lotes/l03.css">
 </head>
 <body>
 <main class="viewport">
@@ -494,6 +495,145 @@
   </div>
 </section>
 
+<!-- ======================= L03 · ESTILOS Y TOKENS ======================= -->
+<section class="slide" id="l03-titulo" data-section="Estilos y tokens" data-title="Estilos y tokens">
+  <header class="s-head"><p class="kicker">lote 03 · 14 componentes</p><h2 class="s-title">Estilos y tokens</h2></header>
+  <div class="s-body ac-lote"><div><p class="ac-lote-num">03</p><p class="ac-lote-desc">Las diez direcciones de arte, el sistema de tokens y las paletas de gráficos generadas.</p></div><ol class="ac-lote-demos"><li><span>Estilo Rice</span><code>l03-estilo-rice</code></li><li><span>Estilo Noche</span><code>l03-estilo-noche</code></li><li><span>Estilo Suizo</span><code>l03-estilo-suizo</code></li><li><span>Estilo Aurora</span><code>l03-estilo-aurora</code></li><li><span>Estilo Cromo</span><code>l03-estilo-cromo</code></li><li><span>Estilo Arcilla</span><code>l03-estilo-arcilla</code></li><li><span>Estilo Nube</span><code>l03-estilo-nube</code></li><li><span>Estilo Térmica</span><code>l03-estilo-termica</code></li><li><span>Estilo Célula</span><code>l03-estilo-celula</code></li><li><span>Estilo Matriz</span><code>l03-estilo-matriz</code></li><li><span>Tokens de color por rol</span><code>l03-tokens-color</code></li><li><span>Tokens de forma, fuente y movimiento</span><code>l03-tokens-forma-movimiento</code></li><li><span>Paletas de gráficos</span><code>l03-paletas-graficos</code></li><li><span>Metadatos de estilos</span><code>l03-meta-estilos</code></li></ol></div>
+</section>
+
+<!-- Plantilla de la vista previa de un estilo (la clona ac-estilo; fuera de las diapositivas) -->
+<template id="ac-plantilla-estilo">
+  <header class="s-head"><p class="kicker">vista previa</p><h2 class="s-title">Título de muestra</h2></header>
+  <div class="s-body ac-prev-cuerpo">
+    <div class="panel ac-prev-panel"><p class="label">velocidad lineal</p><p class="value">0,42 <small>m/s</small></p>
+      <div class="ac-prev-barras"><i style="--h:.7;background:var(--cat-1)"></i><i style="--h:.5;background:var(--cat-2)"></i><i style="--h:.9;background:var(--cat-3)"></i><i style="--h:.35;background:var(--cat-4)"></i><i style="--h:.6;background:var(--cat-5)"></i><i style="--h:.45;background:var(--cat-6)"></i></div></div>
+    <div class="stack"><p class="lead">Texto principal con un <b style="color:var(--accent-ink)">acento</b>.</p>
+      <p class="row"><span class="chip"><b style="color:var(--ok)">●</b> ok · listo</span><span class="chip"><b style="color:var(--warn)">●</b> aviso</span><span class="chip"><b style="color:var(--err)">●</b> error</span></p>
+      <div class="term">$ ros2 run nav2 planner<br>[INFO] listo</div></div>
+  </div>
+</template>
+
+<section class="slide" id="l03-estilo-rice" data-fx="ac-estilo" data-estilo="rice" data-section="Estilos y tokens" data-title="Estilo Rice">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Rice</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-rice"><p class="ac-nombre"><b>Estilo Rice</b><code>estilo-rice</code></p><p class="ac-proposito">Escritorio Hyprland con Catppuccin: ventanas en mosaico y borde activo que gira</p><dl class="ac-params"><dt>fuentes</dt><dd>Outfit + JetBrains Mono</dd><dt>fondo</dt><dd>ventanas en mosaico</dd><dt>transicion</dt><dd>cambio de espacio de trabajo</dd><dt>titulo</dt><dd>rise</dd><dt>revelado</dt><dd>tilt</dd><dt>extra</dt><dd>focus-border con rice-angle</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-noche" data-fx="ac-estilo" data-estilo="noche" data-section="Estilos y tokens" data-title="Estilo Noche">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Noche</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-noche"><p class="ac-nombre"><b>Estilo Noche</b><code>estilo-noche</code></p><p class="ac-proposito">Interfaz de ficción con Tokyo Night: paneles recortados y neón</p><dl class="ac-params"><dt>fuentes</dt><dd>Chakra Petch + IBM Plex Mono</dd><dt>fondo</dt><dd>horizonte de neón</dd><dt>transicion</dt><dd>fallo de señal</dd><dt>titulo</dt><dd>descifra</dd><dt>revelado</dt><dd>wipe-x</dd><dt>extra</dt><dd>paneles con clip-path</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-suizo" data-fx="ac-estilo" data-estilo="suizo" data-section="Estilos y tokens" data-title="Estilo Suizo">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Suizo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-suizo"><p class="ac-nombre"><b>Estilo Suizo</b><code>estilo-suizo</code></p><p class="ac-proposito">Editorial de datos acromático con un solo rojo</p><dl class="ac-params"><dt>fuentes</dt><dd>Instrument Sans + Instrument Serif</dd><dt>fondo</dt><dd>geometría de arcos</dd><dt>transicion</dt><dd>corte vertical</dd><dt>titulo</dt><dd>mask-lines</dd><dt>revelado</dt><dd>fade</dd><dt>extra</dt><dd>paneles transparentes</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-aurora" data-fx="ac-estilo" data-estilo="aurora" data-section="Estilos y tokens" data-title="Estilo Aurora">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Aurora</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-aurora"><p class="ac-nombre"><b>Estilo Aurora</b><code>estilo-aurora</code></p><p class="ac-proposito">Arte generativo con Rosé Pine</p><dl class="ac-params"><dt>fuentes</dt><dd>Bricolage Grotesque + DM Mono</dd><dt>fondo</dt><dd>campo de flujo</dd><dt>transicion</dt><dd>fundido con desenfoque</dd><dt>titulo</dt><dd>blur</dd><dt>revelado</dt><dd>mist</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-cromo" data-fx="ac-estilo" data-estilo="cromo" data-section="Estilos y tokens" data-title="Estilo Cromo">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Cromo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-cromo"><p class="ac-nombre"><b>Estilo Cromo</b><code>estilo-cromo</code></p><p class="ac-proposito">Metal líquido de estética Y3K</p><dl class="ac-params"><dt>fuentes</dt><dd>Unbounded + Manrope + Martian Mono</dd><dt>fondo</dt><dd>metabolas por raymarching (WebGL)</dd><dt>transicion</dt><dd>telón que gotea</dd><dt>titulo</dt><dd>sin partir (cromo-sheen)</dd><dt>revelado</dt><dd>wipe</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-arcilla" data-fx="ac-estilo" data-estilo="arcilla" data-section="Estilos y tokens" data-title="Estilo Arcilla">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Arcilla</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-arcilla"><p class="ac-nombre"><b>Estilo Arcilla</b><code>estilo-arcilla</code></p><p class="ac-proposito">Render 3D mate de plastilina</p><dl class="ac-params"><dt>fuentes</dt><dd>Fraunces + Albert Sans + Red Hat Mono</dd><dt>fondo</dt><dd>brazo robótico (WebGL)</dd><dt>transicion</dt><dd>llegada blanda</dd><dt>titulo</dt><dd>pliega</dd><dt>revelado</dt><dd>tilt</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-nube" data-fx="ac-estilo" data-estilo="nube" data-section="Estilos y tokens" data-title="Estilo Nube">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Nube</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-nube"><p class="ac-nombre"><b>Estilo Nube</b><code>estilo-nube</code></p><p class="ac-proposito">Gemelo digital con nube de puntos LiDAR</p><dl class="ac-params"><dt>fuentes</dt><dd>Geist + Geist Mono</dd><dt>fondo</dt><dd>40 000 puntos con mapa Turbo (WebGL)</dd><dt>transicion</dt><dd>barrido de escáner</dd><dt>titulo</dt><dd>rise</dd><dt>revelado</dt><dd>wipe</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-termica" data-fx="ac-estilo" data-estilo="termica" data-section="Estilos y tokens" data-title="Estilo Térmica">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Térmica</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-termica"><p class="ac-nombre"><b>Estilo Térmica</b><code>estilo-termica</code></p><p class="ac-proposito">Cámara infrarroja ironbow o negro caliente</p><dl class="ac-params"><dt>fuentes</dt><dd>Schibsted Grotesk + Spline Sans Mono</dd><dt>fondo</dt><dd>robot con isotermas</dd><dt>transicion</dt><dd>destello de calibración</dd><dt>titulo</dt><dd>sin partir (termica-heat)</dd><dt>revelado</dt><dd>develop</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-celula" data-fx="ac-estilo" data-estilo="celula" data-section="Estilos y tokens" data-title="Estilo Célula">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Célula</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-celula"><p class="ac-nombre"><b>Estilo Célula</b><code>estilo-celula</code></p><p class="ac-proposito">Microscopía en fluorescencia o tinción H&amp;E</p><dl class="ac-params"><dt>fuentes</dt><dd>Newsreader + Public Sans + Sometype Mono</dd><dt>fondo</dt><dd>tejido</dd><dt>transicion</dt><dd>diafragma circular</dd><dt>titulo</dt><dd>enfoca</dd><dt>revelado</dt><dd>focus</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-estilo-matriz" data-fx="ac-estilo" data-estilo="matriz" data-section="Estilos y tokens" data-title="Estilo Matriz">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Matriz</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-prev" data-role="prev"></div><p class="ac-ambiente" data-role="ambiente"></p></div>
+    <aside class="ac-info panel" data-componente="estilo-matriz"><p class="ac-nombre"><b>Estilo Matriz</b><code>estilo-matriz</code></p><p class="ac-proposito">Matriz de LED monocroma con rojo</p><dl class="ac-params"><dt>fuentes</dt><dd>Doto + Host Grotesk + Fragment Mono</dd><dt>fondo</dt><dd>globo de LED con anillo glifo</dd><dt>transicion</dt><dd>puntos que crecen</dd><dt>titulo</dt><dd>descifra</dd><dt>revelado</dt><dd>pixel</dd><dt>extra</dt><dd>glyph-pulse</dd></dl><p class="ac-fuente"><code>themes/source.json · themes/styles.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-tokens-color" data-fx="ac-roles" data-section="Estilos y tokens" data-title="Tokens de color por rol">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Tokens de color</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-roles" data-role="roles"></div><p class="note" data-role="nota"></p></div>
+    <aside class="ac-info panel" data-componente="tokens-color"><p class="ac-nombre"><b>Tokens de color por rol</b><code>tokens-color</code></p><p class="ac-proposito">Nombrar los colores por función (fondo, texto, acento, estados) para que todo cambie con el estilo</p><dl class="ac-params"><dt>roles</dt><dd>bg · bg-2 · bg-3 · fg · fg-2 · fg-3 · accent · accent-2 · accent-3…</dd><dt>regla</dt><dd>nunca literales</dd></dl><p class="ac-fuente"><code>themes/tokens.css (generado) · themes/source.json</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-tokens-forma-movimiento" data-fx="ac-forma" data-section="Estilos y tokens" data-title="Forma, fuente y movimiento">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Forma y movimiento</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-fuentes" data-role="fuentes"></div>
+      <div class="row ac-radios"><div class="ac-radio r1"><code>--radius</code></div><div class="ac-radio r2"><code>--radius-lg</code></div></div>
+      <div class="ac-mov"><div class="ac-pista-mov"><span class="ac-bola" data-role="bola"></span></div><p class="ac-estado mono" data-role="mov"></p></div>
+    </div>
+    <aside class="ac-info panel" data-componente="tokens-forma-movimiento"><p class="ac-nombre"><b>Tokens de forma, fuente y movimiento</b><code>tokens-forma-movimiento</code></p><p class="ac-proposito">Radios, familias tipográficas, duración y curva propias de cada estilo</p><dl class="ac-params"><dt>tokens</dt><dd>font-display · font-text · font-mono · font-serif · radius · dur ·…</dd></dl><p class="ac-fuente"><code>themes/tokens.css · themes/source.json</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-paletas-graficos" data-fx="ac-paletas-src" data-section="Estilos y tokens" data-title="Paletas de gráficos">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Paletas de gráficos</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-antes" data-role="antes"></div></div>
+    <aside class="ac-info panel" data-componente="paletas-graficos"><p class="ac-nombre"><b>Paletas de gráficos</b><code>paletas-graficos</code></p><p class="ac-proposito">Series categóricas con luminosidad igualada y separación para daltonismo, más rampas seq y div</p><dl class="ac-params"><dt>tokens</dt><dd>cat-1…cat-6 · seq-1…seq-7 · div-1…div-7</dd><dt>criterio</dt><dd>ΔE OKLab ≥ 8 entre vecinas en protan y deutan</dd></dl><p class="ac-fuente"><code>tools/build-themes.mjs · themes/tokens.css</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-meta-estilos" data-fx="ac-meta" data-section="Estilos y tokens" data-title="Metadatos de estilos">
+  <header class="s-head"><p class="kicker">l03 · estilos y tokens</p><h2 class="s-title">Metadatos</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><dl class="ac-tabla ac-meta" data-role="meta"></dl></div>
+    <aside class="ac-info panel" data-componente="meta-estilos"><p class="ac-nombre"><b>Metadatos de estilos</b><code>meta-estilos</code></p><p class="ac-proposito">Nombre, armonía, contrastes de Itten y fuentes de cada estilo para los efectos que los muestran</p><dl class="ac-params"><dt>campos</dt><dd>id · name · harmony · itten · fonts</dd></dl><p class="ac-fuente"><code>themes/meta.js (generado)</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l03-resumen" data-fx="ac-resumen-estilos" data-section="Estilos y tokens" data-title="Resumen de estilos">
+  <header class="s-head"><p class="kicker">l03 · resumen</p><h2 class="s-title">Diez estilos</h2></header>
+  <div class="s-body"><div class="ac-diez" data-role="diez"></div></div>
+</section>
+
 </div>
 </main>
 
@@ -523,5 +663,6 @@
 <!-- fx/experimental: se añade aquí lote a lote -->
 <script src="lotes/l01.js"></script>
 <script src="lotes/l02.js"></script>
+<script src="lotes/l03.js"></script>
 </body>
 </html>

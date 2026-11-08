@@ -1,0 +1,54 @@
+/* Atlas Completo · L03 estilos y tokens. Solo tokens. */
+
+/* vista previa: una .slide anidada a escala */
+.ac-prev { flex: none; align-self: center; width: fit-content; height: 459px; border-radius: 12px; overflow: hidden; border: 1px solid var(--line-2); }
+.ac-prev-lienzo.slide { position: relative !important; inset: auto; width: 1920px; height: 1080px; zoom: 0.425; visibility: visible !important; opacity: 1 !important;
+  transform: none !important; pointer-events: none; background: var(--bg); color: var(--fg); }
+.ac-prev-cuerpo { display: grid; grid-template-columns: 760px 1fr; gap: 48px; align-items: start; }
+.ac-prev-panel .value { font-size: 96px; }
+.ac-prev-barras { display: flex; align-items: flex-end; gap: 14px; height: 200px; margin-top: 24px; }
+.ac-prev-barras i { flex: 1; height: calc(var(--h) * 100%); border-radius: 4px 4px 0 0; }
+.ac-prev-lienzo .lead { font-size: 40px; }
+.ac-prev-lienzo .chip { font-size: 26px; }
+.ac-prev-lienzo .term { font-size: 26px; }
+.ac-ambiente { font: 400 22px/1.4 var(--font-text); color: var(--fg-2); text-wrap: pretty; }
+.ac-ambiente b { display: block; font-weight: 600; color: var(--fg); margin-bottom: 4px; }
+.ac-ambiente span { color: var(--fg-3); }
+
+/* tokens de rol */
+.ac-roles { display: grid; grid-template-columns: 40px max-content max-content 1fr max-content; gap: 6px 18px; align-items: center; }
+.ac-roles code { font: 400 22px/1.2 var(--font-mono); color: var(--fg); }
+.ac-roles code.v, .ac-roles .n { font: 400 22px/1.2 var(--font-mono); color: var(--fg-2); }
+.ac-roles .c { font: 600 22px/1.2 var(--font-mono); color: var(--fg); }
+.ac-roles .ac-sw { height: 28px; }
+
+/* forma y movimiento */
+.ac-fuentes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 30px; }
+.ac-fuentes p { margin: 0; display: flex; flex-direction: column; font-size: 40px; line-height: 1.15; color: var(--fg); }
+.ac-fuentes code { font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); }
+.ac-radios { flex-wrap: nowrap; }
+.ac-radio { flex: 1; height: 120px; display: grid; place-items: center; background: var(--bg-3); border: 2px solid var(--accent); }
+.ac-radio.r1 { border-radius: var(--radius); }
+.ac-radio.r2 { border-radius: var(--radius-lg); }
+.ac-radio code { font: 400 22px/1 var(--font-mono); color: var(--fg); }
+.ac-pista-mov { position: relative; height: 56px; background: var(--bg-3); border-radius: 28px; }
+.ac-bola { position: absolute; top: 0; left: 0; width: 56px; height: 56px; border-radius: 50%; background: var(--accent); }
+.ac-mov { display: flex; flex-direction: column; gap: 10px; }
+
+/* paletas de origen y ajustadas */
+.ac-antes { display: flex; flex-direction: column; gap: 14px; }
+.ac-serie { display: grid; grid-template-columns: repeat(6, 1fr); height: 110px; border-radius: 8px; overflow: hidden; }
+.ac-serie span { display: flex; align-items: flex-end; padding: 8px; }
+.ac-serie code { font: 400 22px/1 var(--font-mono); color: var(--fg); background: var(--bg); padding: 3px 6px; border-radius: 4px; }
+
+/* metadatos */
+.ac-meta { font-size: 22px; gap: 10px 24px; }
+.ac-meta dd { font-family: var(--font-text); line-height: 1.35; }
+.ac-meta .t { grid-column: 1 / -1; color: var(--accent-ink, var(--accent)); }
+
+/* resumen: diez vistas previas */
+.ac-diez { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px 22px; height: 100%; align-content: start; }
+.ac-mini-estilo { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.ac-mini-estilo .ac-prev-lienzo.slide { zoom: 0.162; border-radius: 40px; outline: 6px solid var(--line-2); }
+.ac-mini-estilo figcaption { font: 400 22px/1.2 var(--font-text); color: var(--fg-2); }
+.ac-mini-estilo figcaption b { color: var(--fg); font-weight: 600; }
