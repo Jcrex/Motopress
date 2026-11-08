@@ -10,6 +10,7 @@
 // También se usa como módulo: verificar(), capturar(), abrirNavegador(), urlDeck().
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 import { outDir, positional } from './salida.mjs';
@@ -22,11 +23,21 @@ export function urlDeck(deck) {
   return { nombre: isPath ? rel.replace(/\//g, '-') || 'raiz' : deck, ruta: isPath ? (rel ? rel + '/' : '') : `decks/${deck}/` };
 }
 
-export const abrirNavegador = () => chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
+// Chromium: CHROMIUM_PATH, el que espera Playwright o, si falta, el más reciente de su caché.
+export async function abrirNavegador() {
+  if (process.env.CHROMIUM_PATH) return chromium.launch({ executablePath: process.env.CHROMIUM_PATH });
+  try { return await chromium.launch(); } catch (e) {
+    const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || path.join(os.homedir(), process.platform === 'darwin' ? 'Library/Caches/ms-playwright' : '.cache/ms-playwright');
+    const exe = (fs.existsSync(cache) ? fs.readdirSync(cache) : []).filter((d) => /^chromium-\d+$/.test(d)).sort((a, b) => +b.split('-')[1] - +a.split('-')[1])
+      .map((d) => ['chrome-linux64/chrome', 'chrome-linux/chrome', 'chrome-mac/Chromium.app/Contents/MacOS/Chromium', 'chrome-win/chrome.exe'].map((x) => path.join(cache, d, x)).find((x) => fs.existsSync(x))).find(Boolean);
+    if (!exe) throw new Error('No hay Chromium: ejecuta «npx playwright install chromium» o define CHROMIUM_PATH');
+    return chromium.launch({ executablePath: exe });
+  }
+}
 
 // Página con estilo y modo fijados antes de cargar. Junta los errores de consola en page._errores.
-export async function nuevaPagina(browser, { estilo, modo, reduced }) {
-  const p = await browser.newPage({ viewport: { width: 1920, height: 1080 }, ...(reduced ? { reducedMotion: 'reduce' } : {}) });
+export async function nuevaPagina(browser, { estilo, modo, reduced, escala = 1 }) {
+  const p = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: escala, ...(reduced ? { reducedMotion: 'reduce' } : {}) });
   await p.addInitScript(([s, m]) => { try { if (s) localStorage.setItem('motor:style', s); if (m) localStorage.setItem('motor:mode', m); } catch (e) { /* sin almacenamiento */ } }, [estilo, modo]);
   p._errores = [];
   // Los recursos que faltan se avisan con su ruta (el mensaje de consola no la trae).
@@ -37,7 +48,7 @@ export async function nuevaPagina(browser, { estilo, modo, reduced }) {
 }
 
 // Va a una diapositiva, revela pasos y devuelve { png, desbordes, errores, pasos }.
-export async function capturar(page, base, id, { paso = 'primero', reduced = false, espera = 1200, archivo } = {}) {
+export async function capturar(page, base, id, { paso = 'primero', reduced = false, espera = 1200, archivo, formato } = {}) {
   page._errores.length = 0;
   await page.goto(`${base}?v=${encodeURIComponent(id)}#${id}`); // la query fuerza la recarga
   await page.waitForTimeout(espera);
@@ -54,7 +65,7 @@ export async function capturar(page, base, id, { paso = 'primero', reduced = fal
     return [...s.querySelectorAll('*')].filter((e) => { const r = e.getBoundingClientRect(); return r.width && out(r) && !clipped(e); })
       .slice(0, 8).map((e) => e.tagName.toLowerCase() + (e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : ''));
   });
-  const png = await page.screenshot(archivo ? { path: archivo } : {});
+  const png = await page.screenshot({ ...(archivo ? { path: archivo } : {}), ...(formato === 'jpeg' ? { type: 'jpeg', quality: 78 } : {}) });
   return { png, desbordes, errores: [...page._errores], pasos: { mostrados: n, total } };
 }
 

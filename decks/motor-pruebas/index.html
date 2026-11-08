@@ -305,6 +305,213 @@
   </div>
 </section>
 
+<section class="slide is-plain divider" id="tp-sep" data-fx="backdrop" data-seed="5" data-section="Tipos" data-title="Tipos del MCP">
+  <div class="fx-bg"></div>
+  <div class="divider-body">
+    <p class="kicker">tools/mcp/tipos.mjs</p>
+    <h2 class="s-title xl">Tipos del MCP</h2>
+    <p class="lead">Una diapositiva por tipo, generadas desde JSON.</p>
+  </div>
+</section>
+
+<section class="slide" id="tp-cifra" data-section="Tipos" data-title="Cifra">
+  <header class="s-head">
+    <p class="kicker">tipo cifra</p>
+    <h2 class="s-title">Cifra</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="stack" style="justify-content:center">
+      <p class="label">éxito de navegación</p>
+      <span class="cifra" data-value="97.3" data-suf=" %"></span>
+      <span class="cifra-delta sube"><b>▲ sube</b> 4,1 puntos</span>
+      <p class="note">Datos sintéticos.</p>
+    </div>
+    <aside class="stack" style="justify-content:center">
+      <p class="tp-texto">Una cifra protagonista con su explicación al lado.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="tp-cifras" data-section="Tipos" data-title="Varias cifras">
+  <header class="s-head">
+    <p class="kicker">tipo cifras</p>
+    <h2 class="s-title">Varias cifras</h2>
+  </header>
+  <div class="s-body stack">
+    <div class="tp-cifras" style="--n:3">
+      <div>
+        <span class="cifra" data-value="12"></span>
+        <p class="label">robots</p>
+      </div>
+      <div>
+        <span class="cifra" data-value="3.4" data-suf=" km"></span>
+        <p class="label">por día</p>
+      </div>
+      <div>
+        <span class="cifra" data-value="99.1" data-suf=" %"></span>
+        <p class="label">disponibilidad</p>
+      </div>
+    </div>
+    <p class="note">Datos sintéticos.</p>
+  </div>
+</section>
+
+<section class="slide" id="tp-tarjetas" data-section="Tipos" data-title="Tarjetas">
+  <header class="s-head">
+    <p class="kicker">tipo tarjetas</p>
+    <h2 class="s-title">Tarjetas</h2>
+  </header>
+  <div class="s-body stack">
+    <div class="tp-rejilla" style="--n:3">
+      <article class="panel">
+        <span class="chip">sensores</span>
+        <h3>Percepción</h3>
+        <p>Cámaras y LiDAR fusionados.</p>
+      </article>
+      <article class="panel">
+        <span class="chip">nav2</span>
+        <h3>Planificación</h3>
+        <p>Nav2 con costmaps por capas.</p>
+      </article>
+      <article class="panel">
+        <span class="chip">control</span>
+        <h3>Control</h3>
+        <p>MPPI a 20 Hz sobre ros2_control.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="tp-problema" data-section="Tipos" data-title="Problema y solución">
+  <header class="s-head">
+    <p class="kicker">tipo problema</p>
+    <h2 class="s-title">Problema y solución</h2>
+  </header>
+  <div class="s-body stack">
+    <div class="tp-problema">
+      <article class="panel">
+        <p class="label">problema</p>
+        <h3>Mapas que caducan</h3>
+        <p>El entorno cambia y el mapa estático deja de servir.</p>
+      </article>
+      <span class="flecha" aria-hidden="true">→</span>
+      <article class="panel sol">
+        <p class="label">solución</p>
+        <h3>Mapa vivo</h3>
+        <p>Capas que se actualizan con cada pasada del robot.</p>
+      </article>
+    </div>
+    <div class="tp-claves"><span class="chip">menos replanificación</span><span class="chip">sin remapear</span></div>
+  </div>
+</section>
+
+<section class="slide" id="tp-proceso" data-section="Tipos" data-title="Proceso">
+  <header class="s-head">
+    <p class="kicker">tipo proceso · por pasos</p>
+    <h2 class="s-title">Proceso</h2>
+  </header>
+  <div class="s-body stack">
+    <ol class="etapas neutra">
+      <li data-step><b>Captura</b><small>rosbag2</small></li>
+      <li data-step><b>Etiquetado</b><small>CVAT</small></li>
+      <li data-step><b>Entrenamiento</b><small>YOLO</small></li>
+      <li data-step><b>Despliegue</b><small>TensorRT</small></li>
+    </ol>
+  </div>
+</section>
+
+<section class="slide" id="tp-compara" data-section="Tipos" data-title="Comparación">
+  <header class="s-head">
+    <p class="kicker">tipo comparacion</p>
+    <h2 class="s-title">Comparación</h2>
+  </header>
+  <div class="s-body stack">
+    <div class="tp-rejilla" style="--n:2">
+      <article class="panel">
+        <h3>Antes</h3>
+        <ul class="tp-lista"><li>Mapa estático</li><li>Replanifica a ciegas</li></ul>
+      </article>
+      <article class="panel tp-dest">
+        <span class="chip">propuesta</span>
+        <h3>Después</h3>
+        <ul class="tp-lista"><li>Mapa por capas</li><li>Replanifica con contexto</li><li>Aprende del recorrido</li></ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="tp-tabla" data-section="Tipos" data-title="Tabla">
+  <header class="s-head">
+    <p class="kicker">tipo tabla</p>
+    <h2 class="s-title">Tabla</h2>
+  </header>
+  <div class="s-body stack">
+    <table class="tp-tabla">
+      <thead><tr><th>Middleware</th><th class="num">Latencia p50 (ms)</th><th class="num">Latencia p99 (ms)</th><th class="num">CPU (%)</th></tr></thead>
+      <tbody>
+        <tr><td>FastDDS</td><td class="num">0,9</td><td class="num">4,1</td><td class="num">12</td></tr>
+        <tr><td>Cyclone DDS</td><td class="num">0,8</td><td class="num">3,2</td><td class="num">10</td></tr>
+        <tr class="on"><td>Zenoh</td><td class="num">0,7</td><td class="num">2,4</td><td class="num">8</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Datos sintéticos.</p>
+  </div>
+</section>
+
+<section class="slide" id="tp-terminal" data-section="Tipos" data-title="Terminal">
+  <header class="s-head">
+    <p class="kicker">tipo terminal</p>
+    <h2 class="s-title">Terminal</h2>
+  </header>
+  <div class="s-body cols">
+    <div class="stack" style="min-width:0">
+      <div class="win">
+        <div class="win-bar"><span class="dot"></span>kitty · ~/ros2_ws</div>
+        <div class="win-body">
+          <div class="term teclea">
+            <div data-k="cmd">$ colcon build --symlink-install</div>
+            <div>Summary: 14 packages finished [41.2s]</div>
+            <div data-k="cmd">$ ros2 launch robot bringup.launch.py</div>
+            <div>[INFO] [nav2]: Managed nodes are active</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <aside class="stack tp-lado">
+      <p class="tp-texto">Comandos que se escriben solos al entrar.</p>
+    </aside>
+  </div>
+</section>
+
+<section class="slide" id="tp-cita" data-section="Tipos" data-title="Cita">
+  <header class="s-head">
+    <p class="kicker">tipo cita</p>
+    <h2 class="s-title">Cita</h2>
+  </header>
+  <div class="s-body stack">
+    <figure class="tp-cita">
+      <blockquote>Un robot que no sabe dónde está no puede decidir a dónde ir.</blockquote>
+      <figcaption>Principio de la navegación</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="slide" id="tp-checklist" data-section="Tipos" data-title="Checklist">
+  <header class="s-head">
+    <p class="kicker">tipo checklist</p>
+    <h2 class="s-title">Checklist</h2>
+  </header>
+  <div class="s-body stack">
+      <ul class="checklist">
+        <li class="on">Mapa construido</li>
+        <li class="on" data-end="warn">Localización estable</li>
+        <li class="on" data-end="err">Prueba en pasillo</li>
+        <li>Prueba con gente</li>
+        <li class="tp-pend">Informe final</li>
+      </ul>
+  </div>
+</section>
+
 <section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="9" data-section="Pasos" data-title="Cierre">
   <div class="fx-bg"></div>
   <div class="divider-body">

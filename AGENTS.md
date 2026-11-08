@@ -6,6 +6,8 @@ Este repositorio es un motor de diapositivas en HTML, CSS y JavaScript sin paso 
 
 ## Antes de empezar
 
+- Si tu agente admite MCP, conecta el servidor del repositorio (`node tools/mcp/servidor.mjs`, ya registrado en `.mcp.json`): crea decks, añade diapositivas desde datos estructurados (`diapositiva_desde_spec`), las revisa y devuelve capturas. Requiere `npm install` una vez.
+
 - Si tu agente admite skills, carga `.agents/skills/crear-presentacion/SKILL.md` (enlace a `.claude/skills/crear-presentacion/`): tiene la plantilla lista, el catálogo de piezas y efectos (incluidos `secuencia` y `vc-plot`, que aceptan tus datos) y un ejemplo de efecto con datos en el HTML.
 
 - No leas `atlas/original/index.html` entero: tiene cientos de líneas. Usa como referencia `decks/motor-pruebas/index.html` o busca con `grep` la parte que necesites.

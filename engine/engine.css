@@ -404,3 +404,53 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .grafico .g-dot { stroke: var(--bg); stroke-width: 2.5; }
 .grafico .g-pt { fill-opacity: .85; }
 .grafico figcaption { font: 400 22px/1.3 var(--font-mono); color: var(--fg-3); }
+
+/* Tipos de diapositiva (los genera el MCP con diapositiva_desde_spec; también sirven a mano). Prefijo tp- */
+.tp-texto { margin: 0; font-size: 30px; line-height: 1.45; color: var(--fg-2); text-wrap: pretty; }
+.tp-texto b, .tp-texto strong { color: var(--fg); font-weight: 600; }
+:is(.tp-rejilla, .tp-problema, .tp-lado) .panel h3 { margin: 0 0 14px; font: 600 36px/1.15 var(--font-display); color: var(--fg); text-wrap: balance; }
+:is(.tp-rejilla, .tp-problema, .tp-lado) .panel > p:not(.label):not(.note) { margin: 0; font-size: 26px; line-height: 1.45; color: var(--fg-2); text-wrap: pretty; }
+.tp-rejilla { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 32px; align-content: start; }
+.tp-rejilla > .panel { display: flex; flex-direction: column; gap: 6px; }
+.tp-rejilla .chip { align-self: flex-start; margin-bottom: 12px; }
+.tp-cifras { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 32px; align-content: center; height: 100%; }
+.tp-cifras > div { display: flex; flex-direction: column; gap: 12px; padding-top: 24px; border-top: var(--stroke) solid var(--line-2); }
+.tp-cifras .cifra { --cifra-size: 112px; }
+.tp-problema { display: grid; grid-template-columns: minmax(0, 1fr) 96px minmax(0, 1fr); align-items: stretch; gap: 16px; margin-top: 24px; }
+.tp-problema > .panel { padding: 40px 44px; min-height: 300px; }
+.tp-problema .panel h3 { font-size: 46px; margin-bottom: 20px; }
+.tp-problema .panel > p:not(.label):not(.note) { font-size: 30px; }
+.tp-problema > .flecha { align-self: center; justify-self: center; font: 600 64px/1 var(--font-display); color: var(--accent-ink); }
+.tp-problema .panel.sol { border-color: var(--accent); }
+.tp-problema .label { margin-bottom: 18px; }
+.tp-claves { display: flex; flex-wrap: wrap; gap: 14px 18px; margin-top: 36px; }
+.tp-lista { margin: 8px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 14px; }
+.tp-lista > li { position: relative; padding-left: 30px; font-size: 26px; line-height: 1.4; color: var(--fg-2); }
+.tp-lista > li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 10px; height: 10px; border-radius: 2px; background: var(--accent); }
+.tp-tabla { width: 100%; border-collapse: collapse; font-size: 26px; line-height: 1.3; color: var(--fg-2); font-variant-numeric: tabular-nums; }
+.tp-tabla th { padding: 0 20px 14px 0; text-align: left; font: 500 22px/1.2 var(--font-mono); color: var(--fg-3); border-bottom: var(--stroke) solid var(--line-2); }
+.tp-tabla td { padding: 16px 20px 16px 0; border-bottom: 1px solid var(--line); }
+.tp-tabla td:first-child { color: var(--fg); font-weight: 500; }
+.tp-tabla .num { text-align: right; font-family: var(--font-mono); }
+.tp-tabla tr.on td { color: var(--fg); background: var(--bg-2); }
+.tp-tabla tr.on td:first-child { box-shadow: inset 4px 0 0 var(--accent); padding-left: 16px; }
+.tp-cita { margin: auto 0; max-width: 1400px; }
+.tp-cita blockquote { margin: 0; font: var(--title-weight) 58px/1.2 var(--font-display); color: var(--fg); text-wrap: balance; }
+.tp-cita blockquote::before { content: "«"; color: var(--accent-ink); } .tp-cita blockquote::after { content: "»"; color: var(--accent-ink); }
+.tp-cita figcaption { margin-top: 32px; font: 500 26px/1.3 var(--font-mono); color: var(--fg-3); }
+.tp-img { margin: 0; height: 100%; min-height: 0; display: flex; flex-direction: column; gap: 14px; }
+.tp-img img, .tp-img video { flex: 1 1 auto; min-height: 0; width: 100%; object-fit: contain; object-position: left top; border-radius: var(--radius); }
+/* Etapas sin estados («neutra»): un flujo que se explica, no un progreso. Con data-step, cada fase aparece con →. */
+.etapas.neutra > li, .etapas.neutra > li:has(+ li.on) { --fill: calc(100% - 88px); }
+.etapas.neutra > li::before, .etapas.neutra > li.on::before, .etapas.neutra > li:not(.on):first-child::before, .etapas.neutra > li.on + li:not(.on)::before { content: counter(etapa); border-color: var(--accent); color: var(--accent-ink); background: var(--bg-3); transform: none; }
+.etapas.neutra > li::after, .etapas.neutra > li.on::after, .etapas.neutra > li:not(.on):first-child::after, .etapas.neutra > li.on + li:not(.on)::after { content: none; }
+.etapas.neutra > li > b, .etapas.neutra > li > strong, .etapas.neutra > li:not(.on):first-child > b { color: var(--fg); }
+.etapas.neutra > li > small { color: var(--fg-2); font-size: 24px; }
+.slide .etapas.neutra > [data-step]:not(.on) { opacity: 0; transform: translateY(14px); }
+.s-body.stack:has(> .tp-rejilla:only-child, > .tp-problema) { justify-content: center; }
+.tp-rejilla > .panel.tp-dest { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.checklist > li.tp-pend { color: var(--fg-2); }
+.checklist > li.tp-pend::before { border-color: var(--line-2); border-style: solid; }
+.checklist > li.tp-pend::after { content: "pendiente"; color: var(--fg-3); }
+.tp-rejilla .panel h3 { font-size: 40px; }
+.tp-rejilla .panel > p:not(.label):not(.note), .tp-rejilla .tp-lista > li { font-size: 28px; }

@@ -111,3 +111,7 @@ CSS: `var(--bg)`, `--bg-2`, `--bg-3`, `--fg`, `--fg-2`, `--fg-3`, `--line`, `--l
 ## Estilos
 
 `rice`, `noche`, `suizo`, `aurora`, `cromo`, `arcilla`, `nube`, `termica`, `celula`, `matriz`. Suizo es editorial y sobrio (acento rojo); noche, cromo y matriz son oscuros de por sí; nube, arcilla y cromo usan WebGL en portadas. Para datos y clases, `suizo` y `nube` son los más legibles.
+
+## Tipos de diapositiva (`tp-`, los genera el MCP)
+
+`diapositiva_desde_spec` produce HTML con clases de `engine.css` que también sirven a mano: `.tp-problema` (problema → solución), `.tp-rejilla` (tarjetas o columnas, `style="--n:3"`), `.tp-cifras`, `.tp-tabla` (`tr.on` destaca, `.num` alinea números), `.tp-cita`, `.tp-img`, `.tp-lista`, `.tp-texto`, `.etapas.neutra` (flujo sin estados) y `.checklist > li.tp-pend`. Copia el marcado de `decks/motor-pruebas/` (ids `tp-*`).

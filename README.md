@@ -52,6 +52,7 @@ motor/
 │   ├── revisar.mjs       revisión estática de un deck (sin navegador): atributos, scripts, efectos, colores
 │   ├── verificar.mjs     capturas de un deck en varios estilos, modos y pasos, con errores y desbordes
 │   ├── servidor.mjs      servidor estático de la raíz (lo usan verificar y el MCP)
+│   └── mcp/              servidor MCP: edición por diapositivas, tipos de diapositiva y capturas
 │   └── salida.mjs        carpeta de salida común (output/, --out o MOTOR_OUT)
 ├── output/               presentaciones empaquetadas y capturas (no se sube a git)
 └── dist/atlas.html       versión de un solo archivo
@@ -153,6 +154,10 @@ Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto W
    - Iguala la luminosidad OKLCH de las series de gráfico y elige el orden con mayor separación para protanopía y deuteranopía (ΔE OKLab ≥ 8 entre vecinas).
    - Corrige `fg-2`, `fg-3` y los `*-ink` hasta un contraste WCAG suficiente.
 3. Añade su tratamiento en `themes/styles.css` (decorado, paneles, títulos y transición), la familia en el enlace de Google Fonts y su fondo en `fx/fondos.js` (`Motor.painters[id] = { init, frame }`).
+
+## Servidor MCP
+
+`tools/mcp/servidor.mjs` expone el motor a cualquier agente con MCP (Claude Code lo carga desde `.mcp.json`; antes, `npm install`). Herramientas: `catalogo`, `listar_decks`, `crear_deck`, `indice`, `leer_diapositiva`, `diapositiva_desde_spec`, `escribir_diapositiva`, `borrar_diapositiva`, `mover_diapositiva`, `revisar`, `capturar` (devuelve la imagen), `verificar` y `empaquetar`; recursos `motor://guia` y `motor://catalogo`; prompt `nueva-presentacion`. `diapositiva_desde_spec` convierte un JSON de un tipo (portada, problema, cifra, cifras, tarjetas, proceso, comparacion, grafico, tabla, imagen, terminal, cita, checklist, separador, cierre, libre) en HTML con las clases `tp-` de `engine.css`. Ejemplos de todos en `decks/motor-pruebas/` (sección «Tipos»).
 
 ## Empaquetar y exportar
 

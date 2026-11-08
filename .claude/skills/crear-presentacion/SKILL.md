@@ -7,6 +7,10 @@ description: Use when creating, editing, extending or reviewing a slide deck (pr
 
 Un deck es un `decks/<nombre>/index.html` que carga el motor por rutas `../../`. No hay compilación: se escribe HTML, se revisa con dos herramientas y se mira en capturas.
 
+## Con el servidor MCP `motor`
+
+Si tienes sus herramientas (`.mcp.json` lo registra en este repositorio), úsalas en lugar de editar el HTML a mano: `crear_deck` → `diapositiva_desde_spec` por cada idea (tipos: portada, separador, cierre, cifra, cifras, tarjetas, problema, proceso, comparacion, grafico, tabla, imagen, terminal, cita, checklist, libre) → `revisar` → `capturar` cada diapositiva (devuelve la imagen) → `empaquetar`. Para lo que no cubren los tipos, `escribir_diapositiva` con HTML del catálogo. Cada escritura se revisa y no se guarda si añade errores. Las reglas de abajo siguen valiendo.
+
 ## Flujo
 
 1. **Guion antes que HTML.** Una idea por diapositiva. Para cada una decide la forma: cifra, tabla, gráfico, diagrama, proceso o imagen. Pregunta al usuario solo lo que no puedas deducir (estilo, carpeta de salida, datos reales).
