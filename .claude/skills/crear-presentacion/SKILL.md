@@ -10,14 +10,15 @@ Un deck es un `decks/<nombre>/index.html` que carga el motor por rutas `../../`.
 ## Flujo
 
 1. **Guion antes que HTML.** Una idea por diapositiva. Para cada una decide la forma: cifra, tabla, gráfico, diagrama, proceso o imagen. Pregunta al usuario solo lo que no puedas deducir (estilo, carpeta de salida, datos reales).
-2. **Crea el deck** copiando `plantilla.html` (de esta carpeta) a `decks/<nombre>/index.html` y crea `decks/<nombre>/deck.css` con al menos `.slide aside.notes { display: none; }`.
+2. **Crea el deck** copiando `plantilla.html` (de esta carpeta) a `decks/<nombre>/index.html` y crea `decks/<nombre>/deck.css` (aunque esté vacío: la plantilla lo enlaza).
 3. **Escribe las diapositivas** con lo que hay en `catalogo.md`, en este orden de preferencia:
    1. HTML estático con bloques y piezas por clase (`cifra`, `etapas`, `checklist`, `bento`…).
-   2. SVG propio animado con `data-fx="secuencia"` y `data-seq`.
-   3. `vc-plot` / `vc-heat` para curvas y matrices.
-   4. Efecto nuevo (lee `efecto-nuevo.md`).
+   2. Datos numéricos: `<figure class="grafico">` (barras, columnas, líneas, dispersión) con el JSON dentro.
+   3. SVG propio animado con `data-fx="secuencia"` y `data-seq`.
+   4. `vc-plot` / `vc-heat` para curvas y = f(x) y matrices.
+   5. Efecto nuevo (lee `efecto-nuevo.md`).
 4. **Revisión estática** (sin navegador, tarda menos de un segundo): `node tools/revisar.mjs <nombre>`. Corrige todos los `ERROR` y revisa cada `aviso`.
-5. **Revisión visual:** con `python3 -m http.server 8000` en la raíz del repositorio, `node tools/verificar.mjs <nombre> [estilo1,estilo2]`. En esta máquina: `CHROMIUM_PATH=~/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome`. Abre con Read varias capturas de `output/capturas/<nombre>/` (claro y oscuro) y busca títulos en dos líneas, texto cortado o pegado al borde y contraste pobre. `VERIF_REDUCED=1` captura el estado final de las animaciones.
+5. **Revisión visual:** `node tools/verificar.mjs <nombre> [estilo1,estilo2] [--paso=ultimo] [--solo=id1,id2]` (levanta su propio servidor). En esta máquina: `CHROMIUM_PATH=~/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome`. Abre con Read varias capturas de `output/capturas/<nombre>/` (claro y oscuro) y busca títulos en dos líneas, texto cortado o pegado al borde y contraste pobre. `VERIF_REDUCED=1` captura el estado final de las animaciones.
 6. **Entrega:** `node tools/bundle.mjs decks/<nombre>/index.html [--out=<carpeta>]` crea un único HTML.
 
 ## Reglas que no comprueba ninguna herramienta
@@ -27,16 +28,16 @@ Un deck es un `decks/<nombre>/index.html` que carga el motor por rutas `../../`.
 - Cuerpo útil de unos 1664×630 px: si no cabe, divide en dos diapositivas en vez de encoger el texto.
 - `render()` deja el estado final completo; `play()` solo anima.
 
-`revisar.mjs` ya comprueba: atributos obligatorios, `id` duplicados, orden de los scripts, estilos, efectos, pintores, revelados y presets de título inexistentes, colores literales, texto por debajo de 22 px, títulos largos y listas con demasiados elementos.
+`revisar.mjs` ya comprueba: atributos obligatorios, `id` duplicados, orden de los scripts, estilos, efectos, pintores, revelados y presets de título inexistentes, colores literales, texto por debajo de 22 px, títulos largos, listas con demasiados elementos y el JSON de los `.grafico`.
 
 ## Errores frecuentes
 
 | Síntoma | Causa |
 |---|---|
 | Un efecto de demo (`kpis`, `sankey`, `training`…) muestra datos que no son los del usuario | esos efectos traen sus datos dentro del JavaScript; usa uno genérico o escribe uno |
-| `data-fx="vc"` sin estilos ni fórmulas | falta KaTeX o `../vc-base/vc.css` (ver `catalogo.md`) |
-| Las notas del orador se ven en la diapositiva | falta la regla `aside.notes` en `deck.css` |
-| Las capturas no muestran parte del contenido | los `data-step` empiezan ocultos; es normal |
+| `data-fx="vc"` sin estilos ni fórmulas | falta KaTeX o `../../fx/vc.css` (ver `catalogo.md`) |
+| Un gráfico muestra «Gráfico sin datos válidos» | JSON mal formado o falta `fx/grafico.js`; `revisar.mjs` lo indica |
+| Las capturas no muestran parte del contenido | los `data-step` empiezan ocultos; captura con `--paso=ultimo` |
 | Cambiar `data-style` a mano no redibuja | el estilo se guarda en `localStorage` (`motor:style`); usa la tecla S o `verificar.mjs` |
 
 ## No tocar

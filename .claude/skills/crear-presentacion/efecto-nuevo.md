@@ -1,6 +1,6 @@
 # Efecto nuevo
 
-Solo si ninguna pieza, ningún efecto genérico (`secuencia`, `vc-plot`) ni un SVG estático sirve. Va en `fx/<nombre>.js` si puede servir a otros decks, o en `decks/<deck>/fx.js` si es solo de ese deck. Se carga después de `fx/piezas.js`.
+Solo si ninguna pieza, ni `.grafico`, ni un efecto genérico (`secuencia`, `vc-plot`), ni un SVG estático sirve. Para barras, columnas, líneas o dispersión usa `.grafico`; el ejemplo de abajo solo ilustra el patrón. Va en `fx/<nombre>.js` si puede servir a otros decks, o en `decks/<deck>/fx.js` si es solo de ese deck. Se carga después de `fx/piezas.js`.
 
 ## Contrato
 

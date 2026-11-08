@@ -81,7 +81,7 @@ Hacerlo antes del MCP, porque sin ello el MCP solo automatiza los mismos problem
 | Fase | Contenido | Criterio para pasar a la siguiente |
 |---|---|---|
 | 0 · hecho | skill `crear-presentacion`, `tools/revisar.mjs` | — |
-| 1 | trabajo previo 1–5 | un deck con 3 gráficos de datos reales sin escribir efectos |
+| 1 · hecho (2026-11-08) | trabajo previo 1–5: `fx/grafico.js`, `fx/vc.css`, notas en `fx/sistema.js`, `revisar`/`verificar` como módulos, `--paso` y `tools/servidor.mjs` | un deck con 3 gráficos de datos reales sin escribir efectos |
 | 2 | MCP mínimo: `revisar`, `capturar`, `listar/leer/escribir_diapositiva`, `catalogo` | crear el mismo deck de prueba con y sin MCP y comparar iteraciones, errores y tokens |
 | 3 | `crear_deck`, `verificar`, `empaquetar`, prompt `nueva-presentacion` | uso normal en un deck real del máster |
 | 4 | `diapositiva_desde_spec` con tipos de diapositiva | probarlo con un modelo pequeño o local |

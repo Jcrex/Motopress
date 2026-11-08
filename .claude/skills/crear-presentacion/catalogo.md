@@ -48,10 +48,30 @@ Atributos obligatorios en cada `<section>`: `id` (único, minúsculas y guiones)
 
 ## Pasos, revelados y títulos
 
-- `data-step` en cualquier elemento: aparece con →. Las capturas de `verificar.mjs` muestran el primer paso (los `data-step` ocultos).
+- `data-step` en cualquier elemento: aparece con →. `verificar.mjs` captura el primer paso salvo con `--paso=ultimo` o `--paso=N`.
 - `data-reveal="auto"` en un `data-step`: gesto del estilo. Nombres fijos: `fade`, `wipe`, `wipe-x`, `focus`, `develop`, `mist`, `pixel`, `tilt`. En `<html>` vale para todo el deck.
 - `data-title-fx="auto"` anima la entrada del título (por defecto solo en portadas con `backdrop`); `"none"` la quita. Presets: `rise`, `descifra`, `mask-lines`, `blur`, `pliega`, `enfoca`.
 - Fondo de portada: `data-painter="hilos"` (todos los estilos), `data-painter="noche:escaner aurora:hilos"` (por estilo) o `"none"`. Pintores: `grano`, `hilos`, `radar`, `topo`, `isolineas`, `escaner`, `velo`, más el propio de cada estilo. `data-seed` cambia la variación.
+
+## Gráficos con datos (`fx/grafico.js`, sin `data-fx` ni D3)
+
+```html
+<figure class="grafico" data-tipo="barras" data-unidad=" ms" data-orden="desc" data-resalta="Nav2">
+  <script type="application/json">{"datos": [["Nav2", 112], ["MoveIt 2", 74]]}</script>
+  <figcaption>Datos de ejemplo.</figcaption>
+</figure>
+```
+
+| Atributo | Valores |
+|---|---|
+| `data-tipo` | `barras` (horizontales, por defecto; lo mejor con rótulos largos), `columnas`, `lineas`, `dispersion` |
+| `data-apilar` | barras o columnas con varias series, apiladas |
+| `data-unidad`, `data-dec` | sufijo y decimales del eje de valores |
+| `data-eje-x`, `data-eje-y` | título de los ejes |
+| `data-resalta="A|B"` | destaca esas etiquetas; el resto en gris |
+| `data-orden="desc|asc"`, `data-cero`, `data-valores="no"` | ordenar una serie, eje y desde 0 en líneas, sin rótulos de valor |
+
+JSON: `{"datos": [[etiqueta, valor], …]}` para una serie; `{"etiquetas": […], "series": [{"nombre": …, "valores": […]}, …]}` para varias (leyenda automática, colores `cat-1…6`); `"x": [números]` en lugar de `"etiquetas"` hace numérico el eje x de `lineas`; `dispersion` usa `"series": [{"nombre": …, "puntos": [[x, y], …]}]`. Ocupa el alto de su contenedor (mínimo 360 px; dale `style="height:…"` si hace falta). Se anima al entrar o al revelar su `data-step`. Ejemplos en `decks/motor-pruebas/` (`#g-barras` … `#g-dispersion`).
 
 ## Efectos con `data-fx`
 
@@ -66,9 +86,9 @@ Atributos obligatorios en cada `<section>`: `id` (único, minúsculas y guiones)
 | `vc-heat` | `fx/vc.js` | matriz coloreada: `<div class="fx vc-heat" data-m='[[1,2],[3,4]]' data-signed="1" data-dec="2"></div>` |
 | `vc-conv` | `fx/vc.js` | convolución paso a paso: `data-img='[[…]]' data-k='[[…]]' data-mode="conv|corr" data-pad="zero|none"` |
 
-`fx/vc.js` necesita KaTeX (CSS y JS, con `contrib/auto-render`) desde jsDelivr y los estilos de `decks/vc-base/vc.css` (`.eq`, `pre.code`, `.tip`, `.trap`, `.exam`, `.g2`, `.g3`, `.vstack`…). Esa hoja está en `decks/`, que no se sube a git: existe solo en la copia local. Copia el bloque de `<link>`/`<script>` de `decks/vc-t1-realce/index.html`.
+`fx/vc.js` necesita KaTeX (CSS y JS, con `contrib/auto-render`) desde jsDelivr y los estilos de `fx/vc.css` (`.eq`, `pre.code`, `.tip`, `.trap`, `.exam`, `.g2`, `.g3`, `.vstack`…): `<link rel="stylesheet" href="../../fx/vc.css">`. Copia el bloque de `<link>`/`<script>` de KaTeX de `decks/vc-t1-realce/index.html`.
 
-Notas del orador: con `fx/rai.js` cargado, la tecla N abre una ventana con el `<aside class="notes">` de la diapositiva activa. El motor no oculta las notas: añade `.slide aside.notes { display: none; }` al `deck.css`.
+Notas del orador: `<aside class="notes">…</aside>` dentro de la diapositiva. El motor las oculta y la tecla N abre una ventana con las notas de la diapositiva activa, la siguiente y un cronómetro (en `fx/sistema.js`, sin cargar nada más).
 
 ### De demostración: datos fijos dentro del efecto
 

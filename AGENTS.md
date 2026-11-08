@@ -51,12 +51,13 @@ Crea `decks/<nombre>/index.html` con esta plantilla. Cambia solo lo marcado con 
 <script src="../../fx/sistema.js"></script>
 <script src="../../fx/fondos.js"></script>
 <script src="../../fx/piezas.js"></script>
+<script src="../../fx/grafico.js"></script>
 <!-- Añade aquí los fx/ que uses: ../../fx/datos.js, ../../fx/ml.js, ../../fx/ros.js, ../../fx/arch.js -->
 </body>
 </html>
 ```
 
-Orden obligatorio de los `<script>`: `MOTOR_PICK` → librerías CDN → `themes/meta.js` → `engine/engine.js` → `fx/sistema.js` → `fx/fondos.js` → `fx/piezas.js` → resto de `fx/`.
+Orden obligatorio de los `<script>`: `MOTOR_PICK` → librerías CDN → `themes/meta.js` → `engine/engine.js` → `fx/sistema.js` → `fx/fondos.js` → `fx/piezas.js` → `fx/grafico.js` y resto de `fx/`.
 
 Estilos válidos (no inventes otros): `rice`, `noche`, `suizo`, `aurora`, `cromo`, `arcilla`, `nube`, `termica`, `celula`, `matriz`.
 
@@ -103,6 +104,8 @@ Piezas disponibles:
 - Entrada animada del título: `data-title-fx="auto"` en cualquier diapositiva; `"none"` la quita de una portada.
 - Revelado con el gesto del estilo: `data-reveal="auto"` en un elemento con `data-step`.
 - Piezas listas (sin `data-fx`, se combinan): número grande `<span class="cifra" data-value="97.3" data-suf=" %"></span>`; proceso `<ol class="etapas"><li data-step><b>Fase</b><small>detalle</small></li></ol>`; hitos `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>`; índice `<ol class="agenda"></ol>`; foco por pasos `<div class="reticula">` con hijos `data-target="0|1|…" data-label="…"`; rejilla `<div class="bento">`; tarjetas apiladas `<div class="mazo">`; bordes `class="chispa"` o `class="rayo"` en un panel; texto `class="descifra"`; split-flap `<div class="paleta" data-words="A|B">`; terminal `<div class="term teclea">`; nivel `<div class="deposito" data-value="72">`. Fondos de portada con `data-painter`: `grano`, `hilos`, `radar`, `topo`, `isolineas`, `escaner`, `velo`. Detalles en README.
+- Gráficos con tus datos (barras, columnas, líneas, dispersión), sin escribir JavaScript: carga `../../fx/grafico.js` y usa `<figure class="grafico" data-tipo="barras"><script type="application/json">{"datos": [["A", 3], ["B", 5]]}</script></figure>`. Detalles en `.claude/skills/crear-presentacion/catalogo.md`.
+- Notas del orador: `<aside class="notes">` en la diapositiva; la tecla N las abre en otra ventana.
 - Sin `data-fx`, la diapositiva es HTML estático. Es la opción más segura.
 
 Efectos ya hechos para `data-fx` (búscalos con `grep -n "Motor.fx('" fx/*.js`): `backdrop`, `estilos`, `teoria`, `rueda`, `tipo`, `paletas`, `refs`, `compare`, `rosgraph`, `lidar`, `astar`, `tftree`, `blueprint`, `scope`, `training`, `confusion`, `latent`, `nnet`, `clouds`, `ridge`, `calendar`, `sankey`, `kpis`, `desktop`, `fetch`. Reutilízalos antes de crear uno nuevo.
@@ -163,19 +166,15 @@ Primero, la revisión estática (sin navegador ni servidor). Corrige todos los `
 node tools/revisar.mjs <nombre>          # --json para salida estructurada
 ```
 
-Sirve la carpeta raíz del repositorio (no la del deck), porque las rutas usan `../../`:
+Para verlo en el navegador, sirve la raíz del repositorio (las rutas usan `../../`): `node tools/servidor.mjs` y abre http://localhost:8000/decks/<nombre>/#portada.
 
-```bash
-python -m http.server 8000
-# abre http://localhost:8000/decks/<nombre>/#portada
-```
-
-Después, con el servidor en marcha, ejecuta el verificador. Hace capturas de todas las diapositivas en dos estilos y en claro y oscuro, e imprime los errores de consola y los elementos que se salen del lienzo:
+El verificador levanta su propio servidor. Hace capturas de todas las diapositivas en dos estilos y en claro y oscuro, e imprime los errores de consola y los elementos que se salen del lienzo:
 
 ```bash
 npm i -D playwright && npx playwright install chromium   # solo la primera vez
 node tools/verificar.mjs <nombre>                          # estilos por defecto: suizo y noche
 node tools/verificar.mjs <nombre> nube,matriz              # o los que elijas
+node tools/verificar.mjs <nombre> suizo --paso=ultimo --solo=portada,ventas   # pasos revelados, solo esas
 ```
 
 Las capturas quedan en `output/capturas/<nombre>/<estilo>-<modo>-<id>.png`. Si ya tienes Chromium instalado, pásalo con `CHROMIUM_PATH=/ruta/a/chrome`. Si el verificador solo imprime la línea «Capturas en …», no hay errores ni desbordes; aun así, abre algunas capturas.
@@ -183,7 +182,7 @@ Las capturas quedan en `output/capturas/<nombre>/<estilo>-<modo>-<id>.png`. Si y
 Notas:
 
 - El motor lee el estilo y el modo de `localStorage` (`motor:style`, `motor:mode`) al cargar. Cambiar `data-style` a mano después de cargar no redibuja los efectos.
-- Las capturas muestran el primer paso: los elementos con `data-step` salen ocultos.
+- Las capturas muestran el primer paso (los `data-step` ocultos) salvo con `--paso=ultimo` o `--paso=N`.
 
 Si no tienes Playwright ni navegador, comprueba al menos:
 

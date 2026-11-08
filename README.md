@@ -8,7 +8,7 @@ El núcleo no tiene dependencias. Los efectos de gráficos usan D3 y GSAP desde 
 
 ```bash
 cd motor
-python -m http.server 8000      # o cualquier servidor estático
+node tools/servidor.mjs          # o python -m http.server 8000, o cualquier servidor estático
 # abre http://localhost:8000/#portada (redirige a atlas/original/; el Atlas Completo está en /atlas/completo/)
 ```
 
@@ -50,7 +50,8 @@ motor/
 │   ├── build-themes.mjs  genera tokens.css y meta.js y ajusta las paletas de gráficos
 │   ├── bundle.mjs        empaqueta un deck en un único HTML
 │   ├── revisar.mjs       revisión estática de un deck (sin navegador): atributos, scripts, efectos, colores
-│   ├── verificar.mjs     capturas de un deck en varios estilos y modos, con errores y desbordes
+│   ├── verificar.mjs     capturas de un deck en varios estilos, modos y pasos, con errores y desbordes
+│   ├── servidor.mjs      servidor estático de la raíz (lo usan verificar y el MCP)
 │   └── salida.mjs        carpeta de salida común (output/, --out o MOTOR_OUT)
 ├── output/               presentaciones empaquetadas y capturas (no se sube a git)
 └── dist/atlas.html       versión de un solo archivo
@@ -81,6 +82,14 @@ motor/
 - Fondos alternativos para `data-painter`: `grano` (degradado con grano), `hilos` (haz de líneas que se deshilacha), `radar` (pantalla PPI con contactos), `topo` (terreno con curvas de nivel), `isolineas` (curvas de nivel que fluyen, en cat-1…3), `escaner` (sala de rejilla recorrida por un láser) y `velo` (banda de aurora arriba). Todos dejan libre la columna del título y tienen respaldo 2D.
 - Entrada del título: `data-title-fx="auto"` (preset del estilo), `"none"` o el nombre de un preset: `rise` (rice, nube), `descifra` (noche, matriz), `mask-lines` (suizo), `blur` (aurora), `pliega` (arcilla), `enfoca` (celula). Sin atributo, solo se anima en las diapositivas con `backdrop`. En `<html>` vale para todo el deck. Cromo y Térmica nunca parten el título (lo animan en CSS).
 - Pasos: añade `data-step` a cualquier elemento para revelarlo con →. Con `data-reveal="auto"` se revela con el gesto del estilo (inclinación en rice y arcilla, barrido en noche, cromo y nube, niebla en aurora, revelado en térmica, enfoque en célula, puntos en matriz, fundido en suizo); también vale un nombre fijo: `fade`, `wipe`, `wipe-x`, `focus`, `develop`, `mist`, `pixel`, `tilt`. En `<html>` vale para todo el deck.
+
+### Gráficos (`fx/grafico.js`)
+
+`<figure class="grafico" data-tipo="barras|columnas|lineas|dispersion">` con los datos en un `<script type="application/json">` dentro: `{"datos": [["Norte", 420], …]}` o `{"etiquetas": […], "series": [{"nombre": …, "valores": […]}]}`. Opciones: `data-apilar`, `data-unidad`, `data-dec`, `data-eje-x`, `data-eje-y`, `data-resalta`, `data-orden`, `data-cero`, `data-valores="no"`. Dibuja SVG con variables CSS (cambia de estilo sin redibujar), sin D3, y se anima al entrar o al revelar su paso.
+
+### Notas del orador
+
+`<aside class="notes">…</aside>` dentro de una diapositiva. No se ven en el lienzo; la tecla N abre una ventana con las notas de la diapositiva activa, la siguiente y un cronómetro.
 
 ### Piezas (`fx/piezas.js`)
 

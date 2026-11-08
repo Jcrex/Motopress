@@ -4,7 +4,7 @@
        · "rise" (barras, de abajo arriba) · "pop" (escala).
        data-travel="#id-de-camino" en un <circle>: un punto recorre ese camino en bucle.
      render() deja la diapositiva completa; play() solo anima y no deja estilos al terminar.
-   - notas del orador: tecla N abre una ventana con las notas (<aside class="notes">) de la diapositiva activa.
+   - las notas del orador (tecla N) están ahora en fx/sistema.js.
    - vídeos: al salir de una diapositiva se pausan los suyos. */
 (() => {
   const STEP = 620, DUR = 560;
@@ -58,35 +58,6 @@
     if (!window.Motor || Motor.index === last) return;
     last = Motor.index;
     Motor.slides.forEach((s, i) => { if (i !== last) s.querySelectorAll('video').forEach((v) => { if (!v.paused) v.pause(); }); });
-    paintNotes();
   }, 250);
 
-  /* ---------------- notas del orador (tecla N) ---------------- */
-  let win = null;
-  function paintNotes() {
-    if (!win || win.closed) return;
-    const i = Motor.index, s = Motor.slides[i], nx = Motor.slides[i + 1];
-    const notes = s.querySelector('aside.notes');
-    const d = win.document;
-    d.getElementById('n-title').textContent = `${String(i + 1).padStart(2, '0')}/${Motor.slides.length} · ${s.dataset.title || ''}`;
-    d.getElementById('n-body').innerHTML = notes ? notes.innerHTML : '<p class="f">Sin notas.</p>';
-    d.getElementById('n-next').textContent = nx ? 'Siguiente: ' + (nx.dataset.title || '') : 'Última diapositiva';
-  }
-  function openNotes() {
-    if (win && !win.closed) { win.focus(); return; }
-    win = window.open('', 'rai-notas', 'width=760,height=640');
-    if (!win) return;
-    win.document.write(`<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Notas del orador</title>
-<style>body{margin:0;padding:24px 28px;font:20px/1.5 system-ui,sans-serif;background:#16181d;color:#e8e8ea}
-h1{margin:0 0 4px;font-size:22px}#n-next,#n-clock{color:#9aa0aa;font-size:16px;margin:0 0 14px}
-#n-body p{margin:0 0 12px}.f{color:#9aa0aa}code{font-size:.92em}</style></head>
-<body><h1 id="n-title"></h1><p id="n-clock"></p><div id="n-body"></div><p id="n-next"></p>
-<script>const t0=Date.now();setInterval(()=>{const s=Math.floor((Date.now()-t0)/1000);document.getElementById('n-clock').textContent='Tiempo: '+String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')+' · ← → en la ventana principal';},1000);<\/script></body></html>`);
-    win.document.close();
-    paintNotes();
-  }
-  addEventListener('keydown', (e) => {
-    if (e.metaKey || e.ctrlKey || e.altKey || e.target.closest('input, textarea, select')) return;
-    if (e.key === 'n' || e.key === 'N') openNotes();
-  });
 })();

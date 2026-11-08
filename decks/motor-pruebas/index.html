@@ -252,6 +252,59 @@
   <p class="note">Datos de ejemplo.</p>
 </section>
 
+<section class="slide" id="g-barras" data-section="Gráficos" data-title="Barras horizontales">
+  <header class="s-head"><p class="kicker">fx/grafico.js · data-tipo="barras" · data-resalta</p><h2 class="s-title">Barras horizontales</h2></header>
+  <div class="s-body cols">
+    <figure class="grafico" data-tipo="barras" data-unidad=" ms" data-orden="desc" data-resalta="Nav2">
+      <script type="application/json">{"datos": [["SLAM Toolbox", 38], ["Nav2", 112], ["MoveIt 2", 74], ["Detector YOLO", 41], ["Fusión de odometría", 9]]}</script>
+      <figcaption>Datos sintéticos.</figcaption>
+    </figure>
+    <aside class="stack"><p class="lead">Una serie ordenada y una barra destacada; el resto en gris.</p></aside>
+  </div>
+  <aside class="notes"><p>Nota de prueba: debe verse solo con la tecla N.</p></aside>
+</section>
+
+<section class="slide" id="g-columnas" data-section="Gráficos" data-title="Columnas agrupadas">
+  <header class="s-head"><p class="kicker">data-tipo="columnas" · dos series · paso</p><h2 class="s-title">Columnas agrupadas</h2></header>
+  <div class="s-body stack">
+    <figure class="grafico" data-tipo="columnas" data-unidad=" %" data-eje-y="éxito">
+      <script type="application/json">{"etiquetas": ["Pasillo", "Puerta", "Ascensor", "Rampa"], "series": [{"nombre": "Humble", "valores": [92, 71, 48, 80]}, {"nombre": "Jazzy", "valores": [95, 83, 66, 84]}]}</script>
+      <figcaption>Datos sintéticos.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="slide" id="g-apiladas" data-section="Gráficos" data-title="Barras apiladas">
+  <header class="s-head"><p class="kicker">data-apilar · revelado por paso</p><h2 class="s-title">Barras apiladas</h2></header>
+  <div class="s-body stack">
+    <div data-step>
+      <figure class="grafico" data-tipo="barras" data-apilar data-unidad=" h" style="height:520px">
+        <script type="application/json">{"etiquetas": ["Robot A", "Robot B", "Robot C"], "series": [{"nombre": "navegando", "valores": [14, 9, 11]}, {"nombre": "cargando", "valores": [4, 6, 3]}, {"nombre": "parado", "valores": [2, 5, 1]}]}</script>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<section class="slide" id="g-lineas" data-section="Gráficos" data-title="Líneas">
+  <header class="s-head"><p class="kicker">data-tipo="lineas" · eje x numérico</p><h2 class="s-title">Latencia frente a carga</h2></header>
+  <div class="s-body stack">
+    <figure class="grafico" data-tipo="lineas" data-unidad=" ms" data-eje-x="mensajes por segundo" data-eje-y="latencia" data-cero>
+      <script type="application/json">{"x": [100, 500, 1000, 2000, 4000, 8000], "series": [{"nombre": "FastDDS", "valores": [0.4, 0.6, 0.9, 1.6, 3.4, 7.9]}, {"nombre": "Cyclone", "valores": [0.3, 0.5, 0.8, 1.3, 2.6, 5.8]}, {"nombre": "Zenoh", "valores": [0.5, 0.6, 0.7, 1.0, 1.9, 3.7]}]}</script>
+      <figcaption>Datos sintéticos.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section class="slide" id="g-dispersion" data-section="Gráficos" data-title="Dispersión">
+  <header class="s-head"><p class="kicker">data-tipo="dispersion"</p><h2 class="s-title">Precisión frente a coste</h2></header>
+  <div class="s-body stack">
+    <figure class="grafico" data-tipo="dispersion" data-eje-x="ms por imagen" data-eje-y="mAP" data-dec="2" data-valores="no">
+      <script type="application/json">{"series": [{"nombre": "YOLO", "puntos": [[6, 0.52], [9, 0.58], [14, 0.63], [22, 0.67]]}, {"nombre": "RT-DETR", "puntos": [[18, 0.6], [26, 0.66], [41, 0.7]]}]}</script>
+      <figcaption>Datos sintéticos.</figcaption>
+    </figure>
+  </div>
+</section>
+
 <section class="slide is-plain closing" id="cierre" data-fx="backdrop" data-seed="9" data-section="Pasos" data-title="Cierre">
   <div class="fx-bg"></div>
   <div class="divider-body">
@@ -271,6 +324,7 @@
 <script src="../../fx/sistema.js"></script>
 <script src="../../fx/fondos.js"></script>
 <script src="../../fx/piezas.js"></script>
+<script src="../../fx/grafico.js"></script>
 <script src="fx.js"></script>
 </body>
 </html>
