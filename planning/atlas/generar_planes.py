@@ -311,7 +311,7 @@ def indice(db):
           '', '## Terminado cuando\n',
           '- `SELECT * FROM componentes WHERE explicado = 0` devuelve 0 filas.', '- Todos los lotes figuran como completados en esta tabla.',
           '- `recorrer.mjs` navega de la primera a la última diapositiva, paso a paso, sin errores de consola.',
-          '', '## Fuentes\n', '- Inventario: [inventario.md](inventario.md).',
+          '', '## Fuentes\n', '- Cómo retomar el trabajo: [RETOMAR.md](RETOMAR.md).', '- Inventario: [inventario.md](inventario.md).',
           f'- react-bits: clon en `{RBR_TXT}` (fuera del repositorio), commit en la tabla `meta` de `atlas.db`. Props, uso y dependencias en la tabla `react_bits`; relación con el motor en `origen_react_bits`.',
           '- Informes del estudio: [react-bits/](react-bits/).', '']
     open(os.path.join(PLAN, '00-indice.md'), 'w').write('\n'.join(o))

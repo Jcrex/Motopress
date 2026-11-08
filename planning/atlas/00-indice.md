@@ -46,6 +46,7 @@ Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir
 
 ## Fuentes
 
+- Cómo retomar el trabajo: [RETOMAR.md](RETOMAR.md).
 - Inventario: [inventario.md](inventario.md).
 - react-bits: clon en `~/Proyectos/react-bits` (fuera del repositorio), commit en la tabla `meta` de `atlas.db`. Props, uso y dependencias en la tabla `react_bits`; relación con el motor en `origen_react_bits`.
 - Informes del estudio: [react-bits/](react-bits/).
