@@ -1,6 +1,6 @@
 # Estudio: servidor MCP para crear presentaciones con el motor
 
-Fecha: 2026-11-08. Estado: implementado el 2026-11-08 (fases 1 a 4). Código en `tools/mcp/`.
+Fecha: 2026-11-08. Estado: implementado el 2026-11-08 (fases 1 a 4). Código en `tools/mcp/`. Pendientes y mejoras: [pendientes.md](pendientes.md).
 
 ## Conclusión
 

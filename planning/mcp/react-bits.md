@@ -1,6 +1,6 @@
 # Estudio: react-bits en el MCP y en las skills
 
-Fecha: 2026-11-08. Estado: implementado el 2026-11-08 (fases 1 a 5). Resultado de la prueba en [react-bits-prueba.md](react-bits-prueba.md). Clon estudiado: `~/Proyectos/react-bits`, commit `4dc7b5b` (2026-10-31).
+Fecha: 2026-11-08. Estado: implementado el 2026-11-08 (fases 1 a 5). Resultado de la prueba en [react-bits-prueba.md](react-bits-prueba.md). Clon estudiado: `~/Proyectos/react-bits`, commit `4dc7b5b` (2026-10-31). Pendientes y mejoras: [pendientes.md](pendientes.md).
 
 ## Conclusión
 
