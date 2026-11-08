@@ -110,7 +110,7 @@ export function crearDeck({ nombre, titulo, estilo = 'suizo', estilos = null, ex
   for (const e of extras) {
     if (e === 'vc') { extras.includes('katex') || extras.push('katex'); continue; }
     if (CDN[e]) continue;
-    if (/^fx\/[a-z0-9-]+\.js$/.test(e) && fs.existsSync(path.join(ROOT, e))) fxLocal.push(e); else throw new Error(`Extra desconocido: ${e}`);
+    if (/^fx\/(?:experimental\/)?[a-z0-9-]+\.js$/.test(e) && fs.existsSync(path.join(ROOT, e))) fxLocal.push(e); else throw new Error(`Extra desconocido: ${e}`);
   }
   if (extras.includes('vc')) fxLocal.unshift('fx/vc.js', 'fx/rai.js');
   else if (fxLocal.includes('fx/vc.js') && !fxLocal.includes('fx/rai.js')) fxLocal.splice(fxLocal.indexOf('fx/vc.js') + 1, 0, 'fx/rai.js');

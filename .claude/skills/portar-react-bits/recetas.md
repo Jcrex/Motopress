@@ -72,7 +72,7 @@ El motor se presenta, no se manipula. Para cada evento de `rb_codigo … eventos
 ## raf visibilidad resize · ciclo de vida de React
 
 - `useEffect(() => { … return () => cleanup }, [])` → `render()` (montaje) y `stop()` (limpieza).
-- `requestAnimationFrame` propio → `api.raf((t) => …)` en efectos (se cancela solo al salir) o `frame()` en pintores.
+- `requestAnimationFrame` propio → `api.raf((t, dt) => …)` en efectos: `t` son **milisegundos** desde que empezó y `dt` los del último fotograma; devolver `false` lo detiene; se cancela solo al salir. En pintores, `frame(s, api, t, still)` recibe `t` en **segundos**.
 - `setTimeout`/`setInterval` → `api.after(ms, fn)`.
 - `IntersectionObserver` → `motor:enter` / `motor:leave`.
 - `ResizeObserver` → nada: el lienzo mide siempre 1920×1080.

@@ -16,7 +16,7 @@ import { servir } from '../servidor.mjs';
 import { abrirNavegador, nuevaPagina, capturar, verificar, urlDeck } from '../verificar.mjs';
 import { listarDecks, leerDiapositiva, escribirDiapositiva, borrarDiapositiva, moverDiapositiva, crearDeck, rutaDeck } from './deck.mjs';
 import { Spec, renderSpec, TIPOS } from './tipos.mjs';
-import { rbBuscar, rbFicha, rbCodigo, rbTecnica, recetas } from './react-bits.mjs';
+import { rbBuscar, rbFicha, rbCodigo, rbTecnica, rbPreparar, recetas } from './react-bits.mjs';
 
 const SKILL = path.join(ROOT, '.claude/skills/crear-presentacion');
 const STYLES = JSON.parse(fs.readFileSync(path.join(ROOT, 'themes/source.json'), 'utf8')).styles.map((s) => s.id);
@@ -78,7 +78,7 @@ server.registerTool('crear_deck', {
     titulo: z.string().describe('Título del documento (<title>)'),
     estilo: Estilo.default('suizo').describe('Estilo por defecto'),
     estilos: z.array(Estilo).optional().describe('Estilos que se pueden elegir con la tecla S, en orden'),
-    extras: z.array(z.string()).optional().describe('Opcional: katex, vc (fórmulas y fx/vc.js), d3-sankey, d3-cloud o rutas fx/<efecto>.js'),
+    extras: z.array(z.string()).optional().describe('Opcional: katex, vc (fórmulas y fx/vc.js), d3-sankey, d3-cloud o rutas fx/<efecto>.js (también fx/experimental/…, solo para pruebas)'),
   },
 }, seguro(async ({ nombre, titulo, estilo, estilos, extras }) => texto(crearDeck({ nombre, titulo, estilo, estilos, extras: extras || [] }))));
 
@@ -210,6 +210,16 @@ server.registerTool('rb_tecnica', {
   inputSchema: { tecnica: z.string() },
   annotations: { readOnlyHint: true },
 }, seguro(async ({ tecnica }) => texto(rbTecnica(tecnica))));
+server.registerTool('rb_preparar', {
+  title: 'Preparar el port de un componente de react-bits',
+  description: 'Escribe fx/experimental/<nombre>.js con la cabecera del contrato (origen, props → data-* o tokens, lo descartado), los shaders extraídos (pintor) y el esqueleto del destino. No sobrescribe sin forzar ni toca atlas.db.',
+  inputSchema: {
+    nombre: z.string().describe('Nombre en react-bits'),
+    destino: z.enum(['pintor', 'pieza', 'efecto', 'titulo']),
+    id: z.string().optional().describe('id del componente del motor; por defecto, el «quizás» del Atlas que lo porta'),
+    forzar: z.boolean().optional(),
+  },
+}, seguro(async (a) => texto(rbPreparar(a))));
 server.registerResource('recetas-react-bits', 'motor://react-bits/recetas', { title: 'Recetas para portar react-bits', mimeType: 'text/markdown' },
   async (uri) => ({ contents: [{ uri: uri.href, text: recetas() }] }));
 

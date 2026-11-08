@@ -202,14 +202,19 @@ export function rbPreparar({ nombre, destino, id, forzar = false }) {
   if (fs.existsSync(file) && !forzar) throw new Error(`Ya existe ${path.relative(ROOT, file)} (usa forzar para sobrescribirlo)`);
   const props = J(r.props), ev = J(r.eventos), src = clon() ? leerClon(r.ruta_jsx) : '';
   const color = (p) => /colou?r|tint|hue|background|bg\b|gradient/i.test(p.name);
-  const map = props.map((p) => ` *   ${p.name} (${p.type}, ${p.default || '—'}) → ${color(p) ? 'token: api.tok(…) / api.cats()' : ev.length && /mouse|hover|cursor|pointer|click|drag|scroll/i.test(p.name) ? 'se descarta (interacción)' : `data-${kebab(p.name)}`}`);
+  const sinComillas = (v) => String(v ?? '').replace(/^\s*(['"`])(.*)\1\s*$/, '$2');
+  const interaccion = (p) => /mouse|hover|cursor|pointer|click|drag|scroll|wheel|touch/i.test(p.name + ' ' + p.type);
+  const destinoProp = (p) => (p.name === 'children' ? 'contenido del elemento' : color(p) ? 'token: api.tok(…) / api.cats()'
+    : interaccion(p) ? 'interacción: un paso (data-step) o se descarta' : `data-${kebab(p.name)}`);
+  const map = props.map((p) => ` *   ${p.name} (${p.type}, ${sinComillas(p.default) || '—'}) → ${destinoProp(p)}`);
   const head = `/* ${nom} · port experimental de react-bits ${r.nombre} (${r.categoria}) · Atlas Completo, componente ${comp}
  * Origen: react-bits/${r.ruta_jsx} (commit ${commit}). ${r.descripcion}
  * Props del original → motor:
 ${map.join('\n') || ' *   (sin props documentadas)'}
  * Descartado: ${ev.length ? 'interacción (' + ev.join(', ') + ')' : 'nada'}${J(r.dependencias).length ? '; dependencias ' + J(r.dependencias).join(', ') : ''}.
  * Reglas: colores solo con tokens; render() deja el estado final y play() solo anima; con api.reduced no hay movimiento.
- * Receta: rb_tecnica (${J(r.tecnicas).filter((t) => ['webgl', 'ogl', 'three', 'canvas2d', 'motion', 'gsap', 'svg', 'css-animacion'].includes(t)).join(', ') || '—'}). */`;
+ * Receta: rb_tecnica (${[...new Set(J(r.tecnicas).map((t) => ({ glsl: 'webgl', splittext: 'gsap', scrolltrigger: 'gsap', 'filtro-svg': 'svg', visibilidad: 'raf', resize: 'raf', hover: 'raton', clic: 'raton', arrastre: 'raton', scroll: 'raton', teclado: 'raton' })[t] || t)
+    .filter((t) => ['webgl', 'ogl', 'three', 'canvas2d', 'motion', 'gsap', 'svg', 'css-animacion', 'raf', 'raton', 'matter', 'webgpu'].includes(t)))].join(', ') || '—'}). */`;
   const data = (p) => `+(el.dataset.${kebab(p.name).replace(/-([a-z])/g, (_, c) => c.toUpperCase())} ?? ${/^-?[\d.]+$/.test(p.default) ? p.default : JSON.stringify(p.default)})`;
   const lecturas = props.filter((p) => !color(p) && /number/i.test(p.type)).slice(0, 8).map((p) => `      ${p.name}: ${data(p)},`).join('\n');
   let cuerpo;
@@ -297,7 +302,7 @@ ${lecturas.replace(/^ {6}/gm, '      ')}
   const code = `${head}\n${cuerpo}\n`;
   if (code.includes('</script')) throw new Error('El código contiene </script> y rompería el empaquetado');
   fs.writeFileSync(file, code);
-  const uso = { pintor: `<section class="slide is-plain cover" data-fx="backdrop" data-painter="${nom}">…<div class="fx-bg"></div>…`, efecto: `<section class="slide" data-fx="${nom}">… <div class="fx" data-role="${nom}"></div>`, titulo: `<section class="slide" data-title-fx="${nom}">`, pieza: `<div class="${nom}" ${props.filter((p) => !color(p)).slice(0, 3).map((p) => `data-${kebab(p.name)}="${p.default}"`).join(' ')}></div>` }[destino];
+  const uso = { pintor: `<section class="slide is-plain cover" data-fx="backdrop" data-painter="${nom}">…<div class="fx-bg"></div>…`, efecto: `<section class="slide" data-fx="${nom}">… <div class="fx" data-role="${nom}"></div>`, titulo: `<section class="slide" data-title-fx="${nom}">`, pieza: `<div class="${nom}" ${props.filter((p) => !color(p) && !interaccion(p) && p.name !== 'children' && sinComillas(p.default)).slice(0, 3).map((p) => `data-${kebab(p.name)}="${sinComillas(p.default)}"`).join(' ')}>…</div>` }[destino];
   return { archivo: path.relative(ROOT, file), componente: comp, uso, siguiente: 'Completa los TODO con rb_codigo (shaders, bucle, props) y la receta de rb_tecnica; cárgalo en atlas/completo; revisa con capturar en los estilos que encajan.' };
 }
 
