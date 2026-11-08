@@ -7,16 +7,16 @@ Deck: `atlas/completo/index.html`. Diapositivas con id `l02-<componente>`. Estad
 ## Diapositivas del lote
 
 1. `l02-titulo`: título del lote con la lista de sus demos y el id de cada una.
-2. `l02-api-dom`: api.q, api.qa y api.el
-3. `l02-api-tokens`: api.tok y estado del estilo
-4. `l02-api-series`: api.cats, api.seq y api.div
-5. `l02-api-font`: api.font
-6. `l02-api-tiempo`: api.raf, api.after, api.tween, api.dur y api.ease
-7. `l02-api-canvas`: api.canvas
-8. `l02-api-rng-noise`: api.rng y api.noise2
+2. `l02-api-dom`: api.q, api.qa y api.el ✓
+3. `l02-api-tokens`: api.tok y estado del estilo ✓
+4. `l02-api-series`: api.cats, api.seq y api.div ✓
+5. `l02-api-font`: api.font ✓
+6. `l02-api-tiempo`: api.raf, api.after, api.tween, api.dur y api.ease ✓
+7. `l02-api-canvas`: api.canvas ✓
+8. `l02-api-rng-noise`: api.rng y api.noise2 ✓
 9. `l02-motor-color` … sublote [Motor.color](motor-color.md): 8 diapositivas
-10. `l02-motor-util`: Motor.util
-11. `l02-motor-gl`: Motor.gl
+10. `l02-motor-util`: Motor.util ✓
+11. `l02-motor-gl`: Motor.gl ✓
 12. `l02-resumen`: resumen del lote que combina lo visto (la única diapositiva que mezcla componentes).
 
 Total estimado: **19 diapositivas**.
@@ -91,7 +91,7 @@ Total estimado: **19 diapositivas**.
 - **Diapositiva:** `l02-api-rng-noise`
 - **Propósito (texto de la ficha):** Aleatoriedad determinista por semilla y ruido 2D suave para datos y fondos reproducibles
 - **Archivo fuente:** `engine/engine.js rng() noise2()`
-- **Parámetros que muestra la ficha:** `metodos`: ["rng(seed) → () ⇒ [0,1)", "noise2(seed) → (x, y) ⇒ [0,1]"]
+- **Parámetros que muestra la ficha:** `metodos`: ["rng(seed) → () ⇒ [0, 1)", "r.normal() · r.range(a, b) · r.int(a, b) · r.pick(lista)", "noise2(seed) → (x, y) ⇒ [−1, 1]"]
 - **Demo:** Puntos de api.rng con semilla fija junto a un campo de api.noise2 en escala seq; selector de dos semillas
 - **Aceptación propia:** La misma semilla da el mismo dibujo al recargar
 
@@ -101,7 +101,7 @@ Total estimado: **19 diapositivas**.
 - **Propósito (texto de la ficha):** Color perceptual: OKLab/OKLCH, mezcla, contraste WCAG, simulación de daltonismo y distancia ΔE
 - **Archivo fuente:** `engine/engine.js color`
 - **En el Atlas original:** `#color-teoria` (reutilizar su marcado como punto de partida)
-- **Parámetros que muestra la ficha:** `variantes`: ["parse/hex", "oklab/oklch/fromOklch", "mix", "contrast + wcag", "sim protan/deutan", "dE/cvd", "alpha"]
+- **Parámetros que muestra la ficha:** `variantes`: ["parse/hex", "oklab/oklch/fromOklch", "mix", "contrast + wcag", "cvd (mín. protan/deutan)", "dE(a, b, 'protan'\|'deutan')", "alpha"]; `nota`: sim() es interna: la simulación de Machado (2009) solo se usa a través de dE y cvd
 - **Demo:** una diapositiva por variante, ver [motor-color.md](motor-color.md)
 
 ### `motor-util` · Motor.util

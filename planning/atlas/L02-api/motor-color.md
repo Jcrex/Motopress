@@ -9,8 +9,8 @@ Parte de [L02-api](plan.md). Color perceptual: OKLab/OKLCH, mezcla, contraste WC
 3. `l02-motor-color-oklch`: oklab/oklch/fromOklch: el acento descompuesto en L, C y h con barras. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
 4. `l02-motor-color-mix`: mix() de bg a accent en siete pasos. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
 5. `l02-motor-color-contraste`: contrast() y wcag() de fg, fg-2 y fg-3 sobre bg. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
-6. `l02-motor-color-daltonismo`: sim() protan y deutan de cat-1…6 en tres filas. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
-7. `l02-motor-color-delta-e`: dE() y cvd() entre series vecinas con su valor. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
+6. `l02-motor-color-daltonismo`: cvd() entre todas las parejas de cat-1…6 como matriz, con el umbral ΔE 8 marcado. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
+7. `l02-motor-color-delta-e`: dE(a, b), dE(a, b, 'protan') y dE(a, b, 'deutan') de las cinco parejas vecinas en barras. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
 8. `l02-motor-color-alpha`: alpha() del acento al 25, 50 y 75 %. Ficha con el nombre de la variante, qué cambia respecto a las demás y la línea del código que la define.
 
 ## Aceptación

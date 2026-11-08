@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="completo.css">
 <!-- CSS de lotes: se añade aquí lote a lote -->
 <link rel="stylesheet" href="lotes/l01.css">
+<link rel="stylesheet" href="lotes/l02.css">
 </head>
 <body>
 <main class="viewport">
@@ -295,6 +296,204 @@
   </div>
 </section>
 
+<!-- ======================= L02 · API DE EFECTOS ======================= -->
+<section class="slide" id="l02-titulo" data-section="API de efectos" data-title="API de efectos">
+  <header class="s-head"><p class="kicker">lote 02 · 10 componentes</p><h2 class="s-title">API de efectos</h2></header>
+  <div class="s-body ac-lote"><div><p class="ac-lote-num">02</p><p class="ac-lote-desc">Lo que recibe un efecto en api y las utilidades globales Motor.color, Motor.util y Motor.gl.</p></div><ol class="ac-lote-demos"><li><span>api.q, api.qa y api.el</span><code>l02-api-dom</code></li><li><span>api.tok y estado del estilo</span><code>l02-api-tokens</code></li><li><span>api.cats, api.seq y api.div</span><code>l02-api-series</code></li><li><span>api.font</span><code>l02-api-font</code></li><li><span>api.raf, api.after, api.tween, api.dur y api.ease</span><code>l02-api-tiempo</code></li><li><span>api.canvas</span><code>l02-api-canvas</code></li><li><span>api.rng y api.noise2</span><code>l02-api-rng-noise</code></li><li><span>Motor.color</span><code>l02-motor-color</code></li><li><span>Motor.util</span><code>l02-motor-util</code></li><li><span>Motor.gl</span><code>l02-motor-gl</code></li></ol></div>
+</section>
+
+<section class="slide" id="l02-api-dom" data-fx="ac-dom" data-section="API de efectos" data-title="api.q y api.qa">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">api.q y api.qa</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="row ac-tres"><div class="panel ac-diana">.panel</div><div class="panel ac-diana">.panel</div><div class="panel ac-diana">.panel</div></div>
+      <pre class="ac-cod panel" data-role="codigo"></pre>
+      <p class="note">Con <code>api.qa</code> un efecto no toca por error elementos de otras diapositivas que usan las mismas clases. <code>api.el</code> es la propia <code>&lt;section&gt;</code>.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="api-dom"><p class="ac-nombre"><b>api.q, api.qa y api.el</b><code>api-dom</code></p><p class="ac-proposito">Buscar elementos solo dentro de la diapositiva del efecto</p><dl class="ac-params"><dt>metodos</dt><dd>q(sel) · qa(sel) · el</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-tokens" data-fx="ac-tokens" data-section="API de efectos" data-title="api.tok">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">api.tok</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-toks" data-role="tokens"></div>
+      <p class="ac-estado mono" data-role="estado"></p>
+    </div>
+    <aside class="ac-info panel" data-componente="api-tokens"><p class="ac-nombre"><b>api.tok y estado del estilo</b><code>api-tokens</code></p><p class="ac-proposito">Leer tokens CSS del estilo activo y saber estilo, modo y metadatos</p><dl class="ac-params"><dt>metodos</dt><dd>tok(nombre, desde?) · dark · style · meta</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-series" data-fx="ac-series" data-section="API de efectos" data-title="cats, seq y div">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">cats, seq y div</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx" data-role="series"></div></div>
+    <aside class="ac-info panel" data-componente="api-series"><p class="ac-nombre"><b>api.cats, api.seq y api.div</b><code>api-series</code></p><p class="ac-proposito">Obtener colores de series categóricas, rampas secuenciales y divergentes del estilo</p><dl class="ac-params"><dt>metodos</dt><dd>cats(n=6) · seq(t) · div(t) · ramp(prefijo, t)</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi() ramp()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-font" data-fx="ac-font" data-section="API de efectos" data-title="api.font">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">api.font</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx" data-role="lienzo"></div><p class="note">Texto dibujado en <code>&lt;canvas&gt;</code>: sin <code>api.font</code>, el canvas usaría su fuente por defecto y no la del estilo.</p></div>
+    <aside class="ac-info panel" data-componente="api-font"><p class="ac-nombre"><b>api.font</b><code>api-font</code></p><p class="ac-proposito">Componer la fuente de canvas con la familia del estilo</p><dl class="ac-params"><dt>firma</dt><dd>font('mono'|'text'|'display'|'serif', tamaño, peso=400)</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-tiempo" data-fx="ac-tiempo" data-section="API de efectos" data-title="raf, after y tween">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">raf, after y tween</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="fx" data-role="pistas"></div>
+      <p class="ac-estado mono" data-role="estado"></p>
+      <p class="note">El motor cancela todos los <code>raf</code> y <code>after</code> al salir de la diapositiva (<code>api.stopAll()</code>): no queda trabajo en segundo plano.</p>
+    </div>
+    <aside class="ac-info panel" data-componente="api-tiempo"><p class="ac-nombre"><b>api.raf, api.after, api.tween, api.dur y api.ease</b><code>api-tiempo</code></p><p class="ac-proposito">Animar con bucles y temporizadores que el motor cancela solo al salir, con la duración y la curva del estilo</p><dl class="ac-params"><dt>metodos</dt><dd>raf(fn(t, dt) → false para parar) · after(ms, fn) · tween(ms, fn(e,…</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi() stopAll()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-canvas" data-fx="ac-canvas" data-section="API de efectos" data-title="api.canvas">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">api.canvas</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx" data-role="lienzo"></div><p class="ac-estado mono" data-role="estado"></p></div>
+    <aside class="ac-info panel" data-componente="api-canvas"><p class="ac-nombre"><b>api.canvas</b><code>api-canvas</code></p><p class="ac-proposito">Crear un canvas 2D nítido a la densidad de píxeles y escala actuales</p><dl class="ac-params"><dt>devuelve</dt><dd>cv · ctx · w · h · ratio</dd></dl><p class="ac-fuente"><code>engine/engine.js makeApi()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-api-rng-noise" data-fx="ac-azar" data-section="API de efectos" data-title="api.rng y api.noise2">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">rng y noise2</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-dos-fx"><div class="fx" data-role="puntos"></div><div class="fx" data-role="ruido"></div></div>
+      <p class="row"><span class="label">semilla</span><button type="button" class="ac-btn" data-semilla="7" aria-pressed="true">7</button><button type="button" class="ac-btn" data-semilla="42">42</button><span class="ac-estado mono" data-role="estado"></span></p>
+    </div>
+    <aside class="ac-info panel" data-componente="api-rng-noise"><p class="ac-nombre"><b>api.rng y api.noise2</b><code>api-rng-noise</code></p><p class="ac-proposito">Aleatoriedad determinista por semilla y ruido 2D suave para datos y fondos reproducibles</p><dl class="ac-params"><dt>metodos</dt><dd>rng(seed) → () ⇒ [0, 1) · r.normal() · r.range(a, b) · r.int(a, b)…</dd></dl><p class="ac-fuente"><code>engine/engine.js rng() noise2()</code></p></aside>
+  </div>
+</section>
+
+<!-- ---------- sublote Motor.color ---------- -->
+<section class="slide" id="l02-motor-color" data-section="API de efectos" data-title="Motor.color">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">Motor.color</h2></header>
+  <div class="s-body ac-lote">
+    <div><p class="ac-lote-num">7</p><p class="ac-lote-desc">Color perceptual en OKLab y OKLCH: lo usan las paletas generadas, los gráficos y el contraste del texto. Siete variantes, una por diapositiva. Fuente: <code>engine/engine.js</code>, líneas 25–75.</p></div>
+    <ol class="ac-lote-demos">
+      <li><span>parse y hex</span><code>l02-motor-color-parse-hex</code></li>
+      <li><span>oklab, oklch y fromOklch</span><code>l02-motor-color-oklch</code></li>
+      <li><span>mix</span><code>l02-motor-color-mix</code></li>
+      <li><span>contrast y wcag</span><code>l02-motor-color-contraste</code></li>
+      <li><span>cvd</span><code>l02-motor-color-daltonismo</code></li>
+      <li><span>dE con simulación</span><code>l02-motor-color-delta-e</code></li>
+      <li><span>alpha</span><code>l02-motor-color-alpha</code></li>
+    </ol>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-parse-hex" data-fx="ac-color" data-variante="parse-hex" data-section="API de efectos" data-title="color.parse y color.hex">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 1 de 7</p><h2 class="s-title">parse y hex</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.parse · color.hex</b><code>motor-color</code></p>
+      <p class="ac-proposito">Pasar de cualquier color CSS que devuelve un token a tres canales sRGB de 0 a 1, y volver a hexadecimal.</p>
+      <dl class="ac-params"><dt>parse(str)</dt><dd>#hex, rgb() o color con nombre → [r, g, b]</dd><dt>hex([r, g, b])</dt><dd>→ '#rrggbb'</dd><dt>cambia</dt><dd>la entrada de todas las demás</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:28 parse · :38 hex</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-oklch" data-fx="ac-color" data-variante="oklch" data-section="API de efectos" data-title="color.oklch">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 2 de 7</p><h2 class="s-title">oklab y oklch</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>oklab · oklch · fromOklch</b><code>motor-color</code></p>
+      <p class="ac-proposito">Describir un color como luminosidad, croma y tono percibidos, y construir uno nuevo desde ahí sin salirse de sRGB.</p>
+      <dl class="ac-params"><dt>oklch(c)</dt><dd>→ [L 0–1, C, h°]</dd><dt>fromOklch(L, C, h)</dt><dd>baja C hasta que cabe en sRGB</dd><dt>cambia</dt><dd>mismo L = mismo brillo percibido</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:50 oklab · :51 oklch · :52 fromOklch</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-mix" data-fx="ac-color" data-variante="mix" data-section="API de efectos" data-title="color.mix">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 3 de 7</p><h2 class="s-title">mix</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.mix</b><code>motor-color</code></p>
+      <p class="ac-proposito">Mezclar dos colores en OKLab: los pasos intermedios cambian de forma pareja y sin grises sucios.</p>
+      <dl class="ac-params"><dt>mix(a, b, t)</dt><dd>t de 0 (a) a 1 (b) → '#hex'</dd><dt>lo usa</dt><dd>api.seq y api.div entre sus 7 paradas</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:59 mix</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-contraste" data-fx="ac-color" data-variante="contraste" data-section="API de efectos" data-title="color.contrast">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 4 de 7</p><h2 class="s-title">contrast y wcag</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.contrast · color.wcag</b><code>motor-color</code></p>
+      <p class="ac-proposito">Medir la legibilidad de un texto sobre su fondo con la razón de contraste WCAG 2 y darle nombre.</p>
+      <dl class="ac-params"><dt>contrast(a, b)</dt><dd>1 a 21</dd><dt>wcag(r)</dt><dd>AAA ≥ 7 · AA ≥ 4,5 · AA grande ≥ 3 · insuficiente</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:64 contrast · :73 wcag</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-daltonismo" data-fx="ac-color" data-variante="daltonismo" data-section="API de efectos" data-title="color.cvd">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 5 de 7</p><h2 class="s-title">cvd</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.cvd</b><code>motor-color</code></p>
+      <p class="ac-proposito">La peor separación entre dos colores para una persona con protanopía o deuteranopía: el criterio de las series del motor.</p>
+      <dl class="ac-params"><dt>cvd(a, b)</dt><dd>mín(dE protan, dE deutan)</dd><dt>umbral</dt><dd>ΔE ≥ 8 entre series vecinas</dd><dt>simulación</dt><dd>Machado (2009), interna</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:71 cvd</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-delta-e" data-fx="ac-color" data-variante="delta-e" data-section="API de efectos" data-title="color.dE">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 6 de 7</p><h2 class="s-title">dE con simulación</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.dE</b><code>motor-color</code></p>
+      <p class="ac-proposito">Distancia perceptual entre dos colores en OKLab, para visión normal o simulando un tipo de daltonismo.</p>
+      <dl class="ac-params"><dt>dE(a, b)</dt><dd>visión normal, × 100</dd><dt>dE(a, b, k)</dt><dd>k = 'protan' o 'deutan'</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:70 dE</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-color-alpha" data-fx="ac-color" data-variante="alpha" data-section="API de efectos" data-title="color.alpha">
+  <header class="s-head"><p class="kicker">l02 · motor.color · 7 de 7</p><h2 class="s-title">alpha</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="ac-var" data-role="demo"></div></div>
+    <aside class="ac-info panel"><p class="ac-nombre"><b>color.alpha</b><code>motor-color</code></p>
+      <p class="ac-proposito">Usar un token con transparencia en canvas o SVG, donde no hay color-mix().</p>
+      <dl class="ac-params"><dt>alpha(c, a)</dt><dd>a de 0 a 1 → 'rgba(…)'</dd></dl>
+      <p class="ac-fuente"><code>engine/engine.js:72 alpha</code></p></aside>
+  </div>
+</section>
+
+<!-- ---------- fin del sublote ---------- -->
+
+<section class="slide" id="l02-motor-util" data-fx="ac-util" data-section="API de efectos" data-title="Motor.util">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">Motor.util</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx" data-role="curva"></div><pre class="ac-cod" data-role="ejemplos"></pre></div>
+    <aside class="ac-info panel" data-componente="motor-util"><p class="ac-nombre"><b>Motor.util</b><code>motor-util</code></p><p class="ac-proposito">Utilidades numéricas comunes: curvas bezier CSS, clamp y lerp</p><dl class="ac-params"><dt>metodos</dt><dd>bezier(str) · clamp(v, a, b) · lerp(a, b, t)</dd></dl><p class="ac-fuente"><code>engine/engine.js util bezier()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-motor-gl" data-fx="ac-gl" data-section="API de efectos" data-title="Motor.gl">
+  <header class="s-head"><p class="kicker">l02 · api de efectos</p><h2 class="s-title">Motor.gl</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo"><div class="fx ac-gl" data-role="gl"></div><p class="ac-estado mono" data-role="estado"></p></div>
+    <aside class="ac-info panel" data-componente="motor-gl"><p class="ac-nombre"><b>Motor.gl</b><code>motor-gl</code></p><p class="ac-proposito">Capa WebGL2 con respaldo a WebGL1 para pintores y efectos con sombreadores</p><dl class="ac-params"><dt>metodos</dt><dd>layer(s, scale) · program(L, key, vs, fs) · uniforms · drawFull · s…</dd><dt>regla</dt><dd>#version 300 es solo con WebGL2</dd></dl><p class="ac-fuente"><code>fx/fondos.js glLayer() program()</code></p></aside>
+  </div>
+</section>
+
+<section class="slide" id="l02-resumen" data-section="API de efectos" data-title="Resumen de la API">
+  <header class="s-head"><p class="kicker">l02 · resumen</p><h2 class="s-title">Resumen de la API</h2></header>
+  <div class="s-body ac-resumen">
+    <div class="panel"><p class="label">buscar y leer</p><p><code>api.q</code> <code>api.qa</code> <code>api.el</code> · <code>api.tok('fg-2')</code> · <code>api.style</code> <code>api.dark</code> <code>api.meta</code> · <code>api.step</code> / <code>api.steps</code></p></div>
+    <div class="panel"><p class="label">color</p><p><code>api.cats(6)</code> <code>api.seq(t)</code> <code>api.div(t)</code> · <code>Motor.color</code>: oklch, mix, contrast, cvd, dE, alpha</p></div>
+    <div class="panel"><p class="label">dibujar</p><p><code>api.canvas(host)</code> nítido · <code>api.font('mono', 22)</code> · <code>Motor.gl</code> con WebGL2 o WebGL1 y respaldo</p></div>
+    <div class="panel"><p class="label">animar y azar</p><p><code>api.raf</code> <code>api.after</code> <code>api.tween</code> con <code>api.dur</code> y <code>api.ease</code> · <code>api.rng(seed)</code> <code>api.noise2(seed)</code> deterministas</p></div>
+  </div>
+</section>
+
 </div>
 </main>
 
@@ -323,5 +522,6 @@
 <script src="../../fx/nav-semantica.js"></script>
 <!-- fx/experimental: se añade aquí lote a lote -->
 <script src="lotes/l01.js"></script>
+<script src="lotes/l02.js"></script>
 </body>
 </html>

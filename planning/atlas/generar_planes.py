@@ -125,7 +125,7 @@ for i in ['op-pila', 'op-ritmo', 'op-donde', 'op-slam', 'op-grafo', 'op-costmap'
 SUBLOTES = {
     'motor-color': [('parse-hex', 'parse() y hex() con tres colores del estilo y su ida y vuelta'), ('oklch', 'oklab/oklch/fromOklch: el acento descompuesto en L, C y h con barras'),
                     ('mix', 'mix() de bg a accent en siete pasos'), ('contraste', 'contrast() y wcag() de fg, fg-2 y fg-3 sobre bg'),
-                    ('daltonismo', 'sim() protan y deutan de cat-1…6 en tres filas'), ('delta-e', 'dE() y cvd() entre series vecinas con su valor'), ('alpha', 'alpha() del acento al 25, 50 y 75 %')],
+                    ('daltonismo', 'cvd() entre todas las parejas de cat-1…6 como matriz, con el umbral ΔE 8 marcado'), ('delta-e', "dE(a, b), dE(a, b, 'protan') y dE(a, b, 'deutan') de las cinco parejas vecinas en barras"), ('alpha', 'alpha() del acento al 25, 50 y 75 %')],
     'cols': [('cols', '.cols: cuerpo + lateral de 500 px'), ('wide-side', '.cols.wide-side'), ('even', '.cols.even'), ('three', '.cols.three')],
     'data-reveal': [(v, f'Tres bloques con data-step y data-reveal="{v}"' + (' (gesto del estilo activo, escrito en la ficha)' if v == 'auto' else '')) for v in ['auto', 'fade', 'wipe', 'wipe-x', 'focus', 'develop', 'mist', 'pixel', 'tilt']],
     'secuencia': [(v, f'Elementos con data-seq y data-a="{v}"' + {'draw': ' (líneas y caminos SVG)', 'grow': ' (barras de izquierda a derecha)', 'rise': ' (barras de abajo arriba)', 'pop': ' (escala)', 'fade': ' y un punto data-travel que recorre un camino'}[v]) for v in ['fade', 'draw', 'grow', 'rise', 'pop']],
