@@ -29,7 +29,11 @@
   try { new Intl.NumberFormat('es-ES', { useGrouping: 'always' }); } catch (e) { grouping = true; }
   function cifraOpts(el) {
     const raw = el.dataset.value || '0', dec = el.dataset.dec != null ? +el.dataset.dec : (raw.split('.')[1] || '').length;
-    const f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping });
+    // idioma del deck (<html lang>); sin él, español
+    const lang = (el.closest('[lang]') || {}).lang || 'es-ES';
+    let f;
+    try { f = new Intl.NumberFormat(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
+    catch (e) { f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
     const mode = el.dataset.mode && el.dataset.mode !== 'auto' ? el.dataset.mode : ROLL.has(style()) ? 'roll' : 'count';
     return { to: parseFloat(raw), from: parseFloat(el.dataset.from || '0'), fmt: (v) => f.format(v), mode };
   }
