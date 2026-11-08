@@ -6,6 +6,8 @@ Este repositorio es un motor de diapositivas en HTML, CSS y JavaScript sin paso 
 
 ## Antes de empezar
 
+- Si tu agente admite skills, carga `.agents/skills/crear-presentacion/SKILL.md` (enlace a `.claude/skills/crear-presentacion/`): tiene la plantilla lista, el catálogo de piezas y efectos (incluidos `secuencia` y `vc-plot`, que aceptan tus datos) y un ejemplo de efecto con datos en el HTML.
+
 - No leas `atlas/original/index.html` entero: tiene cientos de líneas. Usa como referencia `decks/motor-pruebas/index.html` o busca con `grep` la parte que necesites.
 - No toques `engine/`, `themes/tokens.css` ni `themes/meta.js`. Los dos últimos se generan.
 - Trabaja solo dentro de `decks/<nombre>/` y, si hace falta un efecto nuevo, en `fx/<nombre>.js`.
@@ -154,6 +156,12 @@ Utilidades de `api`: `q(sel)`, `qa(sel)`, `tok('nombre')`, `cats(n)`, `seq(t)`, 
 10. Si los datos no los dio el usuario, escribe en la diapositiva «Datos de ejemplo» o «Datos sintéticos» (por ejemplo, en un `<p class="note">`).
 
 ## Paso 4 · Verificar
+
+Primero, la revisión estática (sin navegador ni servidor). Corrige todos los `ERROR`:
+
+```bash
+node tools/revisar.mjs <nombre>          # --json para salida estructurada
+```
 
 Sirve la carpeta raíz del repositorio (no la del deck), porque las rutas usan `../../`:
 

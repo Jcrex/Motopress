@@ -49,6 +49,7 @@ motor/
 ├── tools/
 │   ├── build-themes.mjs  genera tokens.css y meta.js y ajusta las paletas de gráficos
 │   ├── bundle.mjs        empaqueta un deck en un único HTML
+│   ├── revisar.mjs       revisión estática de un deck (sin navegador): atributos, scripts, efectos, colores
 │   ├── verificar.mjs     capturas de un deck en varios estilos y modos, con errores y desbordes
 │   └── salida.mjs        carpeta de salida común (output/, --out o MOTOR_OUT)
 ├── output/               presentaciones empaquetadas y capturas (no se sube a git)
