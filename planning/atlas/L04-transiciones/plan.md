@@ -7,17 +7,17 @@ Deck: `atlas/completo/index.html`. Diapositivas con id `l04-<componente>`. Estad
 ## Diapositivas del lote
 
 1. `l04-titulo`: título del lote con la lista de sus demos y el id de cada una.
-2. `l04-view-transitions`: Mecanismo de transición
-3. `l04-transicion-rice`: Transición Rice
-4. `l04-transicion-noche`: Transición Noche
-5. `l04-transicion-suizo`: Transición Suizo
-6. `l04-transicion-aurora`: Transición Aurora
-7. `l04-transicion-cromo`: Transición Cromo
-8. `l04-transicion-arcilla`: Transición Arcilla
-9. `l04-transicion-nube`: Transición Nube
-10. `l04-transicion-termica`: Transición Térmica
-11. `l04-transicion-celula`: Transición Célula
-12. `l04-transicion-matriz`: Transición Matriz
+2. `l04-view-transitions`: Mecanismo de transición ✓
+3. `l04-transicion-rice`: Transición Rice ✓
+4. `l04-transicion-noche`: Transición Noche ✓
+5. `l04-transicion-suizo`: Transición Suizo ✓
+6. `l04-transicion-aurora`: Transición Aurora ✓
+7. `l04-transicion-cromo`: Transición Cromo ✓
+8. `l04-transicion-arcilla`: Transición Arcilla ✓
+9. `l04-transicion-nube`: Transición Nube ✓
+10. `l04-transicion-termica`: Transición Térmica ✓
+11. `l04-transicion-celula`: Transición Célula ✓
+12. `l04-transicion-matriz`: Transición Matriz ✓
 13. `l04-resumen`: resumen del lote que combina lo visto (la única diapositiva que mezcla componentes).
 
 Total estimado: **13 diapositivas**.

@@ -2,7 +2,7 @@
 
 Presentación de referencia con una diapositiva por componente del motor, incluidos los «quizás». Deck: `atlas/completo/index.html`. El Atlas original pasa a `atlas/original/` sin cambios de contenido.
 
-**Progreso:** 43 de 238 componentes explicados · unas 288 diapositivas previstas (más la portada).
+**Progreso:** 54 de 238 componentes explicados · unas 288 diapositivas previstas (más la portada).
 
 Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir de `atlas.db`, que es donde se marca el progreso (`explicado = 1`).
 
@@ -14,7 +14,7 @@ Este índice se regenera con `python3 planning/atlas/generar_planes.py` a partir
 | 1 | L01-nucleo · Núcleo | completado | 19/19 | 0 | 21 | [L01-nucleo/plan.md](L01-nucleo/plan.md) |
 | 2 | L02-api · API de efectos | completado | 10/10 | 0 | 19 | [L02-api/plan.md](L02-api/plan.md) |
 | 3 | L03-estilos · Estilos y tokens | completado | 14/14 | 0 | 16 | [L03-estilos/plan.md](L03-estilos/plan.md) |
-| 4 | L04-transiciones · Transiciones | pendiente | 0/11 | 0 | 13 | [L04-transiciones/plan.md](L04-transiciones/plan.md) |
+| 4 | L04-transiciones · Transiciones | completado | 11/11 | 0 | 13 | [L04-transiciones/plan.md](L04-transiciones/plan.md) |
 | 5 | L05-maquetacion · Maquetación | pendiente | 0/14 | 0 | 20 | [L05-maquetacion/plan.md](L05-maquetacion/plan.md) |
 | 6 | L06-texto · Texto y títulos | pendiente | 0/27 | 14 | 29 | [L06-texto/plan.md](L06-texto/plan.md) |
 | 7 | L07-revelados · Revelados y animación | pendiente | 0/11 | 10 | 22 | [L07-revelados/plan.md](L07-revelados/plan.md) |

@@ -1,0 +1,146 @@
+<!-- ======================= L04 · TRANSICIONES ======================= -->
+<!-- titulo:L04 -->
+
+<section class="slide" id="l04-view-transitions" data-fx="ac-vt" data-section="Transiciones" data-title="Mecanismo de transición">
+  <header class="s-head"><!-- kicker:view-transitions --><h2 class="s-title">Mecanismo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <ol class="ac-flujo">
+        <li><code>go(i)</code> fija <code>&lt;html data-dir="next|prev"&gt;</code></li>
+        <li>si hay <code>document.startViewTransition</code> y no hay movimiento reducido: <code>startViewTransition(swap)</code></li>
+        <li><code>swap()</code> quita <code>is-active</code> a la anterior y se lo pone a la nueva</li>
+        <li>el navegador anima <code>::view-transition-old(root)</code> → <code>::view-transition-new(root)</code> con los fotogramas del estilo</li>
+        <li>si no hay API, o si se encadenan teclas y la anterior se salta: <code>swap()</code> directo</li>
+      </ol>
+      <p class="ac-estado mono" data-role="estado"></p>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver la del estilo activo ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button></p>
+      <p class="note">El HUD y la barra de progreso tienen su propio <code>view-transition-name</code> y no se animan: quedan fijos mientras cambia la diapositiva.</p>
+    </div>
+    <!-- ficha:view-transitions -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-rice" data-fx="ac-transicion" data-estilo="rice" data-section="Transiciones" data-title="Transición Rice">
+  <header class="s-head"><!-- kicker:transicion-rice --><h2 class="s-title">Transición Rice</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Rice ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-rice -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-noche" data-fx="ac-transicion" data-estilo="noche" data-section="Transiciones" data-title="Transición Noche">
+  <header class="s-head"><!-- kicker:transicion-noche --><h2 class="s-title">Transición Noche</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Noche ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-noche -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-suizo" data-fx="ac-transicion" data-estilo="suizo" data-section="Transiciones" data-title="Transición Suizo">
+  <header class="s-head"><!-- kicker:transicion-suizo --><h2 class="s-title">Transición Suizo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Suizo ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-suizo -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-aurora" data-fx="ac-transicion" data-estilo="aurora" data-section="Transiciones" data-title="Transición Aurora">
+  <header class="s-head"><!-- kicker:transicion-aurora --><h2 class="s-title">Transición Aurora</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Aurora ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-aurora -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-cromo" data-fx="ac-transicion" data-estilo="cromo" data-section="Transiciones" data-title="Transición Cromo">
+  <header class="s-head"><!-- kicker:transicion-cromo --><h2 class="s-title">Transición Cromo</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Cromo ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-cromo -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-arcilla" data-fx="ac-transicion" data-estilo="arcilla" data-section="Transiciones" data-title="Transición Arcilla">
+  <header class="s-head"><!-- kicker:transicion-arcilla --><h2 class="s-title">Transición Arcilla</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Arcilla ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-arcilla -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-nube" data-fx="ac-transicion" data-estilo="nube" data-section="Transiciones" data-title="Transición Nube">
+  <header class="s-head"><!-- kicker:transicion-nube --><h2 class="s-title">Transición Nube</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Nube ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-nube -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-termica" data-fx="ac-transicion" data-estilo="termica" data-section="Transiciones" data-title="Transición Térmica">
+  <header class="s-head"><!-- kicker:transicion-termica --><h2 class="s-title">Transición Térmica</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Térmica ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-termica -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-celula" data-fx="ac-transicion" data-estilo="celula" data-section="Transiciones" data-title="Transición Célula">
+  <header class="s-head"><!-- kicker:transicion-celula --><h2 class="s-title">Transición Célula</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Célula ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-celula -->
+  </div>
+</section>
+
+<section class="slide" id="l04-transicion-matriz" data-fx="ac-transicion" data-estilo="matriz" data-section="Transiciones" data-title="Transición Matriz">
+  <header class="s-head"><!-- kicker:transicion-matriz --><h2 class="s-title">Transición Matriz</h2></header>
+  <div class="s-body ac-ficha">
+    <div class="ac-demo">
+      <div class="ac-pantalla" data-role="pantalla"><span>A</span></div>
+      <p class="row"><button type="button" class="ac-btn" data-vt="next">Ver en Matriz ▶</button><button type="button" class="ac-btn" data-vt="prev">◀ hacia atrás</button><span class="ac-estado mono" data-role="estado"></span></p>
+      <pre class="ac-cod ac-kf" data-role="css"></pre>
+    </div>
+    <!-- ficha:transicion-matriz -->
+  </div>
+</section>
+
+<section class="slide" id="l04-resumen" data-fx="ac-resumen-vt" data-section="Transiciones" data-title="Resumen de transiciones">
+  <header class="s-head"><p class="kicker">l04 · resumen</p><h2 class="s-title">Diez transiciones</h2></header>
+  <div class="s-body"><div class="ac-vt-tabla" data-role="tabla"></div><p class="note">Cada botón muestra la transición de ese estilo y vuelve al tuyo.</p></div>
+</section>
