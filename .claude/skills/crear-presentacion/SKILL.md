@@ -22,8 +22,8 @@ Si tienes sus herramientas (`.mcp.json` lo registra en este repositorio), úsala
    4. `vc-plot` / `vc-heat` para curvas y = f(x) y matrices.
    5. Efecto nuevo (lee `efecto-nuevo.md`).
 4. **Revisión estática** (sin navegador, tarda menos de un segundo): `node tools/revisar.mjs <nombre>`. Corrige todos los `ERROR` y revisa cada `aviso`.
-5. **Revisión visual:** `node tools/verificar.mjs <nombre> [estilo1,estilo2] [--paso=ultimo] [--solo=id1,id2]` (levanta su propio servidor). En esta máquina: `CHROMIUM_PATH=~/.cache/ms-playwright/chromium-1208/chrome-linux64/chrome`. Abre con Read varias capturas de `output/capturas/<nombre>/` (claro y oscuro) y busca títulos en dos líneas, texto cortado o pegado al borde y contraste pobre. `VERIF_REDUCED=1` captura el estado final de las animaciones.
-6. **Entrega:** `node tools/bundle.mjs decks/<nombre>/index.html [--out=<carpeta>]` crea un único HTML.
+5. **Revisión visual:** `node tools/verificar.mjs <nombre> [estilo1,estilo2] [--paso=ultimo] [--solo=id1,id2]` (levanta su propio servidor y busca Chromium en la caché de Playwright; `CHROMIUM_PATH` solo si no lo encuentra). Abre con Read varias capturas de `output/capturas/<nombre>/` (claro y oscuro) y busca títulos en dos líneas, texto cortado o pegado al borde y contraste pobre. `VERIF_REDUCED=1` captura el estado final de las animaciones.
+6. **Entrega:** `node tools/bundle.mjs decks/<nombre>/index.html [--out=<carpeta>]` crea un único HTML (CSS, JS e imágenes en línea; los vídeos siguen enlazados).
 
 ## Reglas que no comprueba ninguna herramienta
 

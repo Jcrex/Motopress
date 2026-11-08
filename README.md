@@ -161,6 +161,8 @@ Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto W
 
 ## Empaquetar y exportar
 
+`bundle.mjs` mete en línea el CSS, el JavaScript y las imágenes locales (`<img>`); los vídeos siguen enlazados.
+
 ```bash
 node tools/bundle.mjs atlas/original/index.html dist/atlas.html   # un solo HTML, en una ruta concreta
 node tools/bundle.mjs atlas/completo/index.html                   # sin destino: output/atlas-completo.html

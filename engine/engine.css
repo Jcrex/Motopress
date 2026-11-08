@@ -454,3 +454,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .checklist > li.tp-pend::after { content: "pendiente"; color: var(--fg-3); }
 .tp-rejilla .panel h3 { font-size: 40px; }
 .tp-rejilla .panel > p:not(.label):not(.note), .tp-rejilla .tp-lista > li { font-size: 28px; }
+/* La imagen ocupa el alto disponible del cuerpo y nunca lo desborda */
+.s-body > .stack:has(> .tp-img) { height: 100%; min-height: 0; }
+.tp-img img, .tp-img video { flex: 1 1 0; height: 0; }
+.s-body.stack:has(> .etapas.neutra), .s-body.cols > .stack:has(> .etapas.neutra) { justify-content: center; }

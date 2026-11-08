@@ -1,4 +1,4 @@
-// Empaqueta un deck en un único archivo HTML (CSS y JS locales en línea).
+// Empaqueta un deck en un único archivo HTML (CSS, JS e imágenes locales en línea).
 // Uso: node tools/bundle.mjs [entrada=atlas/original/index.html] [salida] [--fragment] [--out=<carpeta>]
 //   salida: archivo de destino. Si se omite, <carpeta de salida>/<nombre del deck>.html
 //           (output/ por defecto; cámbiala con --out=<carpeta> o MOTOR_OUT, ver tools/salida.mjs).
@@ -27,6 +27,14 @@ html = html.replace(/<script src="([^"]+)"><\/script>/g, (m, src) => {
   if (code.includes('</script')) throw new Error(`${src} contiene </script>`);
   return `<script>/* ${src} */\n${code}</script>`;
 });
+// Imágenes locales en línea (data:), para que el HTML único no dependa de assets/. Los vídeos se quedan enlazados.
+const MIME = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.avif': 'image/avif' };
+html = html.replace(/(<img\b[^>]*\ssrc=")([^"]+)(")/g, (m, a, src, b) => {
+  const type = MIME[path.extname(src).toLowerCase()], file = path.resolve(base, src);
+  if (!isLocal(src) || !type || !fs.existsSync(file)) return m;
+  return a + `data:${type};base64,${fs.readFileSync(file).toString('base64')}` + b;
+});
+if (/<(?:video|source)\b[^>]*\ssrc="(?!https?:|data:)/.test(html)) console.warn('Aviso: los vídeos locales siguen enlazados; cópialos junto al HTML.');
 const style = `<style>\n${css.join('\n')}\n</style>`;
 const title = (html.match(/<title>[^<]*<\/title>/) || ['<title>Atlas del motor</title>'])[0];
 if (fragment) {
