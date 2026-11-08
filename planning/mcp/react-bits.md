@@ -1,6 +1,6 @@
 # Estudio: react-bits en el MCP y en las skills
 
-Fecha: 2026-11-08. Estado: propuesta, sin implementar. Clon estudiado: `~/Proyectos/react-bits`, commit `4dc7b5b` (2026-10-31).
+Fecha: 2026-11-08. Estado: implementado el 2026-11-08 (fases 1 a 5). Resultado de la prueba en [react-bits-prueba.md](react-bits-prueba.md). Clon estudiado: `~/Proyectos/react-bits`, commit `4dc7b5b` (2026-10-31).
 
 ## Conclusión
 
@@ -107,11 +107,11 @@ La base es compartida: el MCP solo lee `atlas.db`; las escrituras siguen siendo 
 
 | Fase | Contenido | Coste | Criterio para seguir |
 |---|---|---|---|
-| 1 | `react_bits.py`: veredictos, motivos y ficha técnica calculada | medio día | los 218 componentes con veredicto y técnicas |
-| 2 | `rb_buscar`, `rb_ficha` y `rb_codigo` en el MCP | 1 día | `rb_codigo … shaders` extrae bien los shaders de 5 fondos distintos |
-| 3 | skill `portar-react-bits` y `rb_tecnica` con sus recetas | medio día | — |
-| 4 | `rb_preparar` (esqueletos) | 1 día | portar 2 «quizás» de L06 con y sin las herramientas y comparar tiempo, contexto y errores |
-| 5 | catálogo experimental y aviso de componentes nuevos en react-bits | medio día | — |
+| 1 · hecho | `react_bits.py`: veredictos, motivos y ficha técnica calculada | medio día | los 218 componentes con veredicto y técnicas |
+| 2 · hecho | `rb_buscar`, `rb_ficha` y `rb_codigo` en el MCP | 1 día | `rb_codigo … shaders` extrae bien los shaders de 5 fondos distintos |
+| 3 · hecho | skill `portar-react-bits` y `rb_tecnica` con sus recetas | medio día | — |
+| 4 · hecho | `rb_preparar` (esqueletos) | 1 día | portar 2 «quizás» de L06 con y sin las herramientas y comparar tiempo, contexto y errores |
+| 5 · hecho | catálogo experimental y aviso de componentes nuevos en react-bits | medio día | — |
 
 Total: unos 3,5 días. Las fases 1 y 2 dan la mayor parte del valor; si la comparación de la fase 4 no muestra mejora, basta con las fases 1 a 3.
 

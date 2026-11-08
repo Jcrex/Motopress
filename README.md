@@ -157,7 +157,11 @@ Los fondos de Cromo, Arcilla y Nube usan WebGL. Si el navegador no da contexto W
 
 ## Servidor MCP
 
-`tools/mcp/servidor.mjs` expone el motor a cualquier agente con MCP (Claude Code lo carga desde `.mcp.json`; antes, `npm install`). Herramientas: `catalogo`, `listar_decks`, `crear_deck`, `indice`, `leer_diapositiva`, `diapositiva_desde_spec`, `escribir_diapositiva`, `borrar_diapositiva`, `mover_diapositiva`, `revisar`, `capturar` (devuelve la imagen), `verificar` y `empaquetar`; recursos `motor://guia` y `motor://catalogo`; prompt `nueva-presentacion`. `diapositiva_desde_spec` convierte un JSON de un tipo (portada, problema, cifra, cifras, tarjetas, proceso, comparacion, grafico, tabla, imagen, terminal, cita, checklist, separador, cierre, libre) en HTML con las clases `tp-` de `engine.css`. Ejemplos de todos en `decks/motor-pruebas/` (sección «Tipos»).
+`tools/mcp/servidor.mjs` expone el motor a cualquier agente con MCP (Claude Code lo carga desde `.mcp.json`; antes, `npm install`). Herramientas: `catalogo`, `listar_decks`, `crear_deck`, `indice`, `leer_diapositiva`, `diapositiva_desde_spec`, `escribir_diapositiva`, `borrar_diapositiva`, `mover_diapositiva`, `revisar`, `capturar` (devuelve la imagen), `verificar` y `empaquetar`; recursos `motor://guia` y `motor://catalogo`; prompt `nueva-presentacion`. Para portar componentes de react-bits: `rb_buscar`, `rb_ficha`, `rb_codigo`, `rb_tecnica` y `rb_preparar` (leen `planning/atlas/atlas.db` y el clon de `RB_PATH`, por defecto `~/Proyectos/react-bits`; guía en la skill `portar-react-bits`). `diapositiva_desde_spec` convierte un JSON de un tipo (portada, problema, cifra, cifras, tarjetas, proceso, comparacion, grafico, tabla, imagen, terminal, cita, checklist, separador, cierre, libre) en HTML con las clases `tp-` de `engine.css`. Ejemplos de todos en `decks/motor-pruebas/` (sección «Tipos»).
+
+### react-bits
+
+Al actualizar el clon (`git -C ~/Proyectos/react-bits pull`), ejecuta `python3 planning/atlas/react_bits.py`: recalcula las fichas técnicas, conserva el progreso del Atlas y avisa de los componentes nuevos, que necesitan veredicto en los informes de `planning/atlas/react-bits/`.
 
 ## Empaquetar y exportar
 

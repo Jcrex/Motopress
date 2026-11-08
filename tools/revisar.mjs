@@ -49,6 +49,7 @@ if (opciones.html == null && !fs.existsSync(file)) throw new Error(`No existe ${
   for (const [n, i] of pos) if (i < 0 && n !== 'MOTOR_PICK') (n === 'fx/fondos.js' || n === 'fx/piezas.js' ? warn : err)(`No se carga ${n}`);
   const present = pos.filter(([, i]) => i >= 0);
   for (let k = 1; k < present.length; k++) if (present[k][1] < present[k - 1][1]) err(`${present[k][0]} se carga antes que ${present[k - 1][0]}`);
+  if (!/atlas\/completo\//.test(path.relative(ROOT, file)) && scripts.some((s) => s.src && /fx\/experimental\//.test(s.src))) warn('Carga componentes de fx/experimental: son ports en pruebas, solo para el Atlas Completo');
   const vc = idx(/fx\/vc\.js$/), rai = idx(/fx\/rai\.js$/);
   if (vc >= 0 && rai >= 0 && vc > rai) err('fx/vc.js debe cargarse antes que fx/rai.js');
   if (vc >= 0 && rai < 0) err('fx/vc.js necesita fx/rai.js después (aporta «secuencia»)');

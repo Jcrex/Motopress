@@ -16,7 +16,7 @@ import { servir } from '../servidor.mjs';
 import { abrirNavegador, nuevaPagina, capturar, verificar, urlDeck } from '../verificar.mjs';
 import { listarDecks, leerDiapositiva, escribirDiapositiva, borrarDiapositiva, moverDiapositiva, crearDeck, rutaDeck } from './deck.mjs';
 import { Spec, renderSpec, TIPOS } from './tipos.mjs';
-import { rbBuscar, rbFicha, rbCodigo, rbTecnica, rbPreparar, recetas } from './react-bits.mjs';
+import { rbBuscar, rbFicha, rbCodigo, rbTecnica, rbPreparar, recetas, experimentales } from './react-bits.mjs';
 
 const SKILL = path.join(ROOT, '.claude/skills/crear-presentacion');
 const STYLES = JSON.parse(fs.readFileSync(path.join(ROOT, 'themes/source.json'), 'utf8')).styles.map((s) => s.id);
@@ -60,7 +60,9 @@ server.registerTool('catalogo', {
 }, seguro(async ({ parte }) => {
   const code = fs.readdirSync(path.join(ROOT, 'fx')).filter((f) => f.endsWith('.js')).map((f) => fs.readFileSync(path.join(ROOT, 'fx', f), 'utf8')).join('\n');
   const fx = [...new Set([...code.matchAll(/Motor\.fx\(\s*'([^']+)'/g)].map((m) => m[1]))];
-  const tipos = `Tipos de diapositiva (diapositiva_desde_spec): ${TIPOS.join(', ')}.\nCampos comunes: id, seccion, titulo, kicker, notas. Detalle de cada tipo en el esquema de la herramienta.\nEstilos: ${STYLES.join(', ')}.\nEfectos data-fx registrados: ${fx.join(', ')}.`;
+  const exp = experimentales();
+  const tipos = `Tipos de diapositiva (diapositiva_desde_spec): ${TIPOS.join(', ')}.\nCampos comunes: id, seccion, titulo, kicker, notas. Detalle de cada tipo en el esquema de la herramienta.\nEstilos: ${STYLES.join(', ')}.\nEfectos data-fx registrados: ${fx.join(', ')}.`
+    + (exp.length ? `\n\nExperimentales (ports de react-bits; solo para el Atlas Completo, no los uses en un deck hasta que pasen a estable):\n${exp.map((e) => `- ${e.archivo}: ${e.resumen}`).join('\n')}` : '');
   if (parte === 'tipos') return texto(tipos);
   const cat = fs.readFileSync(path.join(SKILL, 'catalogo.md'), 'utf8');
   return texto(parte === 'piezas' ? cat : `${tipos}\n\n${cat}`);
