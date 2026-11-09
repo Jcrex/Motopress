@@ -20,9 +20,17 @@ let html = fs.readFileSync(input, 'utf8');
 const base = path.dirname(input);
 const isLocal = (u) => !/^(?:[a-z][\w+.-]*:|\/\/|#|%23)/i.test(u.trim()); // ni http:, ni data:, ni //cdn, ni #ancla
 const clean = (u) => u.replace(/[?#].*$/, '');
-const inRepo = (f) => f === ROOT || f.startsWith(ROOT + path.sep);
+// Dentro del repositorio según la ruta real: un enlace simbólico que apunta fuera no cuenta como «dentro».
+const ROOT_REAL = fs.realpathSync(ROOT);
+const inRepo = (f) => {
+  let real = f;
+  try { real = fs.realpathSync(f); } catch { /* no existe: se juzga por la ruta escrita */ }
+  return (real === ROOT_REAL || real.startsWith(ROOT_REAL + path.sep)) && (f === ROOT || f.startsWith(ROOT + path.sep));
+};
 // Ruta local → archivo del repositorio (sin ?v= ni #…). from: carpeta desde la que se resuelve.
-const resolveLocal = (u, from = base) => path.resolve(from, decodeURI(clean(u)));
+// Un «%» suelto (img/100%.png) no es un escape: se deja tal cual en vez de abortar.
+const decodeSafe = (u) => { try { return decodeURI(u); } catch { return u; } };
+const resolveLocal = (u, from = base) => path.resolve(from, decodeSafe(clean(u)));
 const readText = (rel, what) => {
   const f = resolveLocal(rel);
   if (!inRepo(f)) throw new Error(`${what} fuera del repositorio: ${rel}`);
@@ -35,6 +43,8 @@ const dataUri = (f) => `data:${MIME[path.extname(f).toLowerCase()]};base64,${fs.
 const warned = new Set();
 const warn = (msg) => { if (!warned.has(msg)) { warned.add(msg); console.warn('Aviso: ' + msg); } };
 
+// Los comentarios HTML no cuentan: un <script> o <link> comentado no se incrusta ni aborta el empaquetado.
+html = html.replace(/<!--[\s\S]*?-->/g, (c) => (/<(?:script|link|img)\b/i.test(c) ? '' : c));
 // El <title> se busca en el HTML original: después, un script incrustado podría contener «<title>».
 const titleMatch = html.match(/<title>[^<]*<\/title>/);
 const title = titleMatch ? titleMatch[0] : '<title>Atlas del motor</title>';

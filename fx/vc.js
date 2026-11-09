@@ -59,7 +59,34 @@
 
   /* ---------- utilidades ---------- */
   const J = (s, d) => { try { return s ? JSON.parse(s) : d; } catch (e) { console.warn('vc: JSON no válido', s); return d; } };
-  const fmt = (v, dec) => { const r = +v.toFixed(dec); return Object.is(r, -0) ? '0' : String(r).replace('.', ','); };
+  // Validación de atributos: un valor malo lanza un error que nombra el atributo (guard lo muestra en la diapositiva).
+  const bad = (attr, why) => { throw new Error(`${attr}: ${why}`); };
+  const finite = (v) => typeof v === 'number' && Number.isFinite(v);
+  const matrix = (v, attr) => {
+    if (!Array.isArray(v) || !v.length || !v.every((r) => Array.isArray(r) && r.length)) bad(attr, 'debe ser una matriz [[…], …]');
+    if (v.some((r) => r.length !== v[0].length)) bad(attr, 'todas las filas deben tener la misma longitud');
+    if (!v.flat().every(finite)) bad(attr, 'solo admite números finitos');
+    return v;
+  };
+  const range = (s, attr, def) => {
+    const r = (s || def).split(',').map((x) => Motor.util.num(x.trim()));
+    if (r.length !== 2 || !r.every(Number.isFinite)) bad(attr, 'debe ser «min,max» con dos números');
+    const big = Math.max(Math.abs(r[0]), Math.abs(r[1]));
+    if (!(Math.abs(r[1] - r[0]) > big * 1e-12)) bad(attr, 'min y max deben ser distintos');
+    return r;
+  };
+  const decAttr = (s, attr, def) => {
+    if (s === undefined || s === '') return def;
+    const d = Motor.util.num(s);
+    if (Number.isInteger(d) && d >= 0 && d <= 10) return d;
+    console.warn(`[vc] ${attr} debe ser un entero de 0 a 10; se ignora:`, s);
+    return def;
+  };
+  const fmt = (v, dec) => {
+    if (!Number.isFinite(v)) return '—';
+    if (Math.abs(v) >= 1e15) return v.toExponential(2).replace('.', ',');
+    const r = +v.toFixed(dec); return Object.is(r, -0) ? '0' : String(r).replace('.', ',');
+  };
   const NS = 'http://www.w3.org/2000/svg';
   const el = (tag, at = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in at) e.setAttribute(k, at[k]); if (parent) parent.appendChild(e); return e; };
 
@@ -77,8 +104,8 @@
   }
   function convRender(api, host, state) {
     host.innerHTML = '';
-    const img = J(host.dataset.img, [[0]]), k = J(host.dataset.k, [[1]]), mode = host.dataset.mode || 'conv', pad = host.dataset.pad || 'zero';
-    const dec = +(host.dataset.dec ?? 2);
+    const img = matrix(J(host.dataset.img, [[0]]), 'data-img'), k = matrix(J(host.dataset.k, [[1]]), 'data-k'), mode = host.dataset.mode || 'conv', pad = host.dataset.pad || 'zero';
+    const dec = decAttr(host.dataset.dec, 'data-dec', 2);
     const { res, kk } = convOut(img, k, mode, pad);
     const H = img.length, W = img[0].length, kh = k.length, kw = k[0].length;
     const Wpx = host.clientWidth || 1200, Hpx = host.clientHeight || 520;
@@ -136,23 +163,28 @@
   function plotRender(api, host) {
     host.innerHTML = '';
     const Wpx = host.clientWidth || 900, Hpx = host.clientHeight || 520;
-    const [x0, x1] = (host.dataset.x || '0,1').split(',').map(Number), [y0, y1] = (host.dataset.y || '0,1').split(',').map(Number);
-    const fns = J(host.dataset.fns, []), bars = J(host.dataset.bars, null), pts = J(host.dataset.pts, []);
+    const [x0, x1] = range(host.dataset.x, 'data-x', '0,1'), [y0, y1] = range(host.dataset.y, 'data-y', '0,1');
+    let fns = J(host.dataset.fns, []), bars = J(host.dataset.bars, null), pts = J(host.dataset.pts, []);
+    if (!Array.isArray(fns)) { console.warn('[vc] data-fns debe ser una lista; se ignora'); fns = []; }
+    if (bars != null && !(Array.isArray(bars) && bars.every(finite))) { console.warn('[vc] data-bars debe ser una lista de números; se ignora'); bars = null; }
+    if (!Array.isArray(pts)) { console.warn('[vc] data-pts debe ser una lista [[x,y],…]; se ignora'); pts = []; }
+    pts = pts.filter((p) => Array.isArray(p) && finite(p[0]) && finite(p[1]));
     const m = { l: 120, r: 30, t: host.dataset.legend === 'top' ? 64 : 24, b: 70 };
     const X = (x) => m.l + (x - x0) / (x1 - x0) * (Wpx - m.l - m.r), Y = (y) => Hpx - m.b - (y - y0) / (y1 - y0) * (Hpx - m.t - m.b);
     const svg = el('svg', { width: Wpx, height: Hpx, viewBox: `0 0 ${Wpx} ${Hpx}` }, host);
     const fg2 = api.tok('fg-2'), fg3 = api.tok('fg-3'), line = api.tok('line'), cats = api.cats(6);
     const txt = (x, y, s, anchor = 'middle', size = 22, color = fg2) => { const t = el('text', { x, y, 'text-anchor': anchor, fill: color }, svg); t.style.font = api.font('mono', size, 400); t.textContent = s; return t; };
-    const nice = (a, b) => {   // marcas redondas: paso 1, 2, 2,5 o 5 × 10^k, unas 4–6 marcas
-      const span = Math.abs(b - a) || 1, raw = span / 5, p10 = 10 ** Math.floor(Math.log10(raw));
+    const nice = (a, b) => {   // marcas redondas: paso 1, 2, 2,5 o 5 × 10^k, unas 4–6 marcas (nunca más de 12)
+      const span = Math.abs(b - a), raw = span / 5, p10 = 10 ** Math.floor(Math.log10(raw));
       const q = span / 4; if (q >= 15 && Number.isInteger(q) && q % 15 === 0 && a % q === 0) return { t: [0, 1, 2, 3, 4].map((i) => Math.min(a, b) + i * q), dec: 0 };   // ángulos: pasos de 15°, 45°, 90°…
-      const st = [1, 2, 2.5, 5, 10].map((m) => m * p10).find((v) => span / v <= 6) || 10 * p10;
-      const t = []; for (let v = Math.ceil(Math.min(a, b) / st - 1e-9) * st; v <= Math.max(a, b) + 1e-9; v += st) t.push(+v.toFixed(10));
+      const st = [1, 2, 2.5, 5, 10].map((m) => m * p10).find((v) => span / v <= 6) || 10 * p10, eps = st * 1e-6;
+      const t = [], v0 = Math.ceil(Math.min(a, b) / st - 1e-6) * st;
+      for (let i = 0; i <= 12; i++) { const v = v0 + i * st; if (v > Math.max(a, b) + eps) break; t.push(Number(v.toPrecision(12))); }
       const dec = Math.max(0, -Math.floor(Math.log10(st) + 1e-9) + (st / p10 === 2.5 ? 1 : 0));
       return { t, dec: Math.min(3, dec) };
     };
     const tx = nice(x0, x1), ty = nice(y0, y1);
-    const dx = host.dataset.xdec !== undefined ? +host.dataset.xdec : tx.dec, dy = host.dataset.ydec !== undefined ? +host.dataset.ydec : ty.dec;
+    const dx = decAttr(host.dataset.xdec, 'data-xdec', tx.dec), dy = decAttr(host.dataset.ydec, 'data-ydec', ty.dec);
     tx.t.forEach((xv) => { el('line', { x1: X(xv), x2: X(xv), y1: Y(y0), y2: Y(y1), stroke: line, 'stroke-dasharray': '2 6' }, svg); txt(X(xv), Hpx - m.b + 30, fmt(xv, dx)); });
     ty.t.forEach((yv) => { el('line', { x1: X(x0), x2: X(x1), y1: Y(yv), y2: Y(yv), stroke: line, 'stroke-dasharray': '2 6' }, svg); txt(m.l - 12, Y(yv) + 7, fmt(yv, dy), 'end'); });
     if (host.dataset.xl) txt((Wpx + m.l) / 2, Hpx - 12, host.dataset.xl, 'middle', 22, fg3);
@@ -214,7 +246,7 @@
   /* ---------- vc-heat ---------- */
   function heatRender(api, host) {
     host.innerHTML = '';
-    const m = J(host.dataset.m, [[0]]), signed = host.dataset.signed === '1', dec = +(host.dataset.dec ?? 2);
+    const m = matrix(J(host.dataset.m, [[0]]), 'data-m'), signed = host.dataset.signed === '1', dec = decAttr(host.dataset.dec, 'data-dec', 2);
     const H = m.length, W = m[0].length, Wpx = host.clientWidth || 400, Hpx = host.clientHeight || 400;
     const cell = Math.min(Wpx / W, Hpx / H), mx = Math.max(1e-9, ...m.flat().map(Math.abs)), mn = Math.min(...m.flat());
     const svg = el('svg', { width: W * cell, height: H * cell, viewBox: `0 0 ${W * cell} ${H * cell}` }, host);
@@ -230,7 +262,13 @@
   /* ---------- registro ---------- */
   const seqFx = () => REG.secuencia;
   // Cada gráfico por separado: un fallo en uno no deja sin dibujar el resto ni la secuencia.
-  const guard = (h, fn) => { try { return fn(); } catch (e) { console.error('[vc]', h, e); h.innerHTML = '<p class="note">Gráfico con error (ver consola)</p>'; return null; } };
+  const guard = (h, fn) => {
+    try { return fn(); } catch (e) {
+      console.error('[vc]', h.className || h.dataset.role, e);
+      h.innerHTML = '<p class="note"></p>'; h.firstChild.textContent = `Gráfico con error: ${e.message}`;
+      return null;
+    }
+  };
   function stopAll(api) { (api.vcAnims || []).forEach((a) => { try { a.cancel(); } catch (e) { /* ya terminada */ } }); api.vcAnims = []; }
   function renderAll(api) {
     stopAll(api);

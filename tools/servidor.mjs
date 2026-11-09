@@ -10,7 +10,8 @@ import { ROOT } from './salida.mjs';
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.webp': 'image/webp', '.avif': 'image/avif', '.mp4': 'video/mp4', '.webm': 'video/webm', '.woff2': 'font/woff2', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.pdf': 'application/pdf' };
 
 // Nunca se sirven archivos ocultos (.git, .mcp.json…) ni bases de datos de planning/.
-const PRIVADO = (rel) => rel.split('/').some((seg) => seg.startsWith('.')) || /\.(?:db|sqlite\d?)(?:-\w+)?$/i.test(rel);
+// También sus copias (atlas.db.bak, atlas.db-journal, atlas.sqlite3.old…).
+const PRIVADO = (rel) => rel.split('/').some((seg) => seg.startsWith('.')) || /\.(?:db|sqlite\d?)(?:[-.]\w+)*$/i.test(rel);
 
 // Devuelve { url, port, close() }. port = 0 elige uno libre.
 export function servir({ root = ROOT, port = 0 } = {}) {
@@ -24,7 +25,13 @@ export function servir({ root = ROOT, port = 0 } = {}) {
     if (PRIVADO(rel)) { res.writeHead(404).end('No encontrado'); return; }
     let file = path.join(base, path.normalize(rel));
     if (file !== base && !file.startsWith(base + path.sep)) { res.writeHead(403).end(); return; }
+    if (req.method !== 'GET' && req.method !== 'HEAD') { res.writeHead(405, { Allow: 'GET, HEAD' }).end(); return; }
     if (fs.existsSync(file) && fs.statSync(file).isDirectory()) file = path.join(file, 'index.html');
+    // Un enlace simbólico que sale de la raíz no se sigue.
+    if (fs.existsSync(file)) {
+      const real = fs.realpathSync(file), baseReal = fs.realpathSync(base);
+      if (real !== baseReal && !real.startsWith(baseReal + path.sep)) { res.writeHead(404).end('No encontrado'); return; }
+    }
     if (rel === '/favicon.ico' && !fs.existsSync(file)) { res.writeHead(204).end(); return; }
     if (!fs.existsSync(file)) { res.writeHead(404).end('No encontrado'); return; }
     const stat = fs.statSync(file), type = TYPES[path.extname(file).toLowerCase()] || 'application/octet-stream';

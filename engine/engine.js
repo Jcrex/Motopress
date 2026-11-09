@@ -12,7 +12,10 @@
   const root = document.documentElement;
   // Un deck puede limitar y ordenar los estilos con window.MOTOR_PICK = ['rice', 'noche', …].
   const ALL_STYLES = window.MOTOR_STYLES || [];
-  const STYLES = Array.isArray(window.MOTOR_PICK) ? window.MOTOR_PICK.map((id) => ALL_STYLES.find((s) => s.id === id)).filter(Boolean) : ALL_STYLES;
+  const PICKED = Array.isArray(window.MOTOR_PICK) ? window.MOTOR_PICK.map((id) => ALL_STYLES.find((s) => s.id === id)).filter(Boolean) : ALL_STYLES;
+  // Sin ningún estilo válido en MOTOR_PICK se usan todos (y se avisa), en vez de quedar sin estilo.
+  if (!PICKED.length) console.warn('[motor] MOTOR_PICK no incluye ningún estilo válido; se usan todos:', window.MOTOR_PICK);
+  const STYLES = PICKED.length ? PICKED : ALL_STYLES;
   const FX = Object.create(null);
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   const sysDark = matchMedia('(prefers-color-scheme: dark)');
@@ -111,11 +114,64 @@
       return (v00 * (1 - u) + v10 * u) * (1 - v) + (v01 * (1 - u) + v11 * u) * v;
     };
   }
-  const util = { bezier, rng, noise2, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), lerp: (a, b, t) => a + (b - a) * t };
+  // Número escrito a mano o en JSON. Acepta «4.1», «4,1», «1.234,5», «1,234.5», «1.234.567», «1 234»,
+  // «−3» (signo tipográfico) y «1.5e-7». Un solo punto o una sola coma son decimales («1.000» = 1);
+  // varios separadores iguales son de miles y deben ir de tres en tres. Devuelve { v, dec }:
+  // v es NaN si no es un número; dec son los decimales escritos («97,30» → 2).
+  function parseNum(t) {
+    if (typeof t === 'number') return { v: t, dec: decimalsOf(t) };
+    if (t == null || typeof t !== 'string') return { v: NaN, dec: 0 };
+    let s = t.trim().replace(/[\s   ]/g, '').replace(/^[−‒–]/, '-');
+    const m = /^([+-]?)([\d.,]+)(e[+-]?\d+)?$/i.exec(s);
+    if (!m || !/\d/.test(m[2])) return { v: NaN, dec: 0 };
+    let [, sign, body, exp = ''] = m;
+    const dots = body.split('.').length - 1, commas = body.split(',').length - 1;
+    const groups = (x, sep) => new RegExp(`^\\d{1,3}(\\${sep}\\d{3})+$`).test(x);
+    let int = body, frac = '';
+    if (dots && commas) {
+      const d = body.lastIndexOf('.') > body.lastIndexOf(',') ? '.' : ',', th = d === '.' ? ',' : '.';
+      int = body.slice(0, body.lastIndexOf(d)); frac = body.slice(body.lastIndexOf(d) + 1);
+      if (frac.includes(th) || !(groups(int, th) || /^\d+$/.test(int))) return { v: NaN, dec: 0 };
+      int = int.split(th).join('');
+    } else if (dots > 1 || commas > 1) {
+      const th = dots > 1 ? '.' : ',';
+      if (!groups(body, th)) return { v: NaN, dec: 0 };
+      int = body.split(th).join('');
+    } else if (dots || commas) {
+      [int, frac] = body.split(dots ? '.' : ',');
+    }
+    if (!/^\d*$/.test(int) || !/^\d*$/.test(frac) || (int + frac) === '') return { v: NaN, dec: 0 };
+    const v = Number(`${sign}${int || '0'}.${frac || '0'}${exp}`);
+    return { v, dec: exp ? decimalsOf(v, 20) : frac.length };
+  }
+  // Decimales con los que se escribe v sin perder información, hasta max («0.1 + 0.2» → 1, no 17).
+  function decimalsOf(v, max = 6) {
+    if (!Number.isFinite(v) || Number.isInteger(v)) return 0;
+    const a = Math.abs(v);
+    for (let d = 1; d < max; d++) { const k = a * 10 ** d; if (Math.abs(k - Math.round(k)) <= 1e-9 * Math.max(1, k)) return d; }
+    return max;
+  }
+  // Escala con marcas redondas (1, 2, 2,5, 5 × 10^k) que cubre [lo, hi]. Nunca entra en bucle:
+  // si el rango es más estrecho que la precisión de los valores (0,3 y 0,30000000000000004;
+  // 1e16 repetido) se ensancha hasta incluir el 0, y como mucho genera 60 marcas.
+  function nice(lo, hi, count = 5) {
+    if (!Number.isFinite(lo) || !Number.isFinite(hi)) { lo = 0; hi = 1; }
+    if (lo > hi) [lo, hi] = [hi, lo];
+    const big = Math.max(Math.abs(lo), Math.abs(hi));
+    if (hi - lo <= big * 1e-9) { lo = Math.min(0, lo); hi = Math.max(0, hi); if (lo === hi) hi = 1; }
+    const raw = (hi - lo) / count, mag = 10 ** Math.floor(Math.log10(raw)), f = raw / mag;
+    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
+    if (!Number.isFinite(step) || step <= 0) return { lo, hi, ticks: [lo, hi], step: hi - lo || 1 };
+    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, ticks = [];
+    for (let i = 0; i <= 60; i++) { const v = a + i * step; if (v > b + step / 2) break; ticks.push(Number(v.toPrecision(12))); }
+    return { lo: a, hi: b, ticks, step };
+  }
+  const util = { bezier, rng, noise2, parseNum, num: (t) => parseNum(t).v, decimalsOf, nice, clamp: (v, a, b) => Math.max(a, Math.min(b, v)), lerp: (a, b, t) => a + (b - a) * t };
 
   /* ------------------------------------------------------------------ estado */
   let viewport, stage, slides = [], idx = 0, overview = false, scale = 1, hud, progress, idleTimer = 0, refreshQueued = false;
   let pendingSwap = null, hudOff = false, refreshing = false; // refreshing: motor:enter/leave de un cambio de estilo o modo
+  let booted = false, lastHash = '', activeVT = null; // booted: ya hubo una navegación (una tecla durante la carga de fuentes cuenta)
   const sections = [];
 
   const effectiveDark = () => (root.dataset.theme ? root.dataset.theme === 'dark' : sysDark.matches);
@@ -283,7 +339,10 @@
   function flushSwap() { if (pendingSwap) { const f = pendingSwap; pendingSwap = null; f(); } }
   function go(i, instant = false) {
     flushSwap();
-    i = Math.max(0, Math.min(slides.length - 1, i));
+    if (!slides.length) return;
+    if (!Number.isFinite(i)) { console.warn('[motor] go(): índice no válido', i); return; }
+    booted = true;
+    i = Math.max(0, Math.min(slides.length - 1, Math.trunc(i)));
     const prev = slides[idx], next = slides[i];
     if (prev === next && next.classList.contains('is-active') && !instant) return;
     root.dataset.dir = i >= idx ? 'next' : 'prev';
@@ -301,18 +360,33 @@
     };
     if (!instant && !overview && document.startViewTransition && !reduced.matches) {
       pendingSwap = swap;
-      try { document.startViewTransition(flushSwap).ready.catch(() => {}); } catch (e) { flushSwap(); } // al encadenar teclas, la anterior se salta
+      try {
+        const vt = (activeVT = document.startViewTransition(flushSwap));
+        vt.ready.catch(() => {});
+        vt.finished.catch(() => {}).finally(() => { if (activeVT === vt) activeVT = null; });
+      } catch (e) { flushSwap(); } // al encadenar teclas, la anterior se salta
     } else swap();
-    try { history.replaceState(null, '', '#' + next.id); } catch (e) { /* sin historial */ }
+    // El id va codificado: «a%20b» y «a b» dan anclas distintas.
+    if (next.id) { lastHash = '#' + encodeURIComponent(next.id); try { history.replaceState(null, '', lastHash); } catch (e) { /* sin historial */ } }
+  }
+  // Ancla → índice: primero el id decodificado; si no, el texto tal cual (enlaces antiguos sin codificar).
+  function indexOfHash(hash) {
+    const raw = hash.replace(/^#/, '');
+    let h = raw;
+    try { h = decodeURIComponent(raw); } catch (e) { /* ancla mal codificada (#50%): se usa tal cual */ }
+    const i = slides.findIndex((s) => s.id === h);
+    return i >= 0 ? i : slides.findIndex((s) => s.id === raw);
   }
   function next() {
     flushSwap();
+    if (!slides.length) return;
     const pending = slides[idx].querySelector('[data-step]:not(.on)');
     if (pending && !overview) { pending.classList.add('on'); stepped(pending, 'next'); return; }
     go(idx + 1);
   }
   function prev() {
     flushSwap();
+    if (!slides.length) return;
     const shown = [...slides[idx].querySelectorAll('[data-step].on')];
     if (shown.length && !overview) { const el = shown[shown.length - 1]; el.classList.remove('on'); stepped(el, 'prev'); return; }
     go(idx - 1);
@@ -329,23 +403,40 @@
   function setMode(mode) { if (mode) root.dataset.theme = mode; else delete root.dataset.theme; store.set('mode', mode); refreshAll(); }
   function toggleMode() { setMode(effectiveDark() ? 'light' : 'dark'); }
 
+  // Abrir la vista general dibuja (render) las diapositivas con efecto pendientes, en tamaño real, por lotes
+  // de ~40 ms: el hilo no se bloquea aunque haya muchas. Se muestra cuando están todas.
+  let ovJob = 0, ovEntered = false;
   function toggleOverview(on = !overview) {
-    if (on === overview) return;
+    if (on === overview || !slides.length) return;
     flushSwap();
     // api.step cambia (en la vista general cuentan todos los pasos): hay que volver a dibujar
     slides.forEach((s) => { if (s._rendered && s.querySelector('[data-step]')) s._dirty = true; });
     overview = on;
+    const job = ++ovJob, cur = slides[idx];
     if (on) {
-      // Renderiza en tamaño real lo que aún no tiene contenido, antes de reducir.
       // La activa se para (stop, motor:leave) y se dibuja en su estado final, no a mitad de animación.
-      const cur = slides[idx];
       deactivate(cur); cur._dirty = true;
-      slides.forEach((s) => { if (fxOf(s) && (!s._rendered || s._dirty)) { s._api && s._api.stopAll(); renderSlide(s); } });
-      emit(cur, 'enter', { api: apiOf(cur), animate: false });
+      const todo = slides.filter((s) => fxOf(s) && (!s._rendered || s._dirty));
+      let k = 0;
+      const batch = () => {
+        if (job !== ovJob) return; // se cerró antes de terminar
+        const t0 = performance.now();
+        while (k < todo.length && performance.now() - t0 < 40) { const s = todo[k++]; if (!s._rendered || s._dirty) { s._api && s._api.stopAll(); renderSlide(s); } }
+        if (k < todo.length) { setTimeout(batch, 0); return; }
+        emit(cur, 'enter', { api: apiOf(cur), animate: false }); ovEntered = true;
+        viewport.classList.add('is-overview');
+        stage.style.transform = ''; layoutOverview();
+        requestAnimationFrame(() => slides[idx].scrollIntoView({ block: 'center' }));
+        updateHud();
+      };
+      batch();
+      return;
     }
-    viewport.classList.toggle('is-overview', on);
-    if (on) { stage.style.transform = ''; layoutOverview(); requestAnimationFrame(() => slides[idx].scrollIntoView({ block: 'center' })); }
-    else { fit(); activate(slides[idx]); }
+    viewport.classList.remove('is-overview');
+    fit();
+    if (ovEntered) emit(cur, 'leave', { api: apiOf(cur), refresh: false }); // cada enter con su leave
+    ovEntered = false;
+    activate(cur);
     updateHud();
   }
   function fullscreen() {
@@ -433,8 +524,9 @@
   }
   function onTouch() {
     let x0 = null, y0 = null;
-    viewport.addEventListener('touchstart', (e) => { if (overview) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
-    viewport.addEventListener('touchend', (e) => {
+    // En la ventana y no en .viewport: durante una View Transition los toques llegan a <html>.
+    addEventListener('touchstart', (e) => { if (overview) return; x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+    addEventListener('touchend', (e) => {
       if (x0 === null) return;
       const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0; x0 = null;
       if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) (dx < 0 ? next : prev)();
@@ -447,6 +539,9 @@
     viewport = document.querySelector('.viewport');
     stage = viewport.querySelector('.stage');
     slides = [...stage.querySelectorAll(':scope > .slide')];
+    const lost = stage.querySelectorAll('.slide').length - slides.length;
+    if (lost > 0) console.error(`[motor] ${lost} diapositiva(s) no son hijas directas de .stage y no se mostrarán (¿una etiqueta sin cerrar? node tools/revisar.mjs)`);
+    if (!slides.length) { console.warn('[motor] el deck no tiene ninguna <section class="slide"> dentro de .stage'); return; }
     slides.forEach((s) => { const sec = s.dataset.section; if (sec && !sections.includes(sec)) sections.push(sec); });
     slides.forEach((s, i) => {
       s.setAttribute('role', 'group');
@@ -468,15 +563,22 @@
     fit();
     addEventListener('resize', fit);
     addEventListener('keydown', onKey);
+    // Durante una View Transition, Chromium dirige los clics a <html> y el HUD los pierde: el clic salta la
+    // transición y se reenvía al botón que hay debajo.
+    addEventListener('pointerdown', (e) => {
+      if (!activeVT || e.target !== root) return;
+      const { clientX: x, clientY: y } = e;
+      try { activeVT.skipTransition(); } catch (err) { /* ya terminada */ }
+      requestAnimationFrame(() => { const b = document.elementFromPoint(x, y)?.closest?.('.hud button'); if (b) b.click(); });
+    }, true);
     addEventListener('pointermove', wake, { passive: true });
     onTouch();
     sysDark.addEventListener('change', refreshAll);
     reduced.addEventListener('change', refreshAll);
     new MutationObserver(refreshAll).observe(root, { attributes: true, attributeFilter: ['data-theme'] });
-    const raw = location.hash.slice(1);
-    let h = raw;
-    try { h = decodeURIComponent(raw); } catch (e) { /* ancla mal codificada (#50%): se usa tal cual */ }
-    const start = Math.max(0, slides.findIndex((s) => s.id === h));
+    const start = Math.max(0, indexOfHash(location.hash));
+    // Un ancla cambiada a mano (o un enlace interno #id) navega; la que escribe el propio motor no.
+    addEventListener('hashchange', () => { if (location.hash === lastHash) return; const i = indexOfHash(location.hash); if (i >= 0) go(i); });
     idx = start;
     wake();
     // La primera diapositiva se activa con las fuentes ya cargadas (máximo 1 s de espera),
@@ -485,7 +587,7 @@
     if (!fonts) go(start, true);
     else {
       let started = false;
-      const begin = () => { if (!started) { started = true; go(start, true); } };
+      const begin = () => { if (!started) { started = true; if (!booted) go(start, true); } };
       setTimeout(begin, 1000);
       fonts.then(() => { if (started) refreshAll(); else begin(); });
     }

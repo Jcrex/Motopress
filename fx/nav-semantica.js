@@ -81,18 +81,22 @@
     render(api) {
       const host = api.q('[data-role="g1"]'); if (!host) return;
       const old = api.el._g1;
-      // Libera el contexto WebGL anterior: Chrome solo mantiene unos 16 vivos.
-      if (old) { old.renderer.dispose(); try { old.renderer.forceContextLoss(); } catch (e) { /* sin extensión */ } host.querySelectorAll('canvas').forEach((c) => c.remove()); }
+      // Un solo renderer (y un solo contexto WebGL) por diapositiva: se reutiliza en cada render, así las
+      // visitas no acumulan lienzos ni contextos (Chrome solo mantiene unos 16 vivos).
+      if (old) old.scene.traverse((o) => { if (o.material) o.material.dispose(); });
       api.el._g1 = null;
       if (!window.THREE || !THREE.STLLoader) { fallback(api, true); return; }
-      let renderer;
-      try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); }
-      catch (e) { fallback(api, true); return; }
+      let renderer = old && old.renderer;
+      if (!renderer) {
+        try { renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true }); }
+        catch (e) { fallback(api, true); return; }
+      }
       const w = host.clientWidth || 680, h = host.clientHeight || 900;
       renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1)); renderer.setSize(w, h, false);
       renderer.setClearAlpha(0);
       renderer.outputEncoding = THREE.sRGBEncoding;
-      host.appendChild(renderer.domElement);
+      host.querySelectorAll('canvas').forEach((c) => { if (c !== renderer.domElement) c.remove(); });
+      if (renderer.domElement.parentNode !== host) host.appendChild(renderer.domElement);
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(24, w / h, 0.1, 20);
       camera.position.set(0, 0.72, 3.45); camera.lookAt(0, 0.64, 0);

@@ -119,6 +119,16 @@ function ensure(hex, bg, min, dir) {
   while (contrast(out, bg) < min && guard++ < 80) { L += dir * 0.01; out = fromOklch(Math.max(0, Math.min(1, L)), C, H); }
   return out;
 }
+// Igual, pero contra varias superficies a la vez: [[fondo, mínimo], …]. El texto secundario y los acentos
+// se leen sobre el fondo y también sobre paneles (bg-2, bg-3) y píldoras, no solo sobre el fondo plano.
+function ensureOn(hex, pairs, dir) {
+  let [L, C, H] = oklch(hex), out = hex, guard = 0;
+  const ok = () => pairs.every(([bg, min]) => contrast(out, bg) >= min);
+  while (!ok() && guard++ < 100) { L += dir * 0.01; out = fromOklch(Math.max(0, Math.min(1, L)), C, H); }
+  return out;
+}
+// Mezcla en OKLab (como color-mix(in oklab, a t, b)).
+const mixOk = (a, b, t) => { const A = labFromLin(lin(a)), B = labFromLin(lin(b)); return rgb2hex(linFromLab(A.map((v, i) => v * t + B[i] * (1 - t))).map(l2s)); };
 function bestOn(accent, cands) { return cands.reduce((a, b) => (contrast(b, accent) > contrast(a, accent) ? b : a)); }
 
 // ---------- emit ----------
@@ -138,12 +148,15 @@ for (const st of src.styles) {
     computed[mode] = { cats, seq, div };
     const r = { ...m.roles };
     const dir = mode === 'dark' ? 1 : -1;
-    r['fg-2'] = ensure(r['fg-2'], r.bg, 6, dir);
-    r['fg-3'] = ensure(r['fg-3'], r.bg, 4.6, dir);
+    const panels = (min) => [[r['bg-2'], min], [r['bg-3'], min]];
+    r.fg = ensureOn(r.fg, [[r.bg, 4.6], ...panels(4.6)], dir);
+    r['fg-2'] = ensureOn(r['fg-2'], [[r.bg, 6], ...panels(4.6)], dir);
+    r['fg-3'] = ensureOn(r['fg-3'], [[r.bg, 4.6], ...panels(4.5)], dir);
     r['on-accent'] = bestOn(r.accent, [r['on-accent'], r.bg, r['bg-2'], r.fg, mode === 'dark' ? '#0d0d12' : '#ffffff', '#ffffff', '#101014']);
-    for (const k of ['accent', 'accent-2', 'accent-3']) r[k + '-ink'] = ensure(r[k], r.bg, 4.6, dir);
+    // tinta de acento: también sobre la píldora del kicker (acento al 16 % sobre el fondo)
+    for (const k of ['accent', 'accent-2', 'accent-3']) r[k + '-ink'] = ensureOn(r[k], [[r.bg, 4.6], ...panels(4.5), [mixOk(r[k], r.bg, 0.16), 4.5], [mixOk(r.accent, r.bg, 0.16), 4.5]], dir);
     // ok, warn y err como texto (deltas, marcas, tablas): misma corrección de legibilidad
-    for (const k of ['ok', 'warn', 'err']) r[k + '-ink'] = ensure(r[k], r.bg, 4.6, dir);
+    for (const k of ['ok', 'warn', 'err']) r[k + '-ink'] = ensureOn(r[k], [[r.bg, 4.6], ...panels(4.5)], dir);
     m.roles = r;
     const lines = [...order, 'accent-ink', 'accent-2-ink', 'accent-3-ink', 'ok-ink', 'warn-ink', 'err-ink'].map((k) => `--${k}:${r[k]}`);
     cats.forEach((c, i) => lines.push(`--cat-${i + 1}:${c}`));

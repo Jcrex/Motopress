@@ -386,11 +386,17 @@
       const solid = paths.filter((p) => !p.getAttribute('stroke-dasharray'));
       solid.forEach((p) => { const L = p.getTotalLength(); p.style.strokeDasharray = L; p.style.strokeDashoffset = L; });
       const k = api.dur / 900;
-      gsap.to(solid, { strokeDashoffset: 0, duration: 0.9 * k, stagger: 0.07 * k, ease: 'none', onComplete: () => solid.forEach((p) => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; }) });
-      gsap.fromTo(api.qa('.bp-dims > *'), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.02, delay: 1.4 * k });
-      gsap.fromTo(api.qa('.bp-red'), { opacity: 0 }, { opacity: 1, duration: 0.4, delay: 2.4 * k });
+      // Se guardan los tweens: stop() los mata aunque aún no hayan empezado (los retrasados retenían el SVG viejo).
+      api.bpTweens = [
+        gsap.to(solid, { strokeDashoffset: 0, duration: 0.9 * k, stagger: 0.07 * k, ease: 'none', onComplete: () => solid.forEach((p) => { p.style.strokeDasharray = ''; p.style.strokeDashoffset = ''; }) }),
+        gsap.fromTo(api.qa('.bp-dims > *'), { opacity: 0 }, { opacity: 1, duration: 0.3, stagger: 0.02, delay: 1.4 * k }),
+        gsap.fromTo(api.qa('.bp-red'), { opacity: 0 }, { opacity: 1, duration: 0.4, delay: 2.4 * k }),
+      ];
     },
-    stop(api) { if (window.gsap) gsap.killTweensOf(api.qa('.bp-draw path, .bp-draw circle, .bp-dims > *, .bp-red')); },
+    stop(api) {
+      (api.bpTweens || []).forEach((t) => t.kill()); api.bpTweens = [];
+      if (window.gsap) gsap.killTweensOf(api.qa('.bp-draw path, .bp-draw circle, .bp-dims > *, .bp-red'));
+    },
   });
 
   /* =================================================================

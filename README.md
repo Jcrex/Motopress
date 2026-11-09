@@ -96,7 +96,7 @@ motor/
 
 Componentes por clase que se combinan en cualquier diapositiva, con o sin `data-fx`. Se ven completos sin animar (capturas, vista general, PDF).
 
-- `<span class="cifra" data-value="97.3" data-suf=" %"></span>`: número grande que cuenta (`data-mode="count"`) o rueda por dígitos (`"roll"`); por defecto, según el estilo. `data-dec`, `data-pre`, `data-from`. Dentro de un `data-step`, se anima al revelarse. Para la variación: `<span class="cifra-delta sube"><b>▲ sube</b> 4,1 fps</span>` (o `baja`).
+- `<span class="cifra" data-value="97.3" data-suf=" %"></span>`: número grande que cuenta (`data-mode="count"`) o rueda por dígitos (`"roll"`); por defecto, según el estilo. `data-dec`, `data-pre`, `data-from`. Dentro de un `data-step`, se anima al revelarse. Para la variación: `<span class="cifra-delta sube"><b>▲ sube</b> 4,1 fps</span>` (o `baja`). `data-value` acepta `97,3`, `1.234,5`, `1.234.567` o `−3` (un solo punto es decimal: `1.000` vale 1); si no es un número se muestra «—» y `revisar` lo marca.
 - `<ol class="etapas"><li data-step><b>Fase</b><small>detalle</small></li>…</ol>`: proceso lineal; cada → marca una fase como «hecho» y la siguiente como «en curso». `class="etapas v"` en vertical.
 - `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>`: hitos con marca y palabra (pendiente, en curso, hecho, revisar, falló). `class="checklist tacha"` tacha lo hecho.
 - `<ol class="agenda"></ol>`: índice generado con los `data-section`, con la sección actual destacada (o `data-current`); `data-skip="Inicio"` omite secciones; `class="agenda banda"` la rellena.

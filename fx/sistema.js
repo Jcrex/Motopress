@@ -140,10 +140,22 @@
     aurora: {
       init(s, api) {
         s.n = api.noise2(s.seed); s.R = api.rng(s.seed + 1);
-        s.parts = Array.from({ length: 820 }, () => spawn(s));
         s.cols = api.cats(3); s.styles = null;
         s.ctx.clearRect(0, 0, s.w, s.h);
+        // El precalentado (170 pasos) cuesta 100–200 ms: se guarda por semilla, tamaño y colores y se
+        // reutiliza al volver a la diapositiva o a este estilo (el bucle de partículas sigue desde ahí).
+        const key = [s.seed, s.w, s.h, s.ratio, api.dark, s.cols.join()].join('|'), hit = auroraCache.get(key);
+        if (hit) {
+          s.parts = hit.parts.map((p) => ({ ...p }));
+          s.ctx.save(); s.ctx.setTransform(1, 0, 0, 1, 0, 0); s.ctx.drawImage(hit.cv, 0, 0); s.ctx.restore();
+          return;
+        }
+        s.parts = Array.from({ length: 820 }, () => spawn(s));
         for (let k = 0; k < 170; k++) step(s, api, 0, true);
+        const cv = document.createElement('canvas'); cv.width = s.cv.width; cv.height = s.cv.height;
+        cv.getContext('2d').drawImage(s.cv, 0, 0);
+        auroraCache.set(key, { cv, parts: s.parts.map((p) => ({ ...p })) });
+        if (auroraCache.size > 3) auroraCache.delete(auroraCache.keys().next().value);
       },
       frame(s, api, t) {
         const { ctx, w, h } = s;
@@ -152,6 +164,7 @@
       },
     },
   });
+  const auroraCache = new Map();
   function spawn(s) { const R = s.R; return { x: R() * s.w, y: R() * s.h, life: 60 + R() * 220, c: Math.floor(R() * 3), lw: 0.7 + R() * 1.8 }; }
   // Los trazos se agrupan por color y grosor (medio píxel): unas 30 llamadas a stroke por paso
   // en lugar de 820. El precalentado de init (170 pasos) bajó así de ~240 ms a unas decenas.
@@ -185,18 +198,19 @@
       for (const tok of attr.trim().split(/[\s,]+/)) {
         const [a, b] = tok.split(':');
         const name = b === undefined ? a : a === api.style ? b : null;
-        if (name && painters[name]) return painters[name];
+        if (name && Object.hasOwn(painters, name)) return painters[name]; // «constructor» o «toString» no son pintores
         if (name) console.warn('[motor] pintor desconocido: ' + name);
       }
       return null;
     };
-    return pick(api.el.dataset.painter) || pick(document.documentElement.dataset.painter) || painters[api.style] || painters.rice;
+    return pick(api.el.dataset.painter) || pick(document.documentElement.dataset.painter) || (Object.hasOwn(painters, api.style) ? painters[api.style] : painters.rice);
   }
   Motor.painterOf = painterOf;
 
   Motor.fx('backdrop', {
     render(api) {
       const host = api.q('.fx-bg');
+      if (!host) { api.s = null; console.warn('[motor] data-fx="backdrop" necesita un <div class="fx-bg"> en la diapositiva', api.el.id); return; }
       host.querySelectorAll(':scope > canvas.gl').forEach((g) => { g.style.display = 'none'; });
       const c = api.canvas(host);
       const s = (api.s = { ...c, host, seed: +(api.el.dataset.seed || 1), style: api.style, quiet: api.el.classList.contains('closing') });
@@ -206,7 +220,7 @@
       p.frame(s, api, 4, true);
     },
     play(api) {
-      const s = api.s;
+      const s = api.s; if (!s) return;
       api.raf((t) => { s.painter.frame(s, api, 4 + t / 1000); });
     },
   });
@@ -288,7 +302,7 @@
     const own = slide.dataset.titleFx || document.documentElement.dataset.titleFx || (slide.dataset.fx === 'backdrop' ? 'auto' : 'none');
     if (own === 'none' || titleEase[style] === null) return null;
     const name = own === 'auto' ? Motor.titleStyle[style] || 'rise' : own;
-    if (!titlePresets[name]) { console.warn('[motor] preset de título desconocido: ' + name); return null; }
+    if (!Object.hasOwn(titlePresets, name)) { console.warn('[motor] preset de título desconocido: ' + name); return null; }
     return titlePresets[name];
   }
   function titleOut(slide) { if (slide._title) { try { slide._title.revert(); } catch (e) { /* ya revertido */ } slide._title = null; } }

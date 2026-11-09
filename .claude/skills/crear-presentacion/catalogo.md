@@ -32,7 +32,7 @@ Atributos obligatorios en cada `<section>`: `id` (único, minúsculas y guiones)
 
 | Pieza | Marcado | Para |
 |---|---|---|
-| Número grande | `<span class="cifra" data-value="97.3" data-suf=" %"></span>` · `data-dec`, `data-pre`, `data-from`, `data-mode="count|roll"` | una cifra protagonista |
+| Número grande | `<span class="cifra" data-value="97.3" data-suf=" %"></span>` · `data-dec`, `data-pre`, `data-from`, `data-mode="count|roll"`. `data-value` admite `97.3`, `97,3`, `1.234,5`, `1.234.567` y `−3`; un solo punto es decimal (`1.000` = 1, escribe `1000`); sin número se muestra «—». Si no cabe, la letra se reduce | una cifra protagonista |
 | Variación | `<span class="cifra-delta sube"><b>▲ sube</b> 4,1 fps</span>` (o `baja`) | junto a una cifra |
 | Proceso | `<ol class="etapas"><li data-step><b>Fase</b><small>detalle</small></li>…</ol>` · `etapas v` en vertical | fases lineales |
 | Hitos | `<ul class="checklist"><li data-step data-end="ok|warn|err">…</li></ul>` · `checklist tacha` | estado de tareas |
@@ -66,7 +66,7 @@ Atributos obligatorios en cada `<section>`: `id` (único, minúsculas y guiones)
 |---|---|
 | `data-tipo` | `barras` (horizontales, por defecto; lo mejor con rótulos largos), `columnas`, `lineas`, `dispersion` |
 | `data-apilar` | barras o columnas con varias series, apiladas |
-| `data-unidad`, `data-dec` | sufijo y decimales del eje de valores |
+| `data-unidad`, `data-dec` | sufijo (si es larga, va una vez en el título del eje) y decimales de los rótulos de valor (el eje usa al menos los de su paso) |
 | `data-eje-x`, `data-eje-y` | título de los ejes |
 | `data-resalta="A|B"` | destaca esas etiquetas; el resto en gris |
 | `data-orden="desc|asc"`, `data-cero`, `data-valores="no"` | ordenar una serie, eje y desde 0 en líneas, sin rótulos de valor |

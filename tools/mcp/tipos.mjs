@@ -4,7 +4,18 @@
 import { z } from 'zod';
 
 const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const t = (s) => esc(s).replace(/&lt;(\/?)(b|strong|i|em|code)&gt;/g, '<$1$2>').replace(/&lt;br\s*\/?&gt;/g, '<br>');
+// Formato permitido, siempre equilibrado: una etiqueta sin cerrar se cierra al final del texto y un cierre
+// sin apertura se queda como texto. Así un «<em>» suelto no se traga las diapositivas siguientes.
+const t = (s) => {
+  const open = [];
+  const out = esc(s).replace(/&lt;br\s*\/?&gt;/g, '<br>').replace(/&lt;(\/?)(b|strong|i|em|code)&gt;/g, (m, close, tag) => {
+    if (!close) { open.push(tag); return `<${tag}>`; }
+    const at = open.lastIndexOf(tag);
+    if (at < 0) return m;
+    return open.splice(at).reverse().map((x) => `</${x}>`).join('');
+  });
+  return out + open.reverse().map((x) => `</${x}>`).join('');
+};
 const attr = (k, v) => (v == null || v === '' || v === false ? '' : v === true ? ` ${k}` : ` ${k}="${esc(v)}"`);
 
 const ID = z.string().regex(/^[a-z0-9][a-z0-9-]*$/, 'minúsculas, números y guiones').describe('id único de la diapositiva');
@@ -17,24 +28,29 @@ const base = {
 };
 const STEP = z.boolean().optional().describe('Revela los elementos uno a uno con →');
 const Num = z.number();
+const DEC = z.number().int().min(0).max(20);
 const Grafico = z.object({
   tipo: z.enum(['barras', 'columnas', 'lineas', 'dispersion']).default('barras'),
   datos: z.array(z.tuple([z.string(), Num])).optional().describe('Una serie: [[etiqueta, valor], …]'),
   etiquetas: z.array(z.string()).optional(),
   x: z.array(Num).optional().describe('lineas: eje x numérico en lugar de etiquetas'),
-  series: z.array(z.object({ nombre: z.string(), valores: z.array(Num.nullable()).optional(), puntos: z.array(z.tuple([Num, Num])).optional() })).optional(),
-  unidad: z.string().optional().describe('Sufijo: " ms", " %"'), dec: z.number().int().min(0).max(4).optional(),
+  series: z.array(z.object({ nombre: z.string(), valores: z.array(Num.nullable()).optional(), puntos: z.array(z.tuple([Num, Num])).optional() })
+    .refine((s) => s.valores || s.puntos, { message: 'Cada serie necesita "valores" (o "puntos" en dispersion)' })).optional(),
+  unidad: z.string().max(60).optional().describe('Sufijo: " ms", " %" (si es larga, va en el título del eje)'), dec: z.number().int().min(0).max(4).optional(),
   ejeX: z.string().optional(), ejeY: z.string().optional(),
   resalta: z.array(z.string()).optional(), orden: z.enum(['desc', 'asc']).optional(),
   apilar: z.boolean().optional(), cero: z.boolean().optional(), valores: z.boolean().optional(),
-}).refine((g) => (g.datos && g.datos.length) || (g.series && g.series.length), { message: 'El gráfico necesita "datos" o "series" con algún valor' });
+}).refine((g) => (g.datos && g.datos.length) || (g.series && g.series.some((s) => (s.valores || s.puntos || []).some((v) => v != null))), { message: 'El gráfico necesita "datos" o "series" con algún valor' })
+  .refine((g) => !g.series || !(g.etiquetas || g.x) || g.series.every((s) => !s.valores || s.valores.length === (g.etiquetas || g.x).length), { message: 'Cada serie debe tener tantos "valores" como "etiquetas" (o "x")' })
+  .refine((g) => g.tipo !== 'dispersion' || (g.series && g.series.every((s) => s.puntos)), { message: 'dispersion necesita "series" con "puntos"' });
+const FONDO = z.string().regex(/^[a-z0-9:\s-]+$/, 'pintores: «grano» o por estilo «noche:hilos rice:grano»');
 
 export const Spec = z.discriminatedUnion('tipo', [
-  z.object({ tipo: z.literal('portada'), ...base, lead: z.string().optional(), fondo: z.string().optional().describe('data-painter: grano, hilos, radar, topo, isolineas, escaner, velo…'), semilla: z.number().int().optional() }),
-  z.object({ tipo: z.literal('separador'), ...base, lead: z.string().optional(), fondo: z.string().optional(), semilla: z.number().int().optional() }),
-  z.object({ tipo: z.literal('cierre'), ...base, lead: z.string().optional(), fondo: z.string().optional() }),
-  z.object({ tipo: z.literal('cifra'), ...base, valor: Num, prefijo: z.string().optional(), sufijo: z.string().optional(), decimales: z.number().int().optional(), etiqueta: z.string().optional(), delta: z.object({ texto: z.string(), sentido: z.enum(['sube', 'baja']) }).optional(), texto: z.string().optional().describe('Explicación lateral'), nota: z.string().optional() }),
-  z.object({ tipo: z.literal('cifras'), ...base, items: z.array(z.object({ valor: Num, prefijo: z.string().optional(), sufijo: z.string().optional(), decimales: z.number().int().optional(), etiqueta: z.string() })).min(2).max(4), nota: z.string().optional(), pasos: STEP }),
+  z.object({ tipo: z.literal('portada'), ...base, lead: z.string().optional(), fondo: FONDO.optional().describe('data-painter: grano, hilos, radar, topo, isolineas, escaner, velo…'), semilla: z.number().int().optional() }),
+  z.object({ tipo: z.literal('separador'), ...base, lead: z.string().optional(), fondo: FONDO.optional(), semilla: z.number().int().optional() }),
+  z.object({ tipo: z.literal('cierre'), ...base, lead: z.string().optional(), fondo: FONDO.optional() }),
+  z.object({ tipo: z.literal('cifra'), ...base, valor: Num, prefijo: z.string().optional(), sufijo: z.string().optional(), decimales: DEC.optional(), etiqueta: z.string().optional(), delta: z.object({ texto: z.string(), sentido: z.enum(['sube', 'baja']) }).optional(), texto: z.string().optional().describe('Explicación lateral'), nota: z.string().optional() }),
+  z.object({ tipo: z.literal('cifras'), ...base, items: z.array(z.object({ valor: Num, prefijo: z.string().optional(), sufijo: z.string().optional(), decimales: DEC.optional(), etiqueta: z.string() })).min(2).max(4), nota: z.string().optional(), pasos: STEP }),
   z.object({ tipo: z.literal('tarjetas'), ...base, items: z.array(z.object({ titulo: z.string(), texto: z.string(), etiqueta: z.string().optional() })).min(2).max(4), nota: z.string().optional(), pasos: STEP }),
   z.object({ tipo: z.literal('problema'), ...base, problema: z.object({ titulo: z.string(), texto: z.string() }), solucion: z.object({ titulo: z.string(), texto: z.string() }), claves: z.array(z.string()).max(5).optional().describe('Chips con ideas clave'), pasos: STEP }),
   z.object({ tipo: z.literal('proceso'), ...base, pasos_proceso: z.array(z.object({ titulo: z.string(), detalle: z.string().optional() })).min(2).max(6), vertical: z.boolean().optional(), texto: z.string().optional(), pasos: STEP }),
@@ -45,13 +61,13 @@ export const Spec = z.discriminatedUnion('tipo', [
   z.object({ tipo: z.literal('terminal'), ...base, lineas: z.array(z.object({ cmd: z.boolean().optional(), texto: z.string() })).min(1).max(14), ventana: z.string().optional().describe('Título de la ventana'), texto: z.string().optional() }),
   z.object({ tipo: z.literal('cita'), ...base, texto: z.string(), autor: z.string().optional() }),
   z.object({ tipo: z.literal('checklist'), ...base, items: z.array(z.object({ texto: z.string(), estado: z.enum(['hecho', 'revisar', 'fallo', 'en curso', 'pendiente']).default('hecho') })).min(2).max(6), texto: z.string().optional(), pasos: STEP }),
-  z.object({ tipo: z.literal('libre'), ...base, cuerpo: z.string().describe('HTML del interior de <div class="s-body …">'), cuerpoClase: z.string().optional().describe('Clases extra de .s-body: cols, cols even, stack…'), fx: z.string().optional() }),
+  z.object({ tipo: z.literal('libre'), ...base, cuerpo: z.string().describe('HTML del interior de <div class="s-body …">'), cuerpoClase: z.string().regex(/^[\w\s-]*$/, 'solo nombres de clase separados por espacios').optional().describe('Clases extra de .s-body: cols, cols even, stack…'), fx: z.string().regex(/^[\w\s-]*$/, 'nombres de efecto separados por espacios').optional() }),
 ]);
 
 const head = (s) => `  <header class="s-head">\n${s.kicker ? `    <p class="kicker">${t(s.kicker)}</p>\n` : ''}    <h2 class="s-title">${t(s.titulo)}</h2>\n  </header>`;
 const notas = (s) => (s.notas ? `\n  <aside class="notes">${s.notas.split(/\n\s*\n/).map((p) => `<p>${t(p.trim())}</p>`).join('')}</aside>` : '');
 const open = (s, extra = {}) => `<section class="slide${extra.clase ? ' ' + extra.clase : ''}" id="${s.id}"${attr('data-fx', extra.fx)}${attr('data-painter', extra.painter)}${attr('data-seed', extra.seed)} data-section="${esc(s.seccion)}" data-title="${esc(s.titulo)}">`;
-const slide = (s, body, bodyClass = '', extra = {}) => `${open(s, extra)}\n${head(s)}\n  <div class="s-body${bodyClass ? ' ' + bodyClass : ''}">\n${body}\n  </div>${notas(s)}\n</section>`;
+const slide = (s, body, bodyClass = '', extra = {}) => `${open(s, extra)}\n${extra.bg ? '  <div class="fx-bg"></div>\n' : ''}${head(s)}\n  <div class="s-body${bodyClass ? ' ' + esc(bodyClass) : ''}">\n${body}\n  </div>${notas(s)}\n</section>`;
 const step = (on) => (on ? ' data-step data-reveal="auto"' : '');
 const nota = (n) => (n ? `\n    <p class="note">${t(n)}</p>` : '');
 const lado = (txt, inner) => (txt ? `    <div class="stack" style="min-width:0">\n${inner}\n    </div>\n    <aside class="stack tp-lado">\n      <p class="tp-texto">${t(txt)}</p>\n    </aside>` : inner);
@@ -78,17 +94,26 @@ const R = {
   tabla: (s) => {
     const isNum = (v) => typeof v === 'number' || /^[\d.,\s%+−-]+$/.test(String(v));
     const numCol = s.columnas.map((_, j) => s.filas.every((f) => j > 0 && isNum(f[j])));
-    const fmt = (v) => (typeof v === 'number' ? v.toLocaleString('es-ES') : t(v));
-    return slide(s, `    <table class="tp-tabla">\n      <thead><tr>${s.columnas.map((c, j) => `<th${numCol[j] ? ' class="num"' : ''}>${t(c)}</th>`).join('')}</tr></thead>\n      <tbody>\n${s.filas.map((f, i) => `        <tr${(s.resaltar || []).includes(i) ? ' class="on"' : ''}>${f.map((v, j) => `<td${numCol[j] ? ' class="num"' : ''}>${fmt(v)}</td>`).join('')}</tr>`).join('\n')}\n      </tbody>\n    </table>${nota(s.nota)}`, 'stack');
+    // Números: los mismos decimales en toda la columna (los que pida el valor más preciso, hasta 6),
+    // para que 0,0004 no salga como «0» ni 0,9876 como «0,988»; magnitudes enormes, en notación científica.
+    const decOf = (v) => { if (!Number.isFinite(v) || Number.isInteger(v)) return 0; for (let d = 1; d < 6; d++) { const k = Math.abs(v) * 10 ** d; if (Math.abs(k - Math.round(k)) <= 1e-9 * Math.max(1, k)) return d; } return 6; };
+    const colDec = s.columnas.map((_, j) => Math.max(0, ...s.filas.map((f) => (typeof f[j] === 'number' ? decOf(f[j]) : 0))));
+    const fmt = (v, j) => {
+      if (typeof v !== 'number') return t(v);
+      if (Math.abs(v) >= 1e15 || (v !== 0 && Math.abs(v) < 1e-6)) return v.toExponential(2).replace('.', ',');
+      return v.toLocaleString('es-ES', { minimumFractionDigits: colDec[j], maximumFractionDigits: colDec[j] });
+    };
+    return slide(s, `    <table class="tp-tabla">\n      <thead><tr>${s.columnas.map((c, j) => `<th${numCol[j] ? ' class="num"' : ''}>${t(c)}</th>`).join('')}</tr></thead>\n      <tbody>\n${s.filas.map((f, i) => `        <tr${(s.resaltar || []).includes(i) ? ' class="on"' : ''}>${f.map((v, j) => `<td${numCol[j] ? ' class="num"' : ''}>${fmt(v, j)}</td>`).join('')}</tr>`).join('\n')}\n      </tbody>\n    </table>${nota(s.nota)}`, 'stack');
   },
   imagen: (s) => slide(s, lado(s.texto, `      <figure class="tp-img">\n        <img src="${esc(s.src)}" alt="${esc(s.alt)}">\n${s.pie ? `        <figcaption class="note">${t(s.pie)}</figcaption>\n` : ''}      </figure>`), s.texto ? 'cols' : 'stack'),
-  terminal: (s) => slide(s, lado(s.texto, `      <div class="win">\n        <div class="win-bar"><span class="dot"></span>${t(s.ventana || 'terminal')}</div>\n        <div class="win-body">\n          <div class="term teclea">\n${s.lineas.map((l) => `            <div${l.cmd ? ' data-k="cmd"' : ''}>${esc(l.cmd && !/^\s*[$#❯]/.test(l.texto) ? '$ ' + l.texto : l.texto)}</div>`).join('\n')}\n          </div>\n        </div>\n      </div>`), s.texto ? 'cols' : 'stack'),
+  terminal: (s) => slide(s, lado(s.texto, `      <div class="win">\n        <div class="win-bar"><span class="dot"></span>${t(s.ventana || 'terminal')}</div>\n        <div class="win-body">\n          <div class="term teclea">${s.lineas.map((l) => `<div${l.cmd ? ' data-k="cmd"' : ''}>${esc(l.cmd && !/^\s*[$#❯]/.test(l.texto) ? '$ ' + l.texto : l.texto)}</div>`).join('')}</div>\n        </div>\n      </div>`), s.texto ? 'cols' : 'stack'),
   cita: (s) => slide(s, `    <figure class="tp-cita">\n      <blockquote>${t(s.texto)}</blockquote>\n${s.autor ? `      <figcaption>${t(s.autor)}</figcaption>\n` : ''}    </figure>`, 'stack'),
   checklist: (s) => {
     const END = { hecho: '', revisar: 'warn', fallo: 'err' };
     return slide(s, lado(s.texto, `      <ul class="checklist">\n${s.items.map((i) => `        <li${i.estado === 'pendiente' ? ' class="tp-pend"' : i.estado === 'en curso' ? '' : s.pasos ? ' data-step' : ' class="on"'}${END[i.estado] ? ` data-end="${END[i.estado]}"` : ''}>${t(i.texto)}</li>`).join('\n')}\n      </ul>`), s.texto ? 'cols' : 'stack');
   },
-  libre: (s) => slide(s, s.cuerpo.replace(/^/gm, '    '), s.cuerpoClase || '', { fx: s.fx }),
+  // «backdrop» pinta en un .fx-bg: se añade si el cuerpo no trae el suyo.
+  libre: (s) => slide(s, s.cuerpo.replace(/^/gm, '    '), s.cuerpoClase || '', { fx: s.fx, bg: /(^|\s)backdrop(\s|$)/.test(s.fx || '') && !/class="[^"]*\bfx-bg\b/.test(s.cuerpo) }),
 };
 
 export function renderSpec(spec) {

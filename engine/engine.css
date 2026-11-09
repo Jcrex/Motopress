@@ -3,7 +3,7 @@
 
 @property --angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 
-html, body { height: 100%; }
+html, body { height: 100%; overscroll-behavior: none; } /* sin «atrás» del navegador al deslizar en horizontal */
 body {
   margin: 0;
   background: var(--bg-2);
@@ -14,6 +14,7 @@ body {
 }
 
 /* ---------- visor y escenario ---------- */
+.viewport:not(.is-overview) { touch-action: pinch-zoom; } /* el deslizamiento lo gestiona el motor */
 .viewport {
   position: fixed;
   left: 0; right: 0;
@@ -73,6 +74,7 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   letter-spacing: var(--title-tracking);
   text-transform: var(--title-case);
   text-wrap: balance;
+  overflow-wrap: anywhere; /* una palabra sin espacios (identificador, URL) parte en vez de salirse del lienzo */
   color: var(--fg);
 }
 .s-title.xl { font-size: calc(var(--title-size) * 1.55); line-height: .96; }
@@ -132,9 +134,9 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
   border-radius: var(--radius-lg);
   overflow: hidden;
 }
-.win-bar { display: flex; align-items: center; gap: 14px; padding: 12px 20px; font: 500 20px/1 var(--font-mono); color: var(--fg-3); border-bottom: 1px solid var(--line); }
+.win-bar { display: flex; align-items: center; gap: 14px; padding: 12px 20px; font: 500 22px/1 var(--font-mono); color: var(--fg-3); border-bottom: 1px solid var(--line); }
 .win-body { position: relative; flex: 1; min-height: 0; padding: 18px 22px; }
-.term { margin: 0; font: 400 24px/1.5 var(--font-mono); color: var(--fg); white-space: pre; }
+.term { margin: 0; font: 400 24px/1.5 var(--font-mono); color: var(--fg); white-space: pre-wrap; overflow-wrap: anywhere; } /* una línea larga parte en vez de recortarse en silencio */
 
 /* ---------- pasos ---------- */
 .slide [data-step] { opacity: 0; transform: translateY(14px); transition: opacity var(--dur) var(--ease), transform var(--dur) var(--ease); }
@@ -275,7 +277,9 @@ html:not(.has-vt) .slide.is-active { transition: opacity var(--dur) var(--ease),
 .paleta > i::after { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid color-mix(in oklab, var(--bg) 70%, transparent); }
 
 /* teclea: terminal que escribe los comandos (data-k="cmd") y suelta la salida */
-.teclea > * { white-space: pre; min-height: 1.5em; }
+/* Cada línea es un hijo: el espacio y los saltos entre ellos (sangría del HTML) no cuentan como líneas en blanco. */
+.term.teclea { white-space: normal; }
+.teclea > * { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.5em; }
 .teclea > [data-k="cmd"] { color: var(--fg); }
 .teclea > :not([data-k="cmd"]) { color: var(--fg-2); }
 .teclea .caret { color: var(--accent); font-weight: 400; animation: caret 1s steps(1) 4; }

@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { ROOT } from '../salida.mjs';
 import { revisar, archivoDeck } from '../revisar.mjs';
+import { trozos } from '../html.mjs';
 
 export const NOMBRE = /^[a-z0-9][a-z0-9-]{0,60}$/;
 const PLANTILLA = path.join(ROOT, '.claude/skills/crear-presentacion/plantilla.html');
@@ -18,21 +19,9 @@ export function listarDecks() {
   return fs.readdirSync(dir).filter((d) => fs.existsSync(path.join(dir, d, 'index.html'))).sort();
 }
 
-// Posiciones [inicio, fin) de cada <section class="slide">, contando secciones anidadas.
-// Los comentarios, <script> y <style> no cuentan, y un «>» dentro de un atributo no corta la etiqueta.
-const TAG = `(?:[^>"']|"[^"]*"|'[^']*')*`;
-const attrDe = (tag, name) => { const m = tag.match(new RegExp(`\\s${name}\\s*=\\s*(?:"([^"]*)"|'([^']*)')`)); return m ? (m[1] ?? m[2]) : null; };
-export function trozos(html) {
-  const vivo = html.replace(/<!--[\s\S]*?-->|<(script|style)\b[\s\S]*?<\/\1\s*>/gi, (c) => ' '.repeat(c.length)); // mismas posiciones
-  const out = [], re = new RegExp(`<section\\b${TAG}>|<\\/section\\s*>`, 'gi');
-  let m, depth = 0, cur = null;
-  while ((m = re.exec(vivo))) {
-    if (m[0][1] === '/') { depth = Math.max(0, depth - 1); if (cur && depth === cur.depth) { cur.fin = m.index + m[0].length; out.push(cur); cur = null; } continue; }
-    if (!cur && /(?:^|\s)slide(?:\s|$)/.test(attrDe(m[0], 'class') || '')) cur = { inicio: m.index, depth, id: attrDe(m[0], 'id') };
-    depth++;
-  }
-  return out;
-}
+// Posiciones [inicio, fin) de cada <section class="slide"> de primer nivel: lector común (tools/html.mjs),
+// que respeta comentarios, <script>, <template>, atributos con comillas y mayúsculas.
+export { trozos };
 
 const leerHtml = (deck) => { const f = rutaDeck(deck); if (!fs.existsSync(f)) throw new Error(`No existe el deck «${deck}»`); return fs.readFileSync(f, 'utf8'); };
 
@@ -65,10 +54,12 @@ function guardar(deck, nuevo, ids, forzar) {
 export function escribirDiapositiva(deck, seccion, { despuesDe = null, forzar = false } = {}) {
   seccion = seccion.trim();
   const ts = trozos(seccion);
-  if (ts.length !== 1 || ts[0].inicio !== 0 || ts[0].fin !== seccion.length) throw new Error('El html debe ser exactamente una <section class="slide" id="…">…</section>');
+  if (ts.length !== 1 || ts[0].inicio !== 0 || ts[0].fin !== seccion.length || ts[0].sinCerrar) throw new Error('El html debe ser exactamente una <section class="slide" id="…">…</section>, bien cerrada');
   const id = ts[0].id;
   if (!id) throw new Error('La diapositiva necesita id');
   const html = leerHtml(deck), all = trozos(html), prev = all.find((x) => x.id === id);
+  const rota = all.find((x) => x.sinCerrar);
+  if (rota) throw new Error(`La diapositiva ${rota.id ? '#' + rota.id : 'en ' + rota.inicio} no tiene </section>: corrígela antes de escribir otra (node tools/revisar.mjs ${deck})`);
   let nuevo;
   if (prev && !despuesDe) nuevo = html.slice(0, prev.inicio) + seccion + html.slice(prev.fin);
   else {
@@ -77,7 +68,9 @@ export function escribirDiapositiva(deck, seccion, { despuesDe = null, forzar = 
     const d = despuesDe && list.find((x) => x.id === despuesDe);
     if (despuesDe && !d) throw new Error(`No hay ninguna diapositiva #${despuesDe}`);
     const cierre = !despuesDe && [...list].reverse().find((x) => /^<section\b[^>]*class="[^"]*\bclosing\b/.test(base.slice(x.inicio)));
-    if (cierre) nuevo = base.slice(0, cierre.inicio) + seccion + '\n\n' + base.slice(cierre.inicio);
+    // Une sin tocar el resto del documento: solo se ajustan los saltos de línea junto a la diapositiva.
+    const junta = (a, b) => a.replace(/\n+$/, '') + '\n\n' + seccion + '\n\n' + b.replace(/^\n+/, '');
+    if (cierre) nuevo = junta(base.slice(0, cierre.inicio), base.slice(cierre.inicio));
     else {
       let at;
       if (d) at = d.fin;
@@ -87,9 +80,8 @@ export function escribirDiapositiva(deck, seccion, { despuesDe = null, forzar = 
         if (!st) throw new Error('El deck no tiene <div class="stage"> ni diapositivas: no sé dónde colocarla');
         at = st.index + st[0].length;
       }
-      nuevo = base.slice(0, at) + '\n\n' + seccion + base.slice(at);
+      nuevo = junta(base.slice(0, at), base.slice(at));
     }
-    nuevo = nuevo.replace(/\n{3,}(?=<section|<\/div>)/g, '\n\n');
   }
   return { id, accion: prev ? (despuesDe ? 'movida' : 'sustituida') : 'creada', ...guardar(deck, nuevo, [id], forzar) };
 }

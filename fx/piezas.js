@@ -27,40 +27,61 @@
   const ROLL = new Set(['noche', 'nube', 'termica', 'matriz', 'arcilla']);
   let grouping = 'always';
   try { new Intl.NumberFormat('es-ES', { useGrouping: 'always' }); } catch (e) { grouping = true; }
-  // Número escrito a mano: acepta «4.1», «4,1» y «1.234,5». Devuelve NaN si no es un número.
-  const parseNum = (t) => {
-    if (t == null) return NaN;
-    let s = String(t).trim().replace(/\s/g, '');
-    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-    return s === '' ? NaN : Number(s);
-  };
+  // Número escrito a mano («4.1», «4,1», «1.234,5», «1.234.567», «−3»): lector común del motor.
+  const parseNum = (t) => Motor.util.num(t);
   const decOk = (d) => Number.isInteger(d) && d >= 0 && d <= 20;
+  // Decimales automáticos: los escritos, pero sin arrastrar ruido de coma flotante (97.33333333333333 → 4)
+  // y con al menos tres cifras significativas en valores pequeños (0,00012345 → 0,000123).
+  const autoDec = (v, written) => {
+    if (written <= 4 || !v) return Math.min(written, 20);
+    return Math.min(written, 20, Math.max(4, 2 - Math.floor(Math.log10(Math.abs(v)))));
+  };
   function cifraOpts(el) {
-    const raw = el.dataset.value || '0', norm = String(parseNum(raw) || 0), own = parseNum(el.dataset.dec);
-    const dec = decOk(own) ? own : Math.min(20, (/[.,](\d+)$/.exec(raw.trim()) || [, ''])[1].length || (norm.split('.')[1] || '').length);
-    if (!Number.isFinite(parseNum(raw))) console.warn('[motor] cifra con data-value no numérico:', raw);
+    const raw = el.dataset.value, p = Motor.util.parseNum(raw ?? ''), own = parseNum(el.dataset.dec);
+    const ok = Number.isFinite(p.v);
+    if (!ok) console.warn('[motor] cifra sin data-value numérico (se muestra «—»):', raw, el);
+    const dec = decOk(own) ? own : autoDec(p.v, p.dec);
     // idioma del deck (<html lang>); sin él, español
     const lang = (el.closest('[lang]') || {}).lang || 'es-ES';
+    const opts = { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping, signDisplay: 'negative' };
     let f;
-    try { f = new Intl.NumberFormat(lang, { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
-    catch (e) { f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, useGrouping: grouping }); }
+    try { f = new Intl.NumberFormat(lang, opts); }
+    catch (e) { try { f = new Intl.NumberFormat('es-ES', opts); } catch (e2) { delete opts.signDisplay; f = new Intl.NumberFormat('es-ES', opts); } }
     const mode = el.dataset.mode && el.dataset.mode !== 'auto' ? el.dataset.mode : ROLL.has(style()) ? 'roll' : 'count';
-    return { to: parseNum(raw) || 0, from: parseNum(el.dataset.from || '0') || 0, fmt: (v) => f.format(v), mode };
+    const from = parseNum(el.dataset.from || '0');
+    return { ok, to: ok ? p.v : 0, from: Number.isFinite(from) ? from : 0, fmt: (v) => f.format(Object.is(v, -0) ? 0 : v), mode };
   }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
   // strips: tiras 0–9 para la animación «roll»; el estado final deja un solo dígito por columna
   function cifraRender(el, strips = false) {
-    const o = cifraOpts(el), txt = o.fmt(o.to), pre = el.dataset.pre || '', suf = el.dataset.suf || '';
-    el.setAttribute('role', 'img'); el.setAttribute('aria-label', pre + txt + suf);
+    const o = cifraOpts(el), pre = el.dataset.pre || '', suf = el.dataset.suf || '';
+    el.setAttribute('role', 'img');
+    el.classList.toggle('sin-dato', !o.ok);
+    if (!o.ok) { el.setAttribute('aria-label', 'sin dato'); el.innerHTML = '<span class="v cifra-nd">—</span>'; el.dataset.mode0 = 'count'; return; }
+    const txt = o.fmt(o.to);
+    el.setAttribute('aria-label', pre + txt + suf);
     const body = o.mode === 'roll'
       ? [...txt].map((c) => (!/\d/.test(c) ? `<span>${esc(c)}</span>` : strips ? `<span class="dg"><span style="--d:${10 + +c}">${'0123456789'.repeat(2).split('').map((d) => `<i>${d}</i>`).join('')}</span></span>` : `<span class="dg"><span><i>${c}</i></span></span>`)).join('')
       : `<span class="v">${esc(txt)}</span>`;
     el.innerHTML = (pre ? `<span class="pre">${esc(pre.trim())}</span>` : '') + body + (suf ? `<span class="u">${esc(suf.trim())}</span>` : '');
     el.dataset.mode0 = o.mode;
+    cifraFit(el);
+  }
+  // Una cifra larga («3.074.185 ms» en una columna de tres) reduce su letra, hasta el 40 %, en vez de salirse.
+  function cifraFit(el) {
+    el.style.removeProperty('font-size');
+    const box = el.parentElement;
+    if (!box || !el.isConnected) return;
+    const cs = getComputedStyle(box), avail = box.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const w = el.scrollWidth;
+    if (!avail || !w || w <= avail + 1) return;
+    const size = parseFloat(getComputedStyle(el).fontSize);
+    if (size) el.style.fontSize = Math.max(size * 0.4, size * (avail / w) * 0.98).toFixed(1) + 'px';
   }
   function cifraPlay(el, api) {
     cifraStop(el);
     const o = cifraOpts(el), dur = Math.max(900, api.dur * 1.8), ease = tok(el, 'ease') || 'ease-out';
+    if (!o.ok) return;
     if (o.mode === 'count') {
       const v = el.querySelector('.v');
       v.textContent = o.fmt(o.from);
@@ -239,7 +260,8 @@
   const FLAP = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789·-';
   function paletaWords(el) {
     const w = (el.dataset.words || el.textContent || '').split('|').map((x) => x.trim().toUpperCase());
-    const pad = +el.dataset.pad || Math.max(...w.map((x) => x.length));
+    const own = Number(el.dataset.pad), pad = Number.isInteger(own) && own > 0 ? Math.min(own, 64) : Math.max(...w.map((x) => x.length));
+    if (el.dataset.pad && pad !== own) console.warn('[motor] paleta: data-pad debe ser un entero entre 1 y 64:', el.dataset.pad, el);
     return w.map((x) => x.padEnd(pad, ' ').slice(0, pad));
   }
   function paletaIndex(el, step) {
@@ -307,19 +329,20 @@
 
   /* ------------------------------------------------------------------ depósito */
   function depositoRender(el) {
-    const n = parseNum(el.dataset.value || '0'), sinDato = !Number.isFinite(n);
+    const n = parseNum(el.dataset.value ?? ''), sinDato = !Number.isFinite(n);
     const v = sinDato ? 0 : Math.max(0, Math.min(100, n)), um = parseNum(el.dataset.umbral), cr = parseNum(el.dataset.critico);
     const state = sinDato ? 'sin-dato' : v <= cr ? 'critico' : v <= um ? 'bajo' : '';
     ['bajo', 'critico', 'sin-dato'].forEach((c) => el.classList.toggle(c, state === c));
     const word = { 'sin-dato': 'sin dato', critico: 'crítico', bajo: 'bajo' }[state] || 'normal';
-    const dec = decOk(parseNum(el.dataset.dec)) ? parseNum(el.dataset.dec) : Math.min(2, ((/[.,](\d+)$/.exec(String(el.dataset.value || '').trim()) || [, ''])[1]).length);
+    const dec = decOk(parseNum(el.dataset.dec)) ? parseNum(el.dataset.dec) : Math.min(2, Motor.util.parseNum(el.dataset.value ?? '').dec);
     el.innerHTML = `<div class="vaso" aria-hidden="true"><div class="liq" style="--v:${v}"></div><i style="bottom:25%"></i><i style="bottom:50%"></i><i style="bottom:75%"></i></div>` +
       `<div class="lectura">${sinDato ? '<span class="cifra-nd">—</span>' : `<span class="cifra" data-value="${v}" data-suf=" %" data-mode="count" data-dec="${dec}"></span>`}${el.dataset.label ? `<p class="label">${esc(el.dataset.label)}</p>` : ''}<p class="estado"><b>●</b> ${word}</p></div>`;
     el.querySelectorAll('.cifra').forEach((c) => cifraRender(c));
   }
   function depositoPlay(el, api) {
     const liq = el.querySelector('.liq'); if (!liq) return;
-    const v = Math.max(0, Math.min(100, parseNum(el.dataset.value || '0') || 0)), w = 2 * Math.PI / 1.1, z = 0.32;
+    const n = parseNum(el.dataset.value ?? ''); if (!Number.isFinite(n)) return;
+    const v = Math.max(0, Math.min(100, n)), w = 2 * Math.PI / 1.1, z = 0.32;
     api.raf((ms) => {
       const t = ms / 1000, env = Math.exp(-z * w * t), lvl = v * (1 - env * Math.cos(w * t)), amp = 14 * env;
       liq.style.setProperty('--v', Math.max(0, lvl).toFixed(2));
@@ -379,23 +402,24 @@
     renderSlide(slide);
     const go = () => {
       if (!slide.classList.contains('is-active')) return;
-      slide.querySelectorAll('.reticula').forEach((el) => reticulaPlace(el, api.step, false));
-      slide.querySelectorAll('.paleta').forEach((el) => paletaRender(el, paletaIndex(el, api.step)));
-      slide.querySelectorAll('.mazo').forEach(mazoRender);
-      if (bordesLayer(slide)) drawBordes(slide, 0);
+      // Sin pasos en la diapositiva, la retícula queda en su objetivo final (como en render(), capturas y PDF).
+      slide.querySelectorAll('.reticula').forEach(safe((el) => reticulaPlace(el, api.steps ? api.step : FINAL, false)));
+      slide.querySelectorAll('.paleta').forEach(safe((el) => paletaRender(el, paletaIndex(el, api.step))));
+      slide.querySelectorAll('.mazo').forEach(safe(mazoRender));
+      try { if (bordesLayer(slide)) drawBordes(slide, 0); } catch (e) { console.error('[motor] bordes', e); }
       if (!animate) return;
       playIn(slide, api, false);
-      slide.querySelectorAll('.agenda').forEach((el) => agendaPlay(el, api));
-      slide.querySelectorAll('.bento').forEach(bentoPlay);
-      bordesPlay(slide, api);
+      slide.querySelectorAll('.agenda').forEach(safe((el) => agendaPlay(el, api)));
+      slide.querySelectorAll('.bento').forEach(safe(bentoPlay));
+      try { bordesPlay(slide, api); } catch (e) { console.error('[motor] bordes', e); }
     };
     if (!document.fonts || document.fonts.status === 'loaded') go(); else document.fonts.ready.then(go);
   });
   document.addEventListener('motor:step', (e) => {
     const { slide, api, step, dir, el, animate } = e.detail;
-    slide.querySelectorAll('.reticula').forEach((h) => reticulaPlace(h, step, animate));
-    slide.querySelectorAll('.mazo').forEach((p) => (animate && p.contains(el) ? mazoStep(p, dir, api) : mazoRender(p)));
-    slide.querySelectorAll('.paleta[data-pasos]').forEach((p) => { const i = paletaIndex(p, step); if (i === p._idx) return; if (animate) paletaTo(p, api, i); else paletaRender(p, i); });
+    slide.querySelectorAll('.reticula').forEach(safe((h) => reticulaPlace(h, step, animate)));
+    slide.querySelectorAll('.mazo').forEach(safe((p) => (animate && p.contains(el) ? mazoStep(p, dir, api) : mazoRender(p))));
+    slide.querySelectorAll('.paleta[data-pasos]').forEach(safe((p) => { const i = paletaIndex(p, step); if (i === p._idx) return; if (animate) paletaTo(p, api, i); else paletaRender(p, i); }));
     if (dir === 'next' && animate) playIn(el, api, true);
   });
   document.addEventListener('motor:leave', (e) => {
@@ -403,6 +427,8 @@
     lastSection = slide.dataset.section || null;
     renderSlide(slide);
     slide.querySelectorAll('.cifra').forEach(cifraStop);
+    // Entradas escalonadas de bento y retícula: se cancelan al salir (stopAll del motor no ve las WAAPI).
+    slide.querySelectorAll('.bento, .reticula').forEach((el) => { try { el.getAnimations({ subtree: true }).forEach((a) => a.cancel()); } catch (e) { /* sin WAAPI */ } });
     slide.querySelectorAll('.deposito .liq').forEach((l) => { l.style.clipPath = ''; });
   });
   const boot = () => (Motor.slides || []).forEach((s) => { if (!s._piezas) renderSlide(s); });

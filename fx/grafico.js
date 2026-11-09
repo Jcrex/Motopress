@@ -12,7 +12,7 @@
    Atributos:
      data-tipo     barras (horizontales, por defecto) · columnas · lineas · dispersion
      data-apilar   en barras y columnas con varias series: apiladas en vez de agrupadas
-     data-unidad   sufijo de los valores («ms», « %»)      data-dec   decimales del eje de valores (auto)
+     data-unidad   sufijo de los valores («ms», « %»)      data-dec   decimales de los rótulos de valor (auto; el eje usa al menos los del paso)
      data-eje-x / data-eje-y   título de los ejes          data-cero  lineas: el eje y empieza en 0
      data-resalta  etiquetas destacadas, separadas por «|»: el resto queda en gris
      data-valores="no"  sin rótulos de valor               data-orden="desc|asc"  ordena una serie
@@ -28,27 +28,48 @@
   };
 
   /* ---------- datos ---------- */
-  // Número desde JSON o texto: acepta «1,5» (coma decimal) y «1.234,5»; null o vacío = hueco.
+  // Número desde JSON o texto (lector común del motor: «1,5», «1.234,5», «1.234.567», «−3»);
+  // null o cadena vacía = hueco. Listas, objetos, booleanos y texto no numérico son un error.
   const num = (v) => {
-    if (v == null || v === '') return null;
+    if (v == null || (typeof v === 'string' && v.trim() === '')) return null;
     if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-    let t = String(v).trim().replace(/\s/g, '');
-    if (t.includes(',')) t = t.replace(/\./g, '').replace(',', '.');
-    const n = Number(t);
-    if (!Number.isFinite(n)) throw new Error(`valor no numérico: «${v}»`);
+    const n = typeof v === 'string' ? Motor.util.num(v) : NaN;
+    if (!Number.isFinite(n)) throw new Error(`valor no numérico: «${typeof v === 'object' ? JSON.stringify(v) : v}»`);
     return n;
   };
   function parse(el) {
     const raw = el.querySelector('script[type="application/json"]');
     if (!raw) throw new Error('falta <script type="application/json"> con los datos');
     const d = JSON.parse(raw.textContent);
-    let labels = d.etiquetas || null, series = d.series || [];
-    if (d.datos) { labels = d.datos.map((r) => r[0]); series = [{ nombre: d.nombre || '', valores: d.datos.map((r) => r[1]) }]; }
-    if (d.x) labels = d.x;
-    series = series.map((s) => ({ ...s, valores: s.valores && s.valores.map(num), puntos: s.puntos && s.puntos.map(([a, b]) => [num(a), num(b)]) }));
+    const texto = (v, what) => { if (typeof v === 'string' || typeof v === 'number') return String(v); throw new Error(`${what} debe ser texto`); };
+    const list = (v, what) => { if (v != null && !Array.isArray(v)) throw new Error(`"${what}" debe ser una lista`); return v; };
+    if (!d || typeof d !== 'object' || Array.isArray(d)) throw new Error('el JSON debe ser un objeto con "datos" o "series"');
+    let labels = list(d.etiquetas, 'etiquetas') || null, series = list(d.series, 'series') || [];
+    if (d.datos) {
+      list(d.datos, 'datos').forEach((r, i) => { if (!Array.isArray(r)) throw new Error(`la fila ${i + 1} de "datos" debe ser [etiqueta, valor]`); });
+      labels = d.datos.map((r) => r[0]); series = [{ nombre: d.nombre || '', valores: d.datos.map((r) => r[1]) }];
+    }
+    if (d.x) labels = list(d.x, 'x');
+    series = series.map((s, i) => {
+      if (!s || typeof s !== 'object' || Array.isArray(s)) throw new Error(`la serie ${i + 1} debe ser un objeto`);
+      const puntos = list(s.puntos, 'puntos');
+      return {
+        ...s, nombre: s.nombre == null || s.nombre === '' ? `Serie ${i + 1}` : texto(s.nombre, 'el nombre de una serie'),
+        valores: list(s.valores, 'valores') && s.valores.map(num),
+        puntos: puntos && puntos.map((pt) => { if (!Array.isArray(pt) || pt.length < 2) throw new Error('cada punto debe ser [x, y]'); return [num(pt[0]), num(pt[1])]; }),
+      };
+    });
     if (d.x) labels = labels.map(num);
-    if (!series.length || !series.some((s) => (s.valores || s.puntos || []).some((v) => v != null && (!Array.isArray(v) || v[1] != null)))) throw new Error('no hay valores');
+    else if (labels) labels = labels.map((l) => (l == null ? '' : texto(l, 'cada etiqueta')));
+    const tipo = el.dataset.tipo || 'barras';
+    if (tipo === 'dispersion' && !series.every((s) => s.puntos)) throw new Error('dispersion necesita "puntos" en cada serie');
+    const ok = (v) => (Array.isArray(v) ? v[0] != null && v[1] != null : v != null);
+    if (!series.length || !series.some((s) => (s.valores || s.puntos || []).some(ok))) throw new Error('no hay valores');
     if (!labels && !series.every((s) => s.puntos)) throw new Error('faltan "etiquetas" o "datos"');
+    if (labels) series.forEach((s) => {
+      if (s.valores && s.valores.length !== labels.length) throw new Error(`la serie «${s.nombre}» tiene ${s.valores.length} valores para ${labels.length} ${d.x ? 'x' : 'etiquetas'}`);
+    });
+    if (d.x && labels.some((v) => v == null)) throw new Error('"x" solo admite números');
     const orden = el.dataset.orden;
     if (orden && series.length === 1 && labels) {
       const idx = labels.map((_, i) => i).sort((a, b) => (orden === 'asc' ? 1 : -1) * ((series[0].valores[a] ?? -Infinity) - (series[0].valores[b] ?? -Infinity)));
@@ -58,22 +79,41 @@
   }
 
   /* ---------- escalas y formato ---------- */
-  function nice(lo, hi, count = 5) {
-    if (lo === hi) { hi = lo + 1; lo = Math.min(0, lo); }
-    const raw = (hi - lo) / count, mag = 10 ** Math.floor(Math.log10(raw)), f = raw / mag;
-    const step = (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * mag;
-    const a = Math.floor(lo / step) * step, b = Math.ceil(hi / step) * step, ticks = [];
-    for (let v = a; v <= b + step / 2; v += step) ticks.push(+v.toFixed(10));
-    return { lo: a, hi: b, ticks, step };
-  }
+  const nice = (lo, hi, count) => Motor.util.nice(lo, hi, count);   // común con el motor: nunca entra en bucle
   // Decimales que hacen falta para escribir v sin redondear (2,5 → 1; 0,25 → 2; 25 → 0), hasta max.
-  const decOf = (v, max = 10) => { v = Math.abs(v); for (let d = 0; d < max; d++) { const k = v * 10 ** d; if (Math.abs(k - Math.round(k)) < 1e-6 * Math.max(1, k)) return d; } return max; };
-  const ownDec = (el) => { const d = num(el.dataset.dec); return Number.isInteger(d) && d >= 0 && d <= 20 ? d : null; };
-  const nf = (dec) => new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec });
-  // Marcas del eje: decimales del paso (o data-dec).
-  const fmtr = (el, step, own = true) => { const d = own ? ownDec(el) : null, f = nf(d ?? decOf(step)); return (v) => f.format(v); };
-  // Rótulos de valor: data-dec si existe; si no, los decimales del propio valor (hasta 2), nunca menos que el eje.
-  const fmtVal = (el, step) => { const d = ownDec(el), base = decOf(step), cache = {}; return (v) => { const k = d ?? Math.max(base, decOf(v, 2)); return (cache[k] ||= nf(k)).format(v); }; };
+  const decOf = (v, max = 10) => Motor.util.decimalsOf(v, max);
+  // data-dec: entero de 0 a 20; cualquier otro valor se ignora con un aviso (no tumba el gráfico).
+  const ownDec = (el) => {
+    if (el.dataset.dec == null || el.dataset.dec === '') return null;
+    const d = Motor.util.num(el.dataset.dec);
+    if (Number.isInteger(d) && d >= 0 && d <= 20) return d;
+    console.warn('[grafico] data-dec debe ser un entero de 0 a 20; se ignora:', el.dataset.dec, el);
+    return null;
+  };
+  // Formato es-ES; sin «-0» y con notación científica para magnitudes enormes (1e300 no ocupa 300 cifras).
+  const nf = (dec) => {
+    let f; try { f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec, signDisplay: 'negative' }); }
+    catch (e) { f = new Intl.NumberFormat('es-ES', { minimumFractionDigits: dec, maximumFractionDigits: dec }); }
+    const sci = new Intl.NumberFormat('es-ES', { notation: 'scientific', maximumFractionDigits: 2 });
+    return { format: (v) => (Math.abs(v) >= 1e15 || (v !== 0 && Math.abs(v) < 1e-6) ? sci.format(v) : f.format(Object.is(v, -0) ? 0 : v)) };
+  };
+  // Marcas del eje: decimales del paso; data-dec puede añadir decimales, pero no quitar los que distinguen las marcas.
+  // Con un paso diminuto (< 1e-6) las marcas van en notación científica: con decimales serían todas «0,0».
+  const sciTick = new Intl.NumberFormat('es-ES', { notation: 'scientific', maximumFractionDigits: 3 });
+  const fmtr = (el, step, own = true) => {
+    const d = own ? ownDec(el) : null, f = nf(Math.min(10, Math.max(d ?? 0, decOf(step))));
+    return (v) => (step < 1e-6 && v !== 0 ? sciTick.format(v) : f.format(v));
+  };
+  // Rótulos de valor: data-dec si existe; si no, los decimales del propio valor (hasta 2, o los que hagan falta para
+  // que un valor pequeño no se lea como 0), nunca menos que el eje.
+  const fmtVal = (el, step) => {
+    const d = ownDec(el), base = decOf(step), cache = {};
+    return (v) => {
+      let k = d ?? Math.max(base, decOf(v, 2));
+      if (d == null && v && Math.abs(v) < 10 ** -k) k = Math.min(10, 1 - Math.floor(Math.log10(Math.abs(v))));
+      return (cache[k] ||= nf(k)).format(v);
+    };
+  };
   const lin = (d0, d1, r0, r1) => (v) => r0 + ((v - d0) / (d1 - d0 || 1)) * (r1 - r0);
 
   /* ---------- dibujo ---------- */
@@ -97,42 +137,67 @@
     try { data = parse(el); } catch (e) { fail(el, e); return; }
     try { draw(el, data); } catch (e) { fail(el, e); }
   }
-  function draw(el, data) {
+  function draw(el, data, shrink = 0) {
     const keep = el.querySelector('script[type="application/json"]');
     const cap = el.querySelector('figcaption');
+    // Alto real (sin la escala del escenario) de leyenda y pie: si envuelven a varias líneas, el SVG encoge.
+    const outerH = (n) => { if (!n || !n.isConnected) return 0; const cs = getComputedStyle(n); return n.offsetHeight + (parseFloat(cs.marginTop) || 0) + (parseFloat(cs.marginBottom) || 0); };
     el.textContent = ''; el.appendChild(keep);
+    let capH = 0;
+    if (cap) { el.appendChild(cap); capH = outerH(cap) || 44; cap.remove(); }
     const tipo = el.dataset.tipo || 'barras', { labels, series } = data;
+    let legH = 0;
     if (series.length > 1) {
       const ul = document.createElement('ul'); ul.className = 'legend grafico-legend';
       ul.innerHTML = series.map((s, i) => `<li><i class="${tipo === 'lineas' ? 'line' : ''}" style="--c:${color(i)}"></i>${esc(s.nombre)}</li>`).join('');
       el.appendChild(ul);
+      legH = outerH(ul) || 56;
     }
-    const W = Math.round(el.clientWidth) || 1200, H = Math.max(240, Math.round(el.clientHeight - (series.length > 1 ? 56 : 0) - (cap ? 44 : 0)) || 480);
+    const gap = parseFloat(getComputedStyle(el).rowGap) || 0, items = 1 + (legH ? 1 : 0) + (cap ? 1 : 0);
+    const W = Math.round(el.clientWidth) || 1200, H = Math.max(240, Math.round(el.clientHeight - legH - capH - gap * (items - 1) - shrink) || 480);
+    // Etiquetas que no caben en su hueco se acortan con «…» (el texto completo queda en <title>).
+    const clip = (s, maxW, size, role) => {
+      s = String(s ?? '');
+      if (maxW <= 0 || textW(el, s, size, role) <= maxW) return s;
+      let lo = 0, hi = s.length;
+      while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (textW(el, s.slice(0, mid) + '…', size, role) <= maxW) lo = mid; else hi = mid - 1; }
+      return s.slice(0, lo) + '…';
+    };
+    const label = (parent, x, y, s, maxW, cls, anchor, extra, size = 26, role = 'text') => {
+      const short = clip(s, maxW, size, role), t = txt(parent, x, y, short, cls, anchor, extra);
+      if (short !== String(s ?? '')) svgEl('title', {}, t).textContent = String(s);
+      return t;
+    };
     const svg = svgEl('svg', { viewBox: `0 0 ${W} ${H}`, width: W, height: H, role: 'img' }, el);
     const unit = el.dataset.unidad || '', showVals = el.dataset.valores !== 'no';
+    // Unidad larga: va una sola vez en el título del eje de valores, no en cada marca.
+    const tickUnit = unit.trim().length <= 4 ? unit : '', unitNote = tickUnit ? '' : unit.trim();
+    const withUnit = (t) => (unitNote ? (t ? `${t} (${unitNote})` : unitNote) : t);
     const hi = new Set((el.dataset.resalta || '').split('|').map((s) => s.trim()).filter(Boolean));
     const fillOf = (si, label) => (hi.size ? (hi.has(String(label)) ? color(si) : 'var(--fg-3)') : color(si));
     const opOf = (label) => (hi.size && !hi.has(String(label)) ? 0.45 : 1);
     const stack = el.dataset.apilar != null && series.length > 1;
-    const axisX = el.dataset.ejeX, axisY = el.dataset.ejeY;
+    let axisX = el.dataset.ejeX, axisY = el.dataset.ejeY;
 
     if (tipo === 'barras' || tipo === 'columnas') {
       const n = labels.length, m = series.length;
       const totals = labels.map((_, j) => series.reduce((a, s) => a + (s.valores[j] ?? 0), 0));
       const all = stack ? totals : series.flatMap((s) => s.valores.filter((v) => v != null));
       const sc = nice(Math.min(0, ...all), Math.max(0, ...all));
-      const fmt = fmtr(el, sc.step), lab = (v) => fmt(v) + unit, fv = fmtVal(el, sc.step), labV = (v) => fv(v) + unit;
+      const fmt = fmtr(el, sc.step), lab = (v) => fmt(v) + tickUnit, fv = fmtVal(el, sc.step), labV = (v) => fv(v) + unit;
       const horiz = tipo === 'barras';
+      if (horiz) axisX = withUnit(axisX); else axisY = withUnit(axisY);
       if (horiz) {
         const left = Math.min(W * 0.4, Math.max(...labels.map((l) => textW(el, l, 26))) + 24);
-        const valW = showVals ? Math.max(...all.map((v) => textW(el, labV(v), 22, 'mono'))) + 16 : 12;
+        const halfTick = Math.max(...sc.ticks.map((t) => textW(el, lab(t), 22, 'mono'))) / 2;
+        const valW = Math.max(halfTick + 4, showVals ? Math.max(...all.map((v) => textW(el, labV(v), 22, 'mono'))) + 16 : 12);
         const top = 4, bottom = H - (axisX ? 84 : 48), x = lin(sc.lo, sc.hi, left, W - valW);
         const band = (bottom - top) / n, bh = Math.min(84, band * 0.72);
         sc.ticks.forEach((t) => { svgEl('line', { x1: x(t), x2: x(t), y1: top, y2: bottom, class: t === 0 ? 'g-zero' : 'g-grid' }, svg); txt(svg, x(t), bottom + 22, lab(t), 'g-tick', 'middle'); });
         if (axisX) txt(svg, (left + W - valW) / 2, H - 18, axisX, 'g-axis', 'middle');
         labels.forEach((l, j) => {
           const y0 = top + band * j + (band - bh) / 2;
-          txt(svg, left - 16, y0 + bh / 2, l, 'g-label', 'end', { opacity: opOf(l) });
+          label(svg, left - 16, y0 + bh / 2, l, left - 24, 'g-label', 'end', { opacity: opOf(l) });
           let acc = 0;
           series.forEach((s, i) => {
             const raw = s.valores[j], v = raw ?? 0, h = stack ? bh : bh / m, y = stack ? y0 : y0 + h * i;
@@ -152,7 +217,7 @@
         if (axisX) txt(svg, (left + right) / 2, H - 20, axisX, 'g-axis', 'middle');
         labels.forEach((l, j) => {
           const x0 = left + band * j + (band - bw) / 2;
-          txt(svg, x0 + bw / 2, bottom + 28, l, 'g-label', 'middle', { opacity: opOf(l) });
+          label(svg, x0 + bw / 2, bottom + 28, l, band - 8, 'g-label', 'middle', { opacity: opOf(l) });
           let acc = 0;
           series.forEach((s, i) => {
             const raw = s.valores[j], v = raw ?? 0, w = stack ? bw : bw / m, xx = stack ? x0 : x0 + w * i;
@@ -173,7 +238,8 @@
       const sy = nice(el.dataset.cero != null ? Math.min(0, ...ys) : Math.min(...ys), Math.max(...ys));
       const categorical = tipo === 'lineas' && !data.numericX;
       const sx = categorical ? null : nice(Math.min(...xs), Math.max(...xs));
-      const fy = fmtr(el, sy.step), ly = (v) => fy(v) + unit, fx = sx ? fmtr(el, sx.step, false) : null;
+      const fy = fmtr(el, sy.step), ly = (v) => fy(v) + tickUnit, fx = sx ? fmtr(el, sx.step, false) : null;
+      axisY = withUnit(axisY);
       const fyv = fmtVal(el, sy.step), lyv = (v) => fyv(v) + unit;
       const lastOf = (s) => { for (let k = s.valores.length - 1; k >= 0; k--) if (s.valores[k] != null) return s.valores[k]; return null; };
       const tickW = Math.max(...sy.ticks.map((t) => textW(el, ly(t), 22, 'mono')));
@@ -183,8 +249,9 @@
       const x = categorical ? (j) => left + (labels.length < 2 ? 0 : (j / (labels.length - 1)) * (right - left)) : lin(sx.lo, sx.hi, left, right);
       sy.ticks.forEach((t) => { svgEl('line', { x1: left, x2: right, y1: y(t), y2: y(t), class: t === 0 ? 'g-zero' : 'g-grid' }, svg); txt(svg, left - 12, y(t), ly(t), 'g-tick', 'end'); });
       if (categorical) {
-        const every = Math.ceil(labels.length / Math.max(1, Math.floor((right - left) / (Math.max(...labels.map((l) => textW(el, l, 22, 'mono'))) + 24))));
-        labels.forEach((l, j) => { if (j % every === 0) txt(svg, x(j), bottom + 28, l, 'g-tick', 'middle'); });
+        const slot = Math.min(W * 0.3, Math.max(...labels.map((l) => textW(el, l, 22, 'mono'))) + 24);
+        const every = Math.ceil(labels.length / Math.max(1, Math.floor((right - left) / slot)));
+        labels.forEach((l, j) => { if (j % every === 0) label(svg, x(j), bottom + 28, l, slot - 24, 'g-tick', 'middle', {}, 22, 'mono'); });
       } else sx.ticks.forEach((t) => { svgEl('line', { x1: x(t), x2: x(t), y1: top, y2: bottom, class: 'g-grid' }, svg); txt(svg, x(t), bottom + 28, fx(t), 'g-tick', 'middle'); });
       if (axisY) txt(svg, 22, (top + bottom) / 2, axisY, 'g-axis', 'middle', { transform: `rotate(-90 22 ${(top + bottom) / 2})` });
       if (axisX) txt(svg, (left + right) / 2, H - 20, axisX, 'g-axis', 'middle');
@@ -203,6 +270,9 @@
       el.insertAdjacentHTML('beforeend', `<p class="note">Tipo de gráfico desconocido: ${esc(tipo)}</p>`);
     }
     if (cap) el.appendChild(cap);
+    // Si aun así sobresale (márgenes del estilo, fuentes), se redibuja una vez con el sobrante descontado.
+    const over = el.scrollHeight - el.clientHeight;
+    if (over > 1 && !shrink && el.clientHeight) return draw(el, data, over + 2);
     el._size = el.clientWidth + 'x' + el.clientHeight;
     svg.setAttribute('aria-label', (el.getAttribute('aria-label') || el.closest('.slide')?.dataset.title || 'gráfico'));
   }

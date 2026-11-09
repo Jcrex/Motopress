@@ -9,11 +9,21 @@
 (() => {
   const STEP = 620, DUR = 560;
 
-  function pathOf(api, sel) { const p = api.q(sel); return p && p.getTotalLength ? p : null; }
+  // Un data-travel con selector inválido o sin camino se avisa y se salta: no para los demás puntos.
+  function pathOf(api, c) {
+    let p = null;
+    try { p = api.q(c.dataset.travel); } catch (e) { /* selector no válido */ }
+    if (p && p.getTotalLength) return p;
+    console.warn('[secuencia] data-travel no apunta a un camino SVG:', c.dataset.travel, c);
+    return null;
+  }
+  // data-rest: fracción del camino (0–1) donde reposa el punto; data-period: ms por vuelta (> 0).
+  const restOf = (c) => { const r = Motor.util.num(c.dataset.rest ?? '0'); return Number.isFinite(r) ? Math.min(1, Math.max(0, r)) : 0; };
+  const periodOf = (c) => { const p = Motor.util.num(c.dataset.period ?? ''); return Number.isFinite(p) && p > 0 ? p : 4200; };
   function restDots(api) {
     api.qa('[data-travel]').forEach((c) => {
-      const p = pathOf(api, c.dataset.travel); if (!p) return;
-      const at = p.getPointAtLength(p.getTotalLength() * (+(c.dataset.rest || 0)));
+      const p = pathOf(api, c); if (!p) return;
+      const at = p.getPointAtLength(p.getTotalLength() * restOf(c));
       c.setAttribute('cx', at.x); c.setAttribute('cy', at.y);
     });
   }
@@ -32,7 +42,7 @@
       api.anims = [];
       const step = +(api.el.dataset.stepMs || STEP);
       api.qa('[data-seq]').forEach((e) => {
-        const n = +e.dataset.seq, kind = e.dataset.a || 'fade';
+        const n = Math.max(0, Number(e.dataset.seq) || 0), kind = e.dataset.a || 'fade';
         const opt = { duration: DUR, delay: 200 + n * step, easing: 'cubic-bezier(.2,.7,.2,1)', fill: 'backwards' };
         let frames;
         if (kind === 'draw' && e.getTotalLength) {
@@ -47,13 +57,13 @@
       });
       const dots = api.qa('[data-travel]');
       if (!dots.length) return;
-      const first = Math.max(0, ...api.qa('[data-seq]').map((e) => +e.dataset.seq));
+      const first = Math.max(0, ...api.qa('[data-seq]').map((e) => Number(e.dataset.seq) || 0));
       const t0 = 200 + first * step + DUR;
       dots.forEach((c) => {
-        const p = pathOf(api, c.dataset.travel); if (!p) return;
-        const L = p.getTotalLength(), period = +(c.dataset.period || 4200);
+        const p = pathOf(api, c); if (!p) return;
+        const L = p.getTotalLength(), period = periodOf(c), rest = restOf(c);
         api.raf((t) => {
-          const u = t < t0 ? +(c.dataset.rest || 0) : (((t - t0) / period) % 1);
+          const u = t < t0 ? rest : (((t - t0) / period) % 1);
           const at = p.getPointAtLength(L * u); c.setAttribute('cx', at.x); c.setAttribute('cy', at.y);
         });
       });

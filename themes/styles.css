@@ -128,7 +128,7 @@
    Títulos cromados, bordes biselados, cápsulas iridiscentes.
    ========================================================= */
 [data-style="cromo"] {
-  --chrome: linear-gradient(180deg, #ffffff 0%, #dfe3e8 30%, #8d939d 47%, #3c4149 52%, #b9bfc8 68%, #f2f4f7 100%);
+  --chrome: linear-gradient(180deg, #ffffff 0%, #dfe3e8 30%, #8d939d 47%, #6b717b 52%, #b9bfc8 68%, #f2f4f7 100%);
   --sheen: linear-gradient(100deg, transparent 42%, rgba(255,255,255,.9) 50%, transparent 58%);
   --bevel-hi: rgba(255,255,255,.10); --drop: rgba(0,0,0,.65);
 }
@@ -158,7 +158,7 @@
 [data-style="cromo"] .slide.is-active .s-title { animation: cromo-sheen calc(var(--dur) * 2.2) var(--ease) both; }
 @keyframes cromo-sheen { from { background-position: 160% 0, 0 0; } to { background-position: -60% 0, 0 0; } }
 [data-style="cromo"] .kicker {
-  align-self: flex-start; padding: 9px 18px; border-radius: 999px; font-size: 19px; color: var(--fg);
+  align-self: flex-start; padding: 9px 18px; border-radius: 999px; font-size: 22px; color: var(--fg);
   border: 1.5px solid transparent;
   background: linear-gradient(var(--bg), var(--bg)) padding-box, linear-gradient(90deg, var(--accent), var(--accent-2), var(--accent-3)) border-box;
 }
@@ -175,7 +175,7 @@
   background: linear-gradient(180deg, #fbfcfd, #c3c8d0 52%, #8e959f);
   box-shadow: inset 0 1px 0 #fff, inset 0 -3px 0 rgba(0,0,0,.22), 0 8px 18px -8px var(--drop);
 }
-[data-style="cromo"] .chip { font-size: 19px; border-color: color-mix(in oklab, var(--fg) 26%, transparent); }
+[data-style="cromo"] .chip { font-size: 22px; border-color: color-mix(in oklab, var(--fg) 26%, transparent); }
 [data-style="cromo"] .deco-folio {
   display: flex; align-items: center; gap: 16px; position: absolute; right: 128px; bottom: 56px;
   font: 500 17px/1 var(--font-mono); letter-spacing: .16em; text-transform: uppercase; color: var(--fg-3);
@@ -341,7 +341,7 @@
 [data-style="matriz"] { font-variation-settings: "ROND" 100; }
 [data-style="matriz"] .slide { background: var(--bg); }
 [data-style="matriz"] .s-title { line-height: 1.08; }
-[data-style="matriz"] .kicker { display: inline-flex; align-items: center; gap: 14px; font: 400 20px/1.2 var(--font-mono); color: var(--fg-2); }
+[data-style="matriz"] .kicker { display: inline-flex; align-items: center; gap: 14px; font: 400 22px/1.2 var(--font-mono); color: var(--fg-2); }
 [data-style="matriz"] .kicker::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); flex: none; }
 [data-style="matriz"] .deco-scan {
   display: block; position: absolute; right: 54px; top: 50%; width: 6px; height: 300px; margin-top: -150px; border-radius: 3px;
